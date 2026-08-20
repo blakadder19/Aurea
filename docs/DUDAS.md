@@ -142,3 +142,42 @@ otras tres, para cubrir el alcance completo del README.
 resultado con `setTimeout`/datos fijos de `data/settings.ts` en vez de llamar a Enable
 Banking o Supabase. Se documentarán también en `docs/CURRENT.md` al cerrar todos los
 cortes.
+
+## Corte 12 — Variantes móviles
+
+Corte transversal: no añade pantallas, adapta las 11 ya construidas a 390×844. No
+implementa una app aparte, así que se tocan `AppShell` (nueva `BottomNav`, nueva
+`MorePage` en `/mas`), el componente compartido `SidePanel` (hoja inferior por debajo de
+1024 px) y las 8 tablas del proyecto (`TransactionsTable`, `AccountsTable`,
+`PositionsTable`, `DebtsTable`, `RecentTransactions`, `BudgetBreakdownTable`,
+`UpcomingTimeline` —tabla de hitos—, `ImportCsvPanel`), cada una con una variante de
+tarjetas de fila (`hidden lg:block` / `lg:hidden`) que muestra exactamente las mismas
+columnas que la tabla, no un subconjunto.
+
+**Duda 1:** el `.dc.html` dibuja la navegación inferior con un punto de color en vez de un
+icono real («Iconos con etiqueta de texto» en el alcance del README).
+
+**Decisión:** se sigue el patrón del `.dc.html` (punto + etiqueta de texto) en vez de
+introducir una librería de iconos nueva: ningún corte anterior usa iconos gráficos en
+ningún sitio de la aplicación (solo los glifos de texto ✓/▲/!/◌ para estado), así que un
+set de iconos solo para esta barra rompería la consistencia visual del proyecto. La
+etiqueta de texto —el requisito explícito— está siempre presente.
+
+**Duda 2:** el alcance pide que las hojas inferiores cierren «por ✕ y arrastre», pero
+arrastre (gesto táctil con física de scroll) no lo ofrece Radix Dialog de fábrica y
+añadirlo es un cambio sustancial de comportamiento, no una clase responsive.
+
+**Decisión:** se implementa el cierre por ✕, `Esc` y clic fuera (ya heredado de
+`SidePanel`, verificado en el simulador de pago extra de Deudas), y se deja fuera el
+arrastre táctil. Los tres mecanismos de cierre que sí se implementan ya cubren la regla
+común «cierre con ✕, Esc y clic fuera»; el arrastre es un extra de la variante móvil, no
+un requisito de accesibilidad.
+
+**Duda 3:** ni el README ni el `.dc.html` dan un diseño de tarjeta de fila para las
+tablas de Cuentas, Inversiones, Deudas ni el mapeo CSV de Ajustes (el `.dc.html` solo
+diseña el patrón para Movimientos y las categorías de Presupuesto).
+
+**Decisión:** se extiende el mismo patrón de tarjeta (título + importe a la derecha +
+línea secundaria con el resto de columnas) a las cuatro tablas restantes, manteniendo
+todas las columnas de la versión de escritorio — ninguna cifra se omite en la variante
+móvil.

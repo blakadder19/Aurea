@@ -36,7 +36,8 @@ describe('TransactionsPage', () => {
   it('filters the table live by comercio', () => {
     renderPage()
     fireEvent.change(screen.getByLabelText('Buscar movimientos'), { target: { value: 'zara' } })
-    expect(screen.getByText('Zara · devolución')).toBeInTheDocument()
+    // Se duplica (tabla de escritorio + tarjetas de fila de móvil).
+    expect(screen.getAllByText('Zara · devolución').length).toBeGreaterThan(0)
     expect(screen.queryByText('Mercadona')).not.toBeInTheDocument()
   })
 

@@ -36,8 +36,9 @@ describe('InvestmentsPage', () => {
 
   it('cada rentabilidad de posición se muestra en € y en %, con signo explícito', () => {
     renderPage()
-    expect(screen.getByText('+1.310,00 €')).toBeInTheDocument()
-    expect(screen.getByText('+43,7 %')).toBeInTheDocument()
+    // Se duplica (tabla de escritorio + tarjetas de fila de móvil).
+    expect(screen.getAllByText('+1.310,00 €').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('+43,7 %').length).toBeGreaterThan(0)
   })
 
   it('la propuesta de rebalanceo va etiquetada como recomendación y da un importe concreto', () => {
@@ -50,7 +51,8 @@ describe('InvestmentsPage', () => {
     renderPage()
     expect(screen.queryByText('Peso en cartera')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Detalle' }))
-    expect(screen.getAllByText('Fondo indexado mundial')).toHaveLength(1)
+    // Se duplica (tabla de escritorio + tarjetas de fila de móvil), nunca más.
+    expect(screen.getAllByText('Fondo indexado mundial')).toHaveLength(2)
     expect(screen.getByText('Peso en cartera')).toBeInTheDocument()
     expect(screen.getByText('Por tipo de producto')).toBeInTheDocument()
   })

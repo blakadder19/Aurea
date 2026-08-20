@@ -63,7 +63,49 @@ function Row({ transaction }: { transaction: Transaction }) {
   )
 }
 
-/** Tabla de movimientos con selección múltiple. Busca en vivo por comercio. */
+function MobileCard({ transaction }: { transaction: Transaction }) {
+  const isSelected = useTransactionsStore((s) => s.selectedIds.has(transaction.id))
+  const toggleSelected = useTransactionsStore((s) => s.toggleSelected)
+  const openPanel = useTransactionsStore((s) => s.openPanel)
+
+  return (
+    <div
+      tabIndex={0}
+      role="button"
+      aria-label={`Editar movimiento de ${transaction.comercio}`}
+      onClick={() => openPanel(transaction.id)}
+      onKeyDown={(e) => e.key === 'Enter' && openPanel(transaction.id)}
+      className={`flex cursor-pointer items-center gap-3 rounded-2xl border border-line p-3.5 tabular ${
+        isSelected ? 'bg-canvas' : 'bg-surface'
+      }`}
+    >
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center">
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => toggleSelected(transaction.id)}
+          onClick={(e) => e.stopPropagation()}
+          aria-label={`Seleccionar movimiento de ${transaction.comercio}`}
+          className="h-5 w-5"
+        />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-base font-semibold text-ink">{transaction.comercio}</div>
+        <div className="mt-0.5 truncate text-sm text-ink-muted">
+          {transaction.fecha} · {transaction.categoria} · {transaction.cuenta}
+        </div>
+      </div>
+      <Money
+        value={transaction.importe}
+        signed={transaction.importe > 0}
+        tone={toneFor(transaction)}
+        className="shrink-0 whitespace-nowrap text-[17px] font-bold"
+      />
+    </div>
+  )
+}
+
+/** Tabla de movimientos con selección múltiple; tarjetas de fila por debajo de 1024 px. Busca en vivo por comercio. */
 export function TransactionsTable() {
   const searchQuery = useTransactionsStore((s) => s.searchQuery)
   const selectedIds = useTransactionsStore((s) => s.selectedIds)
@@ -74,43 +116,53 @@ export function TransactionsTable() {
   const filtered = query ? transactions.filter((t) => t.comercio.toLowerCase().includes(query)) : transactions
   const allFilteredSelected = filtered.length > 0 && filtered.every((t) => selectedIds.has(t.id))
 
-  return (
-    <div className="shrink-0 overflow-hidden rounded-card border border-line bg-surface">
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] border-collapse tabular">
-          <thead>
-            <tr className="bg-canvas">
-              <th className="border-b border-line py-3.5 pl-5">
-                <input
-                  type="checkbox"
-                  checked={allFilteredSelected}
-                  onChange={() => (allFilteredSelected ? clearSelection() : setSelectedIds(filtered.map((t) => t.id)))}
-                  aria-label="Seleccionar todo"
-                  className="h-5 w-5"
-                />
-              </th>
-              <th className={`${TH} pr-4`}>Fecha</th>
-              <th className={`${TH} pr-4`}>Comercio</th>
-              <th className={`${TH} pr-4`}>Cuenta</th>
-              <th className={`${TH} pr-4`}>Categoría</th>
-              <th className="border-b border-line py-3.5 pr-5 text-right text-[13px] font-semibold tracking-[0.06em] text-ink-muted uppercase">
-                Importe
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((t) => (
-              <Row key={t.id} transaction={t} />
-            ))}
-          </tbody>
-        </table>
-
-        {filtered.length === 0 && (
-          <div className="px-5 py-16 text-center text-base text-ink-muted">
-            Ningún movimiento coincide con «{searchQuery}».
-          </div>
-        )}
+  if (filtered.length === 0) {
+    return (
+      <div className="shrink-0 rounded-card border border-line bg-surface px-5 py-16 text-center text-base text-ink-muted">
+        Ningún movimiento coincide con «{searchQuery}».
       </div>
-    </div>
+    )
+  }
+
+  return (
+    <>
+      <div className="hidden shrink-0 overflow-hidden rounded-card border border-line bg-surface lg:block">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[720px] border-collapse tabular">
+            <thead>
+              <tr className="bg-canvas">
+                <th className="border-b border-line py-3.5 pl-5">
+                  <input
+                    type="checkbox"
+                    checked={allFilteredSelected}
+                    onChange={() => (allFilteredSelected ? clearSelection() : setSelectedIds(filtered.map((t) => t.id)))}
+                    aria-label="Seleccionar todo"
+                    className="h-5 w-5"
+                  />
+                </th>
+                <th className={`${TH} pr-4`}>Fecha</th>
+                <th className={`${TH} pr-4`}>Comercio</th>
+                <th className={`${TH} pr-4`}>Cuenta</th>
+                <th className={`${TH} pr-4`}>Categoría</th>
+                <th className="border-b border-line py-3.5 pr-5 text-right text-[13px] font-semibold tracking-[0.06em] text-ink-muted uppercase">
+                  Importe
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((t) => (
+                <Row key={t.id} transaction={t} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="flex shrink-0 flex-col gap-2.5 lg:hidden">
+        {filtered.map((t) => (
+          <MobileCard key={t.id} transaction={t} />
+        ))}
+      </div>
+    </>
   )
 }

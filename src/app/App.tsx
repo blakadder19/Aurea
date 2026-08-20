@@ -11,6 +11,7 @@ import { DebtsPage } from '../features/debts/DebtsPage'
 import { PlanningPage } from '../features/planning/PlanningPage'
 import { AssistantPage } from '../features/assistant/AssistantPage'
 import { SettingsPage } from '../features/settings/SettingsPage'
+import { MorePage } from './MorePage'
 
 export function App() {
   return (
@@ -27,6 +28,7 @@ export function App() {
         <Route path="/planificacion" element={<PlanningPage />} />
         <Route path="/asistente" element={<AssistantPage />} />
         <Route path="/ajustes" element={<SettingsPage />} />
+        <Route path="/mas" element={<MorePage />} />
       </Route>
     </Routes>
   )

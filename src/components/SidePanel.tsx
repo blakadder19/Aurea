@@ -10,7 +10,8 @@ interface SidePanelProps {
 }
 
 /**
- * Overlay derecho de 460 px, altura completa, scroll propio.
+ * Overlay derecho de 460 px en escritorio; por debajo de 1024 px pasa a hoja
+ * inferior a altura casi completa, con el mismo contenido y jerarquía.
  * Basado en Radix Dialog: foco atrapado, Esc y click en overlay cierran,
  * y el foco vuelve al elemento que abrió el panel.
  */
@@ -21,7 +22,7 @@ export function SidePanel({ open, onOpenChange, onCloseAutoFocus, children }: Si
         <Dialog.Overlay className="fixed inset-0 z-40 bg-[rgba(22,26,25,0.35)]" />
         <Dialog.Content
           onCloseAutoFocus={onCloseAutoFocus}
-          className="fixed top-0 right-0 z-50 flex h-full w-[460px] max-w-[100vw] flex-col gap-[18px] overflow-y-auto bg-surface p-8 focus:outline-none"
+          className="fixed inset-x-0 bottom-0 top-auto z-50 flex max-h-[92vh] w-full flex-col gap-[18px] overflow-y-auto rounded-t-[20px] bg-surface p-6 focus:outline-none lg:inset-x-auto lg:top-0 lg:right-0 lg:bottom-0 lg:h-full lg:max-h-none lg:w-[460px] lg:max-w-[100vw] lg:rounded-none lg:p-8"
         >
           {children}
         </Dialog.Content>

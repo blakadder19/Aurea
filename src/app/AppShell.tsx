@@ -1,19 +1,20 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { currentUser } from '../data/demo'
 import { useTransactionsStore } from '../features/transactions/store'
+import { BottomNav } from './BottomNav'
 
-interface NavItem {
+export interface NavItem {
   label: string
   to?: string
   badge?: number
 }
 
-interface NavSection {
+export interface NavSection {
   title: string
   items: NavItem[]
 }
 
-const NAV_SECTIONS: NavSection[] = [
+export const NAV_SECTIONS: NavSection[] = [
   {
     title: 'Tu dinero',
     items: [
@@ -124,7 +125,10 @@ export function AppShell() {
     <div className="flex h-screen min-h-screen bg-canvas">
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Outlet />
+        <div className="flex min-h-0 flex-1 flex-col">
+          <Outlet />
+        </div>
+        <BottomNav />
       </div>
     </div>
   )

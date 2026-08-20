@@ -33,7 +33,25 @@ export function UpcomingTimeline() {
         </a>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="flex flex-col gap-2.5 lg:hidden">
+        {timelineEvents
+          .filter((event) => event.tier !== 'today')
+          .map((event) => (
+            <div key={`${event.column}-${event.label}`} className="flex items-center justify-between gap-3 text-base tabular">
+              <span className={event.amount > 0 ? 'font-semibold text-green-text' : 'text-ink'}>
+                {event.day} · {event.label}
+              </span>
+              <Money
+                value={event.amount}
+                signed={event.amount > 0}
+                tone={event.amount > 0 ? 'green' : 'ink'}
+                className="shrink-0 whitespace-nowrap font-bold"
+              />
+            </div>
+          ))}
+      </div>
+
+      <div className="hidden overflow-x-auto lg:block">
         <div className="min-w-[820px]">
           <div className="grid min-h-[150px] grid-cols-[repeat(15,1fr)] items-end gap-x-1">
             {timelineEvents.map((event) => {
@@ -90,7 +108,7 @@ export function UpcomingTimeline() {
       {mode === 'detalle' && (
         <div className="border-t border-line pt-4">
           <SectionLabel className="mb-3">Tabla de los mismos hitos</SectionLabel>
-          <div className="overflow-x-auto">
+          <div className="hidden overflow-x-auto lg:block">
             <table className="w-full border-collapse tabular">
               <thead>
                 <tr>
@@ -121,6 +139,28 @@ export function UpcomingTimeline() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          <div className="flex flex-col gap-2.5 lg:hidden">
+            {hitos.map((h) => (
+              <div
+                key={`${h.fecha}-${h.concepto}`}
+                className="flex items-center justify-between gap-3 rounded-2xl border border-line p-3.5 tabular"
+              >
+                <div className="min-w-0">
+                  <div className="truncate text-base font-semibold text-ink">{h.concepto}</div>
+                  <div className="mt-0.5 truncate text-sm text-ink-muted">
+                    {h.fecha} · {h.tipo} · {h.cuenta}
+                  </div>
+                </div>
+                <Money
+                  value={h.importe}
+                  tone={h.importe > 0 ? 'green' : 'ink'}
+                  signed={h.importe > 0}
+                  className="shrink-0 whitespace-nowrap font-bold"
+                />
+              </div>
+            ))}
           </div>
         </div>
       )}

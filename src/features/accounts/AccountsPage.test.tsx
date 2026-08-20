@@ -24,14 +24,15 @@ describe('AccountsPage', () => {
     expect(screen.getByText('344.526,57 €')).toBeInTheDocument() // Activos
     expect(screen.getByText('188.164,27 €')).toBeInTheDocument() // Patrimonio neto
     // Cada fila de cuenta expone role="button" (para el click/Enter), no "row".
-    expect(screen.getAllByRole('button', { name: /^Ver detalle de/ })).toHaveLength(11)
-    expect(screen.getByText(/1860,00 USD/)).toBeInTheDocument()
-    expect(screen.getByText(/tipo 0,9180/)).toBeInTheDocument()
+    // Se duplica (tabla de escritorio + tarjetas de fila de móvil): 11 × 2 = 22.
+    expect(screen.getAllByRole('button', { name: /^Ver detalle de/ })).toHaveLength(22)
+    expect(screen.getAllByText(/1860,00 USD/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/tipo 0,9180/).length).toBeGreaterThan(0)
   })
 
   it('clicking a row opens the detail panel with that account, and Detalle adds the two breakdowns', () => {
     renderPage()
-    fireEvent.click(screen.getByRole('button', { name: 'Ver detalle de Revolut' }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Ver detalle de Revolut' })[0])
     expect(screen.getByRole('dialog')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Revolut' })).toBeInTheDocument()
     fireEvent.click(screen.getByLabelText('Cerrar panel'))

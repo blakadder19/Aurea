@@ -23,16 +23,17 @@ describe('DebtsPage', () => {
     renderPage()
     expect(screen.getByText('156.362,30 €')).toBeInTheDocument()
     expect(screen.getByText(/pendientes en 4 deudas/)).toBeInTheDocument()
-    expect(screen.getByText('−148.320,00 €')).toBeInTheDocument()
-    expect(screen.getByText('−6.480,00 €')).toBeInTheDocument()
-    expect(screen.getByText('−842,30 €')).toBeInTheDocument()
-    expect(screen.getByText('−720,00 €')).toBeInTheDocument()
+    // Cada saldo se duplica (tabla de escritorio + tarjetas de fila de móvil).
+    expect(screen.getAllByText('−148.320,00 €').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('−6.480,00 €').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('−842,30 €').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('−720,00 €').length).toBeGreaterThan(0)
   })
 
   it('la tarjeta enlaza a Pagos y suscripciones en vez de tener fecha de fin fija', () => {
     renderPage()
-    expect(screen.getByRole('link', { name: 'Ver en Pagos y suscripciones' })).toHaveAttribute('href', '/pagos')
-    expect(screen.getByText('Según uso')).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Ver en Pagos y suscripciones' })[0]).toHaveAttribute('href', '/pagos')
+    expect(screen.getAllByText('Según uso').length).toBeGreaterThan(0)
   })
 
   it('bola de nieve y avalancha no declaran ganadora y muestran las mismas cifras de partida', () => {

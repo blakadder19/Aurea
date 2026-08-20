@@ -52,7 +52,27 @@ function StepOneMapping() {
   return (
     <div className="flex flex-col gap-3.5">
       <div className="text-base text-ink">Empareja cada columna de tu archivo con un campo de Áurea.</div>
-      <div className="overflow-x-auto rounded-lg border border-line">
+
+      <div className="flex flex-col gap-3 lg:hidden">
+        {csvColumns.map((col) => (
+          <label key={col.fileColumn} className="flex flex-col gap-1.5">
+            <span className="text-[15px] font-semibold text-ink">{col.fileColumn}</span>
+            <select
+              value={mapping[col.fileColumn]}
+              onChange={(e) => setMapping(col.fileColumn, e.target.value)}
+              className="min-h-11 rounded-md border border-line bg-surface px-3 text-base text-ink"
+            >
+              {Object.entries(FIELD_LABELS).map(([field, label]) => (
+                <option key={field} value={field}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ))}
+      </div>
+
+      <div className="hidden overflow-x-auto rounded-lg border border-line lg:block">
         <table className="w-full min-w-[420px] border-collapse">
           <thead>
             <tr>

@@ -46,7 +46,8 @@ describe('SettingsPage', () => {
     renderPage()
     fireEvent.click(screen.getByRole('button', { name: 'Importar CSV' }))
 
-    const fechaSelect = screen.getByDisplayValue('Fecha')
+    // Se duplica (lista de móvil + tabla de escritorio); basta con cambiar una.
+    const fechaSelect = screen.getAllByDisplayValue('Fecha')[0]
     fireEvent.change(fechaSelect, { target: { value: 'cuenta' } })
 
     fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))

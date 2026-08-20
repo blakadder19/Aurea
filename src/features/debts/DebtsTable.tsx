@@ -8,11 +8,18 @@ import { formatMonthYearShort, monthsToPayoff } from './domain'
 const TH = 'border-b border-line pb-2.5 text-right text-[13px] font-semibold tracking-[0.06em] text-ink-muted uppercase'
 const TD = 'border-b border-[#f0f3f1] py-4 text-right text-base whitespace-nowrap'
 
+function payoffLabelFor(d: (typeof debts)[number]): string {
+  const months = d.monthlyPayment ? monthsToPayoff(d.balance, d.annualRate, d.monthlyPayment) : null
+  if (months === null) return 'Según uso'
+  if (!Number.isFinite(months)) return 'Indefinido'
+  return formatMonthYearShort(new Date(CONTEXT_DATE.getFullYear(), CONTEXT_DATE.getMonth() + months, 1))
+}
+
 /** Tabla de las cuatro deudas: saldo, tipo, cuota, próximo pago y fin previsto. */
 export function DebtsTable() {
   return (
     <Card padding="lg" className="flex flex-col gap-4">
-      <div className="overflow-x-auto -m-1 p-1">
+      <div className="hidden overflow-x-auto -m-1 p-1 lg:block">
         <table className="w-full min-w-[760px] border-collapse tabular">
           <thead>
             <tr>
@@ -27,42 +34,55 @@ export function DebtsTable() {
             </tr>
           </thead>
           <tbody>
-            {debts.map((d) => {
-              const months = d.monthlyPayment ? monthsToPayoff(d.balance, d.annualRate, d.monthlyPayment) : null
-              const payoffLabel =
-                months === null
-                  ? 'Según uso'
-                  : Number.isFinite(months)
-                    ? formatMonthYearShort(new Date(CONTEXT_DATE.getFullYear(), CONTEXT_DATE.getMonth() + months, 1))
-                    : 'Indefinido'
-
-              return (
-                <tr key={d.id}>
-                  <td className="border-b border-[#f0f3f1] py-4 text-[17px] font-semibold whitespace-nowrap text-ink">
-                    {d.name} · {d.institution}
-                    {d.id === 'tarjeta' && (
-                      <Link to="/pagos" className="ml-2 border-b border-green text-sm font-semibold text-green">
-                        Ver en Pagos y suscripciones
-                      </Link>
-                    )}
-                  </td>
-                  <td className={`${TD} font-bold text-danger-text`}>
-                    <Money value={-d.balance} />
-                  </td>
-                  <td className={`${TD} text-ink-muted`}>
-                    {d.annualRate === 0
-                      ? '0 %'
-                      : `${(d.annualRate * 100).toLocaleString('es-ES', { minimumFractionDigits: 2 })} %`}
-                  </td>
-                  <td className={`${TD} text-ink`}>{d.paymentLabel}</td>
-                  <td className={`${TD} text-ink-muted`}>{d.nextPaymentLabel}</td>
-                  <td className={`${TD} text-ink-muted`}>{payoffLabel}</td>
-                </tr>
-              )
-            })}
+            {debts.map((d) => (
+              <tr key={d.id}>
+                <td className="border-b border-[#f0f3f1] py-4 text-[17px] font-semibold whitespace-nowrap text-ink">
+                  {d.name} · {d.institution}
+                  {d.id === 'tarjeta' && (
+                    <Link to="/pagos" className="ml-2 border-b border-green text-sm font-semibold text-green">
+                      Ver en Pagos y suscripciones
+                    </Link>
+                  )}
+                </td>
+                <td className={`${TD} font-bold text-danger-text`}>
+                  <Money value={-d.balance} />
+                </td>
+                <td className={`${TD} text-ink-muted`}>
+                  {d.annualRate === 0
+                    ? '0 %'
+                    : `${(d.annualRate * 100).toLocaleString('es-ES', { minimumFractionDigits: 2 })} %`}
+                </td>
+                <td className={`${TD} text-ink`}>{d.paymentLabel}</td>
+                <td className={`${TD} text-ink-muted`}>{d.nextPaymentLabel}</td>
+                <td className={`${TD} text-ink-muted`}>{payoffLabelFor(d)}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
+
+      <div className="flex flex-col gap-2.5 lg:hidden">
+        {debts.map((d) => (
+          <div key={d.id} className="flex flex-col gap-2 rounded-2xl border border-line p-3.5 tabular">
+            <div className="flex items-start justify-between gap-3">
+              <div className="text-[17px] font-semibold text-ink">
+                {d.name} · {d.institution}
+              </div>
+              <Money value={-d.balance} tone="danger" className="shrink-0 whitespace-nowrap font-bold" />
+            </div>
+            {d.id === 'tarjeta' && (
+              <Link to="/pagos" className="self-start border-b border-green text-sm font-semibold text-green">
+                Ver en Pagos y suscripciones
+              </Link>
+            )}
+            <div className="text-sm text-ink-muted">
+              {d.annualRate === 0 ? '0 %' : `${(d.annualRate * 100).toLocaleString('es-ES', { minimumFractionDigits: 2 })} %`} ·{' '}
+              {d.paymentLabel} · próximo pago {d.nextPaymentLabel} · fin previsto {payoffLabelFor(d)}
+            </div>
+          </div>
+        ))}
+      </div>
+
       <div className="text-sm text-ink-muted">Sincronizado hoy a las {syncedAt}</div>
     </Card>
   )

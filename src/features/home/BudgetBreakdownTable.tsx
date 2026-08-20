@@ -26,7 +26,7 @@ export function BudgetBreakdownTable() {
         </div>
       </div>
 
-      <table className="w-full border-collapse tabular">
+      <table className="hidden w-full border-collapse tabular lg:table">
         <thead>
           <tr>
             <th className="border-b border-line pr-4 pb-2.5 text-left text-[13px] font-semibold tracking-[0.06em] text-ink-muted uppercase">
@@ -74,6 +74,29 @@ export function BudgetBreakdownTable() {
           })}
         </tbody>
       </table>
+
+      <div className="flex flex-col gap-2.5 lg:hidden">
+        {budgetCategories.map((c) => {
+          const pct = Math.min(100, (c.spent / c.budgeted) * 100)
+          return (
+            <div key={c.name} className="flex flex-col gap-2 rounded-2xl border border-line p-3.5">
+              <div className="flex items-baseline justify-between gap-2">
+                <div className="text-base font-semibold text-ink">{c.name}</div>
+                <div className="text-sm text-ink-muted tabular">
+                  <Money value={c.spent} decimals={0} /> / <Money value={c.budgeted} decimals={0} />
+                </div>
+              </div>
+              <ProgressBar
+                percent={pct}
+                fillClassName={VARIANT_FILL[c.variant]}
+                heightPx={10}
+                label={`${c.name}: ${Math.round(pct)}% del presupuesto`}
+              />
+              <div className={`text-sm font-semibold ${VARIANT_TEXT[c.variant]}`}>{c.status}</div>
+            </div>
+          )
+        })}
+      </div>
     </Card>
   )
 }

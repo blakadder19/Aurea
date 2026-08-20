@@ -25,7 +25,7 @@ export function RecentTransactions() {
         </a>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="hidden overflow-x-auto lg:block">
         <table className="w-full border-collapse tabular">
           <thead>
             <tr>
@@ -62,6 +62,29 @@ export function RecentTransactions() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="flex flex-col gap-2.5 lg:hidden">
+        {movimientos.map((m) => (
+          <div
+            key={`${m.fecha}-${m.comercio}`}
+            className="flex items-center justify-between gap-3 rounded-2xl border border-line p-3.5 tabular"
+          >
+            <div className="min-w-0">
+              <div className="truncate text-base font-semibold text-ink">{m.comercio}</div>
+              <div className="mt-0.5 truncate text-sm text-ink-muted">
+                {m.fecha} · {m.categoria}
+                {isDetalle && ` · ${m.cuenta} · ${m.estado}`}
+              </div>
+            </div>
+            <Money
+              value={m.importe}
+              signed={m.importe > 0}
+              tone={toneFor(m)}
+              className="shrink-0 whitespace-nowrap text-[17px] font-bold"
+            />
+          </div>
+        ))}
       </div>
     </Card>
   )

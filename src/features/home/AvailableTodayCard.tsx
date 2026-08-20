@@ -22,7 +22,7 @@ export function AvailableTodayCard() {
       <SectionLabel>Disponible hoy</SectionLabel>
 
       <div>
-        <div className="font-serif text-[72px] leading-none font-semibold tracking-[-0.02em] text-ink tabular">
+        <div className="font-serif text-[48px] leading-none font-semibold tracking-[-0.02em] text-ink tabular lg:text-[72px]">
           <Money value={availableToday} />
         </div>
         <p className="mt-3.5 max-w-[46ch] text-lg text-ink text-pretty">
