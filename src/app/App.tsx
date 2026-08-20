@@ -4,6 +4,7 @@ import { HomePage } from '../features/home/HomePage'
 import { TransactionsPage } from '../features/transactions/TransactionsPage'
 import { BudgetPage } from '../features/budget/BudgetPage'
 import { AccountsPage } from '../features/accounts/AccountsPage'
+import { RecurringPage } from '../features/recurring/RecurringPage'
 
 export function App() {
   return (
@@ -13,6 +14,7 @@ export function App() {
         <Route path="/movimientos" element={<TransactionsPage />} />
         <Route path="/presupuesto" element={<BudgetPage />} />
         <Route path="/cuentas" element={<AccountsPage />} />
+        <Route path="/pagos" element={<RecurringPage />} />
       </Route>
     </Routes>
   )
