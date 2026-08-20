@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #F6F8F7; font-family: Inter, system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+  a { color: #0F6B4F; }
+  a:hover { color: #0A5138; }
+  [data-focusable]:focus-visible { outline: 3px solid #0F6B4F; outline-offset: 2px; border-radius: 6px; }
+</style>
+</helmet>
+
+<div style="width: 1440px; min-height: 980px; margin: 0 auto; background: #F6F8F7; display: flex;">
+  <nav style="width: 250px; flex: none; background: #FFFFFF; border-right: 1px solid #E2E7E4; padding: 28px 20px; display: flex; flex-direction: column; gap: 26px;">
+    <div>
+      <div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 30px; font-weight: 700; color: #161A19;">Áurea</div>
+      <div style="font-size: 13px; color: #5A6360; margin-top: 2px;">Tu dinero, con perspectiva</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 22px;">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360; padding: 0 10px 6px;">Tu dinero</div>
+        <a href="Áurea.dc.html" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Inicio</a>
+        <a href="Áurea — Cuentas y patrimonio.dc.html" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Cuentas y patrimonio</a>
+        <a href="Áurea — Movimientos.dc.html" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Movimientos</a>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360; padding: 0 10px 6px;">Planes</div>
+        <a href="Áurea — Presupuesto.dc.html" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Presupuesto</a>
+        <a href="Áurea — Pagos y suscripciones.dc.html" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Pagos y suscripciones</a>
+        <a href="Áurea — Objetivos.dc.html" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Objetivos</a>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360; padding: 0 10px 6px;">Crecimiento</div>
+        <a href="Áurea — Inversiones.dc.html" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Inversiones</a>
+        <a href="Áurea — Deudas.dc.html" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Deudas</a>
+        <a href="Áurea — Planificación.dc.html" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Planificación</a>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360; padding: 0 10px 6px;">Herramientas</div>
+        <a href="Áurea — Asistente e insights.dc.html" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Asistente e insights</a>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; background: #E8F2EE; color: #0B563F; font-size: 16px; font-weight: 600; text-decoration: none;">Conexiones y ajustes</a>
+      </div>
+    </div>
+    <div style="margin-top: auto; border-top: 1px solid #E2E7E4; padding-top: 16px; display: flex; align-items: center; gap: 12px;">
+      <div style="width: 40px; height: 40px; border-radius: 999px; background: #E8F2EE; color: #0B563F; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700;">MR</div>
+      <div><div style="font-size: 16px; font-weight: 600; color: #161A19;">Marta Ríos</div><div style="font-size: 13px; color: #5A6360;">Datos de demostración</div></div>
+    </div>
+  </nav>
+
+  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+    <header style="background: #FFFFFF; border-bottom: 1px solid #E2E7E4; padding: 20px 32px; display: flex; align-items: flex-start; justify-content: space-between; gap: 24px;">
+      <div>
+        <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 32px; font-weight: 600; color: #161A19;">Conexiones y ajustes</h1>
+        <div style="font-size: 16px; color: #5A6360; margin-top: 4px;">Todo esto es una demostración: ninguna conexión es real</div>
+      </div>
+      <button data-focusable="true" onClick="{{ openImport }}" style="font-family: Inter, sans-serif; font-size: 16px; font-weight: 600; color: #FFFFFF; background: #0F6B4F; border: 1px solid #0F6B4F; border-radius: 10px; padding: 10px 18px; min-height: 44px; cursor: pointer;">Importar CSV</button>
+    </header>
+
+    <main style="flex: 1; padding: 32px; display: flex; flex-direction: column; gap: 24px;">
+
+      <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 20px; overflow: hidden;">
+        <div style="padding: 18px 24px; border-bottom: 1px solid #F0F3F1; display: flex; align-items: center; justify-content: space-between;">
+          <div><div style="font-size: 17px; font-weight: 600; color: #161A19;">Openbank</div><div style="font-size: 15px; color: #5A6360;">Última actualización hoy, 08:42</div></div>
+          <span style="font-size: 14px; font-weight: 600; color: #0B563F; background: #E8F2EE; border: 1px solid #C7DED5; border-radius: 999px; padding: 5px 10px;">✓ Sincronizado</span>
+        </div>
+        <div style="padding: 18px 24px; border-bottom: 1px solid #F0F3F1; display: flex; align-items: center; justify-content: space-between;">
+          <div><div style="font-size: 17px; font-weight: 600; color: #161A19;">CaixaBank</div><div style="font-size: 15px; color: #5A6360;">Última actualización hoy, 08:42</div></div>
+          <span style="font-size: 14px; font-weight: 600; color: #0B563F; background: #E8F2EE; border: 1px solid #C7DED5; border-radius: 999px; padding: 5px 10px;">✓ Sincronizado</span>
+        </div>
+        <div style="padding: 18px 24px; border-bottom: 1px solid #F0F3F1; display: flex; align-items: center; justify-content: space-between;">
+          <div><div style="font-size: 17px; font-weight: 600; color: #161A19;">Revolut</div><div style="font-size: 15px; color: #5A6360;">Sincronizando ahora…</div></div>
+          <span style="font-size: 14px; font-weight: 600; color: #2E6E8E; background: #EAF3F7; border: 1px solid #C9DEE7; border-radius: 999px; padding: 5px 10px;">⟳ Sincronizando</span>
+        </div>
+        <div style="padding: 18px 24px; border-bottom: 1px solid #F0F3F1; display: flex; align-items: center; justify-content: space-between;">
+          <div><div style="font-size: 17px; font-weight: 600; color: #161A19;">ING</div><div style="font-size: 15px; color: #5A6360;">Última actualización ayer, 21:10</div></div>
+          <span style="font-size: 14px; font-weight: 600; color: #0B563F; background: #E8F2EE; border: 1px solid #C7DED5; border-radius: 999px; padding: 5px 10px;">✓ Sincronizado</span>
+        </div>
+        <div style="padding: 18px 24px; border-bottom: 1px solid #F0F3F1; display: flex; align-items: center; justify-content: space-between;">
+          <div><div style="font-size: 17px; font-weight: 600; color: #161A19;">MyInvestor</div><div style="font-size: 15px; color: #5A6360;">No se pudo actualizar desde hace 3 días</div></div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 14px; font-weight: 600; color: #8A1912; background: #FBEBE9; border: 1px solid #EFC9C5; border-radius: 999px; padding: 5px 10px;">! Error</span>
+            <button data-focusable="true" style="font-size: 15px; font-weight: 600; color: #161A19; background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 8px; padding: 8px 12px; min-height: 40px; cursor: pointer;">Reconectar</button>
+          </div>
+        </div>
+        <div style="padding: 18px 24px; display: flex; align-items: center; justify-content: space-between;">
+          <div><div style="font-size: 17px; font-weight: 600; color: #161A19;">Bankinter</div><div style="font-size: 15px; color: #5A6360;">Última actualización hoy, 08:42</div></div>
+          <span style="font-size: 14px; font-weight: 600; color: #0B563F; background: #E8F2EE; border: 1px solid #C7DED5; border-radius: 999px; padding: 5px 10px;">✓ Sincronizado</span>
+        </div>
+      </div>
+
+      <sc-if value="{{ importOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 20px; padding: 28px 32px; display: flex; flex-direction: column; gap: 20px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 24px; font-weight: 600; color: #161A19;">Importar movimientos desde CSV</h2>
+            <span style="font-size: 13px; font-weight: 700; color: #5A6360; background: #F6F8F7; border: 1px solid #E2E7E4; border-radius: 999px; padding: 3px 10px;">Demostración</span>
+          </div>
+          <div style="display: flex; gap: 24px;">
+            <div style="display: flex; align-items: center; gap: 10px;"><div style="width: 30px; height: 30px; border-radius: 999px; background: {{ step1Bg }}; color: {{ step1Fg }}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700;">1</div><span style="font-size: 16px; font-weight: {{ step1W }}; color: {{ step1Text }};">Mapear columnas</span></div>
+            <div style="display: flex; align-items: center; gap: 10px;"><div style="width: 30px; height: 30px; border-radius: 999px; background: {{ step2Bg }}; color: {{ step2Fg }}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700;">2</div><span style="font-size: 16px; font-weight: {{ step2W }}; color: {{ step2Text }};">Previsualizar</span></div>
+            <div style="display: flex; align-items: center; gap: 10px;"><div style="width: 30px; height: 30px; border-radius: 999px; background: {{ step3Bg }}; color: {{ step3Fg }}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700;">3</div><span style="font-size: 16px; font-weight: {{ step3W }}; color: {{ step3Text }};">Confirmar</span></div>
+          </div>
+
+          <sc-if value="{{ isStep1 }}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              <div style="font-size: 16px; color: #161A19;">Empareja cada columna de tu archivo con un campo de Áurea.</div>
+              <table style="width: 100%; border-collapse: collapse;">
+                <thead><tr><th style="text-align: left; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #5A6360; padding-bottom: 8px; border-bottom: 1px solid #E2E7E4;">Columna del archivo</th><th style="text-align: left; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #5A6360; padding-bottom: 8px; border-bottom: 1px solid #E2E7E4;">Campo en Áurea</th></tr></thead>
+                <tbody>
+                  <tr><td style="font-size: 16px; color: #161A19; padding: 10px 0; border-bottom: 1px solid #F0F3F1;">Fecha_Op</td><td style="padding: 10px 0; border-bottom: 1px solid #F0F3F1;"><select style="font-size: 15px; padding: 8px 10px; border: 1px solid #E2E7E4; border-radius: 8px; min-height: 40px; background: #FFFFFF; color: #161A19;"><option>Fecha</option></select></td></tr>
+                  <tr><td style="font-size: 16px; color: #161A19; padding: 10px 0; border-bottom: 1px solid #F0F3F1;">Concepto</td><td style="padding: 10px 0; border-bottom: 1px solid #F0F3F1;"><select style="font-size: 15px; padding: 8px 10px; border: 1px solid #E2E7E4; border-radius: 8px; min-height: 40px; background: #FFFFFF; color: #161A19;"><option>Comercio</option></select></td></tr>
+                  <tr><td style="font-size: 16px; color: #161A19; padding: 10px 0;">Importe_EUR</td><td style="padding: 10px 0;"><select style="font-size: 15px; padding: 8px 10px; border: 1px solid #E2E7E4; border-radius: 8px; min-height: 40px; background: #FFFFFF; color: #161A19;"><option>Importe</option></select></td></tr>
+                </tbody>
+              </table>
+              <button data-focusable="true" onClick="{{ goStep2 }}" style="align-self: flex-start; font-size: 16px; font-weight: 600; color: #FFFFFF; background: #0F6B4F; border: 1px solid #0F6B4F; border-radius: 10px; padding: 10px 18px; min-height: 44px; cursor: pointer;">Continuar</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isStep2 }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              <div style="display: flex; gap: 24px; font-variant-numeric: tabular-nums;">
+                <div style="background: #E8F2EE; border: 1px solid #C7DED5; border-radius: 12px; padding: 14px 18px;"><div style="font-size: 22px; font-weight: 700; color: #0B563F;">42</div><div style="font-size: 14px; color: #0B563F;">Altas nuevas</div></div>
+                <div style="background: #F6F8F7; border: 1px solid #E2E7E4; border-radius: 12px; padding: 14px 18px;"><div style="font-size: 22px; font-weight: 700; color: #5A6360;">6</div><div style="font-size: 14px; color: #5A6360;">Duplicados detectados</div></div>
+                <div style="background: #FBEBE9; border: 1px solid #EFC9C5; border-radius: 12px; padding: 14px 18px;"><div style="font-size: 22px; font-weight: 700; color: #8A1912;">2</div><div style="font-size: 14px; color: #8A1912;">Filas rechazadas</div></div>
+              </div>
+              <div style="font-size: 15px; color: #5A6360;">Las 2 filas rechazadas tienen un formato de fecha que no reconocemos.</div>
+              <button data-focusable="true" onClick="{{ goStep3 }}" style="align-self: flex-start; font-size: 16px; font-weight: 600; color: #FFFFFF; background: #0F6B4F; border: 1px solid #0F6B4F; border-radius: 10px; padding: 10px 18px; min-height: 44px; cursor: pointer;">Continuar</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isStep3 }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              <div style="font-size: 16px; color: #161A19;">Vas a importar 42 movimientos nuevos. Los 6 duplicados y las 2 filas rechazadas no se importarán.</div>
+              <button data-focusable="true" style="align-self: flex-start; font-size: 16px; font-weight: 700; color: #FFFFFF; background: #0F6B4F; border: 1px solid #0F6B4F; border-radius: 10px; padding: 12px 18px; min-height: 44px; cursor: pointer;">Confirmar importación</button>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1500,&quot;height&quot;:1200}}">
+class Component extends DCLogic {
+  state = { importOpen: false, step: 1 };
+  renderVals() {
+    const s = this.state.step;
+    const active = n => ({ bg: s === n ? '#0F6B4F' : (s > n ? '#E8F2EE' : '#F6F8F7'), fg: s === n ? '#FFFFFF' : (s > n ? '#0B563F' : '#5A6360'), w: s === n ? 700 : 400, text: s === n ? '#161A19' : '#5A6360' });
+    const s1 = active(1), s2 = active(2), s3 = active(3);
+    return {
+      importOpen: this.state.importOpen,
+      openImport: () => this.setState({ importOpen: true, step: 1 }),
+      isStep1: s === 1, isStep2: s === 2, isStep3: s === 3,
+      goStep2: () => this.setState({ step: 2 }),
+      goStep3: () => this.setState({ step: 3 }),
+      step1Bg: s1.bg, step1Fg: s1.fg, step1W: s1.w, step1Text: s1.text,
+      step2Bg: s2.bg, step2Fg: s2.fg, step2W: s2.w, step2Text: s2.text,
+      step3Bg: s3.bg, step3Fg: s3.fg, step3W: s3.w, step3Text: s3.text
+    };
+  }
+}
+</script>
+</body>
+</html>

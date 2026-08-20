@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #F6F8F7; font-family: Inter, system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+  a { color: #0F6B4F; }
+  a:hover { color: #0A5138; }
+  [data-focusable]:focus-visible { outline: 3px solid #0F6B4F; outline-offset: 2px; border-radius: 6px; }
+</style>
+</helmet>
+
+<div style="width: 1440px; min-height: 980px; margin: 0 auto; background: #F6F8F7; display: flex;">
+
+  <nav style="width: 250px; flex: none; background: #FFFFFF; border-right: 1px solid #E2E7E4; padding: 28px 20px; display: flex; flex-direction: column; gap: 26px;">
+    <div>
+      <div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 30px; font-weight: 700; color: #161A19;">Áurea</div>
+      <div style="font-size: 13px; color: #5A6360; margin-top: 2px;">Tu dinero, con perspectiva</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 22px;">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360; padding: 0 10px 6px;">Tu dinero</div>
+        <a href="Áurea.dc.html" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Inicio</a>
+        <a href="Áurea — Cuentas y patrimonio.dc.html" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Cuentas y patrimonio</a>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 10px 12px; border-radius: 10px; background: #E8F2EE; color: #0B563F; font-size: 16px; font-weight: 600; text-decoration: none;">Movimientos<span style="font-size: 13px; font-weight: 700; color: #FFFFFF; background: #A82018; border-radius: 999px; padding: 2px 8px;">4</span></a>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360; padding: 0 10px 6px;">Planes</div>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Presupuesto</a>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Pagos y suscripciones</a>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Objetivos</a>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360; padding: 0 10px 6px;">Crecimiento</div>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Inversiones</a>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Deudas</a>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Planificación</a>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360; padding: 0 10px 6px;">Herramientas</div>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Asistente e insights</a>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Conexiones y ajustes</a>
+      </div>
+    </div>
+    <div style="margin-top: auto; border-top: 1px solid #E2E7E4; padding-top: 16px; display: flex; align-items: center; gap: 12px;">
+      <div style="width: 40px; height: 40px; border-radius: 999px; background: #E8F2EE; color: #0B563F; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700;">MR</div>
+      <div><div style="font-size: 16px; font-weight: 600; color: #161A19;">Marta Ríos</div><div style="font-size: 13px; color: #5A6360;">Datos de demostración</div></div>
+    </div>
+  </nav>
+
+  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+    <header style="background: #FFFFFF; border-bottom: 1px solid #E2E7E4; padding: 20px 32px; display: flex; flex-direction: column; gap: 16px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px;">
+        <div>
+          <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 32px; font-weight: 600; color: #161A19;">Movimientos</h1>
+          <div style="font-size: 16px; color: #5A6360; margin-top: 4px;">148 movimientos en agosto de 2026</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="display: inline-flex; align-items: center; gap: 8px; background: #E8F2EE; border: 1px solid #C7DED5; color: #0B563F; border-radius: 10px; padding: 9px 12px; font-size: 14px; font-weight: 600; min-height: 44px;">✓ Sincronizado · 08:42</div>
+          <button data-focusable="true" style="font-family: Inter, sans-serif; font-size: 16px; font-weight: 600; color: #FFFFFF; background: #0F6B4F; border: 1px solid #0F6B4F; border-radius: 10px; padding: 10px 18px; min-height: 44px; cursor: pointer;">Añadir movimiento</button>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 24px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360;">Vista</span>
+          <div style="display: flex; gap: 4px; background: #F6F8F7; border: 1px solid #E2E7E4; border-radius: 12px; padding: 4px;">
+            <button data-focusable="true" onClick="{{ setTabla }}" style="font-family: Inter, sans-serif; font-size: 15px; font-weight: {{ tablaWeight }}; color: {{ tablaColor }}; background: {{ tablaBg }}; border: 1px solid {{ tablaBorder }}; border-radius: 8px; padding: 8px 18px; min-height: 40px; cursor: pointer;">Todos los movimientos</button>
+            <button data-focusable="true" onClick="{{ setRevision }}" style="font-family: Inter, sans-serif; font-size: 15px; font-weight: {{ revisionWeight }}; color: {{ revisionColor }}; background: {{ revisionBg }}; border: 1px solid {{ revisionBorder }}; border-radius: 8px; padding: 8px 18px; min-height: 40px; cursor: pointer;">Centro de revisión (4)</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main style="flex: 1; padding: 32px; display: flex; flex-direction: column; gap: 20px;">
+
+      <sc-if value="{{ isTabla }}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 16px; padding: 16px 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <input aria-label="Buscar movimientos" placeholder="Buscar por comercio, importe o nota" style="flex: 1; min-width: 260px; font-size: 16px; padding: 11px 14px; border: 1px solid #E2E7E4; border-radius: 10px; min-height: 44px; font-family: Inter, sans-serif;"/>
+            <select aria-label="Filtrar por fecha" style="font-size: 15px; padding: 10px 12px; border: 1px solid #E2E7E4; border-radius: 10px; min-height: 44px; background: #FFFFFF; color: #161A19;"><option>Este mes</option></select>
+            <select aria-label="Filtrar por cuenta" style="font-size: 15px; padding: 10px 12px; border: 1px solid #E2E7E4; border-radius: 10px; min-height: 44px; background: #FFFFFF; color: #161A19;"><option>Todas las cuentas</option></select>
+            <select aria-label="Filtrar por categoría" style="font-size: 15px; padding: 10px 12px; border: 1px solid #E2E7E4; border-radius: 10px; min-height: 44px; background: #FFFFFF; color: #161A19;"><option>Todas las categorías</option></select>
+            <select aria-label="Filtrar por estado" style="font-size: 15px; padding: 10px 12px; border: 1px solid #E2E7E4; border-radius: 10px; min-height: 44px; background: #FFFFFF; color: #161A19;"><option>Cualquier estado</option></select>
+          </div>
+
+          <sc-if value="{{ hasSelection }}" hint-placeholder-val="{{ false }}">
+            <div style="background: #161A19; border-radius: 14px; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+              <div style="font-size: 16px; color: #FFFFFF; font-weight: 600;">{{ selectedCount }} movimientos seleccionados</div>
+              <div style="display: flex; gap: 10px;">
+                <button data-focusable="true" style="font-size: 15px; font-weight: 600; color: #161A19; background: #FFFFFF; border: none; border-radius: 8px; padding: 9px 14px; min-height: 40px; cursor: pointer;">Cambiar categoría</button>
+                <button data-focusable="true" style="font-size: 15px; font-weight: 600; color: #FFFFFF; background: transparent; border: 1px solid #5A6360; border-radius: 8px; padding: 9px 14px; min-height: 40px; cursor: pointer;">Añadir etiqueta</button>
+                <button data-focusable="true" onClick="{{ clearSelection }}" style="font-size: 15px; font-weight: 600; color: #FFFFFF; background: transparent; border: 1px solid #5A6360; border-radius: 8px; padding: 9px 14px; min-height: 40px; cursor: pointer;">Cancelar</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 20px; overflow: hidden;">
+            <table style="width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums;">
+              <thead>
+                <tr style="background: #F6F8F7;">
+                  <th style="padding: 14px 20px; border-bottom: 1px solid #E2E7E4;"><input type="checkbox" aria-label="Seleccionar todo" style="width: 20px; height: 20px;"/></th>
+                  <th style="text-align: left; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5A6360; padding: 14px 0; border-bottom: 1px solid #E2E7E4;">Fecha</th>
+                  <th style="text-align: left; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5A6360; padding: 14px 0; border-bottom: 1px solid #E2E7E4;">Comercio</th>
+                  <th style="text-align: left; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5A6360; padding: 14px 0; border-bottom: 1px solid #E2E7E4;">Cuenta</th>
+                  <th style="text-align: left; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5A6360; padding: 14px 0; border-bottom: 1px solid #E2E7E4;">Categoría</th>
+                  <th style="text-align: right; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5A6360; padding: 14px 20px 14px 0; border-bottom: 1px solid #E2E7E4;">Importe</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ movimientos }}" as="m" hint-placeholder-count="8">
+                  <tr onClick="{{ openPanel }}" style="cursor: pointer; background: {{ m.rowBg }};">
+                    <td style="padding: 14px 20px; border-bottom: 1px solid #F0F3F1;"><input type="checkbox" checked="{{ m.checked }}" aria-label="Seleccionar movimiento" style="width: 20px; height: 20px;"/></td>
+                    <td style="font-size: 16px; color: #5A6360; padding: 14px 0; border-bottom: 1px solid #F0F3F1; white-space: nowrap;">{{ m.fecha }}</td>
+                    <td style="font-size: 16px; font-weight: 600; color: #161A19; padding: 14px 0; border-bottom: 1px solid #F0F3F1;">{{ m.comercio }}</td>
+                    <td style="font-size: 16px; color: #5A6360; padding: 14px 0; border-bottom: 1px solid #F0F3F1;">{{ m.cuenta }}</td>
+                    <td style="padding: 14px 0; border-bottom: 1px solid #F0F3F1;"><span style="font-size: 14px; font-weight: 600; color: #161A19; background: #F6F8F7; border: 1px solid #E2E7E4; border-radius: 999px; padding: 5px 10px;">{{ m.categoria }}</span></td>
+                    <td style="font-size: 17px; font-weight: 700; padding: 14px 20px 14px 0; border-bottom: 1px solid #F0F3F1; text-align: right; color: {{ m.color }};">{{ m.importe }}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 16px; padding: 16px 24px;">
+            <div style="font-size: 16px; color: #5A6360;">Categoría de «Verdeo Café» cambiada a Restaurantes.</div>
+            <button data-focusable="true" style="font-family: Inter, sans-serif; font-size: 16px; font-weight: 700; color: #0F6B4F; background: #FFFFFF; border: 1px solid #0F6B4F; border-radius: 10px; padding: 10px 18px; min-height: 44px; cursor: pointer;">Deshacer</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isRevision }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div style="font-size: 16px; color: #5A6360;">Cuatro movimientos no se clasificaron con suficiente confianza. Revísalos uno a uno.</div>
+
+          <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 20px; padding: 24px 28px; display: flex; flex-direction: column; gap: 14px;">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+              <div>
+                <div style="font-size: 17px; font-weight: 700; color: #161A19;">Transferencia Openbank → Compartida · 1.120,45 €</div>
+                <div style="font-size: 15px; color: #5A6360; margin-top: 4px;">18 ago · Confianza del 94 %</div>
+              </div>
+              <span style="font-size: 14px; font-weight: 700; color: #0B563F; background: #E8F2EE; border: 1px solid #C7DED5; border-radius: 999px; padding: 5px 10px; white-space: nowrap;">94 % de confianza</span>
+            </div>
+            <div style="font-size: 16px; color: #161A19; background: #F6F8F7; border-radius: 12px; padding: 14px; text-wrap: pretty;">Parece una transferencia entre tus cuentas: mismo importe el mismo día en Openbank y en tu cuenta compartida.</div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <button data-focusable="true" style="font-size: 16px; font-weight: 600; color: #FFFFFF; background: #0F6B4F; border: 1px solid #0F6B4F; border-radius: 10px; padding: 10px 16px; min-height: 44px; cursor: pointer;">Confirmar</button>
+              <button data-focusable="true" style="font-size: 16px; font-weight: 600; color: #161A19; background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 10px; padding: 10px 16px; min-height: 44px; cursor: pointer;">Corregir</button>
+              <button data-focusable="true" style="font-size: 16px; font-weight: 600; color: #161A19; background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 10px; padding: 10px 16px; min-height: 44px; cursor: pointer;">Descartar</button>
+              <button data-focusable="true" style="font-size: 16px; font-weight: 600; color: #5A6360; background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 10px; padding: 10px 16px; min-height: 44px; cursor: pointer;">Crear regla</button>
+            </div>
+          </div>
+
+          <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 20px; padding: 24px 28px; display: flex; flex-direction: column; gap: 14px;">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+              <div>
+                <div style="font-size: 17px; font-weight: 700; color: #161A19;">Zara · devolución · +49,95 €</div>
+                <div style="font-size: 15px; color: #5A6360; margin-top: 4px;">16 ago · Confianza del 71 %</div>
+              </div>
+              <span style="font-size: 14px; font-weight: 700; color: #7C4F09; background: #FDF3E3; border: 1px solid #E8D6B4; border-radius: 999px; padding: 5px 10px; white-space: nowrap;">71 % de confianza</span>
+            </div>
+            <div style="font-size: 16px; color: #161A19; background: #F6F8F7; border-radius: 12px; padding: 14px; text-wrap: pretty;">Sugerimos clasificarlo como ingreso porque el importe coincide con una devolución típica de Zara, no con tu sueldo habitual.</div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <button data-focusable="true" style="font-size: 16px; font-weight: 600; color: #FFFFFF; background: #0F6B4F; border: 1px solid #0F6B4F; border-radius: 10px; padding: 10px 16px; min-height: 44px; cursor: pointer;">Confirmar</button>
+              <button data-focusable="true" style="font-size: 16px; font-weight: 600; color: #161A19; background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 10px; padding: 10px 16px; min-height: 44px; cursor: pointer;">Corregir</button>
+              <button data-focusable="true" style="font-size: 16px; font-weight: 600; color: #161A19; background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 10px; padding: 10px 16px; min-height: 44px; cursor: pointer;">Descartar</button>
+              <button data-focusable="true" style="font-size: 16px; font-weight: 600; color: #5A6360; background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 10px; padding: 10px 16px; min-height: 44px; cursor: pointer;">Crear regla</button>
+            </div>
+          </div>
+
+          <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 20px; padding: 24px 28px; display: flex; flex-direction: column; gap: 14px;">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+              <div>
+                <div style="font-size: 17px; font-weight: 700; color: #161A19;">AMZN Mktp ES · −34,90 €</div>
+                <div style="font-size: 15px; color: #5A6360; margin-top: 4px;">18 ago · Confianza del 52 %</div>
+              </div>
+              <span style="font-size: 14px; font-weight: 700; color: #8A1912; background: #FBEBE9; border: 1px solid #EFC9C5; border-radius: 999px; padding: 5px 10px; white-space: nowrap;">52 % de confianza</span>
+            </div>
+            <div style="font-size: 16px; color: #161A19; background: #F6F8F7; border-radius: 12px; padding: 14px; text-wrap: pretty;">Ambiguo entre Hogar y Ocio: has comprado ambos tipos de artículo en Amazon este mes.</div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <button data-focusable="true" style="font-size: 16px; font-weight: 600; color: #161A19; background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 10px; padding: 10px 16px; min-height: 44px; cursor: pointer;">Elegir Hogar</button>
+              <button data-focusable="true" style="font-size: 16px; font-weight: 600; color: #161A19; background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 10px; padding: 10px 16px; min-height: 44px; cursor: pointer;">Elegir Ocio</button>
+              <button data-focusable="true" style="font-size: 16px; font-weight: 600; color: #5A6360; background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 10px; padding: 10px 16px; min-height: 44px; cursor: pointer;">Descartar</button>
+            </div>
+          </div>
+
+          <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 20px; padding: 24px 28px; display: flex; flex-direction: column; gap: 14px;">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+              <div>
+                <div style="font-size: 17px; font-weight: 700; color: #161A19;">Spotify sube de 10,99 € a 11,99 €</div>
+                <div style="font-size: 15px; color: #5A6360; margin-top: 4px;">24 ago · Detectado por cambio de importe</div>
+              </div>
+              <span style="font-size: 14px; font-weight: 700; color: #7C4F09; background: #FDF3E3; border: 1px solid #E8D6B4; border-radius: 999px; padding: 5px 10px; white-space: nowrap;">Subida de precio</span>
+            </div>
+            <div style="font-size: 16px; color: #161A19; background: #F6F8F7; border-radius: 12px; padding: 14px; text-wrap: pretty;">Es el mismo servicio y la misma cuenta que el mes pasado, solo cambia el importe. Se actualizará el historial de la suscripción.</div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <button data-focusable="true" style="font-size: 16px; font-weight: 600; color: #FFFFFF; background: #0F6B4F; border: 1px solid #0F6B4F; border-radius: 10px; padding: 10px 16px; min-height: 44px; cursor: pointer;">Aceptar el cambio</button>
+              <button data-focusable="true" style="font-size: 16px; font-weight: 600; color: #161A19; background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 10px; padding: 10px 16px; min-height: 44px; cursor: pointer;">Ver suscripción</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position: fixed; inset: 0; background: rgba(22,26,25,0.35); display: flex; justify-content: flex-end; z-index: 10;">
+          <div style="width: 460px; height: 100%; background: #FFFFFF; padding: 32px; display: flex; flex-direction: column; gap: 18px; overflow-y: auto;">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between;">
+              <div>
+                <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360;">Editar movimiento</div>
+                <h2 style="margin: 4px 0 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 26px; font-weight: 600; color: #161A19;">Mercadona</h2>
+              </div>
+              <button data-focusable="true" onClick="{{ closePanel }}" style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid #E2E7E4; background: #FFFFFF; font-size: 18px; color: #161A19; cursor: pointer;">✕</button>
+            </div>
+            <div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 34px; font-weight: 600; color: #161A19; font-variant-numeric: tabular-nums;">−62,18 €</div>
+            <div style="font-size: 15px; color: #5A6360;">19 ago 2026 · Nómina · Openbank</div>
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; color: #5A6360;">Categoría
+              <select style="font-size: 16px; padding: 11px 12px; border: 1px solid #E2E7E4; border-radius: 10px; min-height: 44px; background: #FFFFFF; color: #161A19;"><option>Supermercado</option></select>
+            </label>
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; color: #5A6360;">Etiquetas
+              <input placeholder="p. ej. compra semanal" style="font-size: 16px; padding: 11px 12px; border: 1px solid #E2E7E4; border-radius: 10px; min-height: 44px; font-family: Inter, sans-serif;"/>
+            </label>
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; color: #5A6360;">Notas
+              <textarea rows="3" style="font-size: 16px; padding: 11px 12px; border: 1px solid #E2E7E4; border-radius: 10px; font-family: Inter, sans-serif; resize: vertical;"></textarea>
+            </label>
+            <button data-focusable="true" style="align-self: flex-start; font-size: 16px; font-weight: 600; color: #0F6B4F; background: #FFFFFF; border: 1px solid #0F6B4F; border-radius: 10px; padding: 10px 16px; min-height: 44px; cursor: pointer;">Dividir en varias categorías</button>
+            <button data-focusable="true" style="align-self: flex-start; font-size: 16px; font-weight: 600; color: #161A19; background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 10px; padding: 10px 16px; min-height: 44px; cursor: pointer;">Adjuntar recibo</button>
+            <button data-focusable="true" style="margin-top: 8px; font-size: 16px; font-weight: 700; color: #FFFFFF; background: #0F6B4F; border: 1px solid #0F6B4F; border-radius: 10px; padding: 12px 16px; min-height: 44px; cursor: pointer;">Guardar cambios</button>
+          </div>
+        </div>
+      </sc-if>
+
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1500,&quot;height&quot;:1300}}">
+class Component extends DCLogic {
+  state = { view: 'tabla', panelOpen: false, selected: {2: true, 4: true} };
+
+  data = [
+    { fecha: '19 ago', comercio: 'Mercadona', cuenta: 'Nómina · Openbank', categoria: 'Supermercado', importe: '−62,18 €', color: '#161A19' },
+    { fecha: '18 ago', comercio: 'Verdeo Café', cuenta: 'Revolut', categoria: 'Restaurantes', importe: '−9,40 €', color: '#161A19' },
+    { fecha: '18 ago', comercio: 'AMZN Mktp ES', cuenta: 'Nómina · Openbank', categoria: 'Sin clasificar', importe: '−34,90 €', color: '#A82018' },
+    { fecha: '17 ago', comercio: 'Renfe', cuenta: 'Compartida · CaixaBank', categoria: 'Transporte', importe: '−28,60 €', color: '#161A19' },
+    { fecha: '16 ago', comercio: 'Zara · devolución', cuenta: 'Nómina · Openbank', categoria: 'Sin clasificar', importe: '+49,95 €', color: '#0F6B4F' },
+    { fecha: '15 ago', comercio: 'Iberdrola', cuenta: 'Compartida · CaixaBank', categoria: 'Hogar', importe: '−78,45 €', color: '#161A19' },
+    { fecha: '14 ago', comercio: 'Filmin', cuenta: 'Nómina · Openbank', categoria: 'Ocio', importe: '−7,99 €', color: '#161A19' },
+    { fecha: '13 ago', comercio: 'Estudio Nube · freelance', cuenta: 'Nómina · Openbank', categoria: 'Ingresos', importe: '+640,00 €', color: '#0F6B4F' }
+  ];
+
+  renderVals() {
+    const view = this.state.view;
+    const sel = this.state.selected;
+    const count = Object.keys(sel).length;
+    return {
+      isTabla: view === 'tabla',
+      isRevision: view === 'revision',
+      setTabla: () => this.setState({ view: 'tabla' }),
+      setRevision: () => this.setState({ view: 'revision' }),
+      tablaWeight: view === 'tabla' ? 600 : 400, tablaColor: view === 'tabla' ? '#161A19' : '#5A6360', tablaBg: view === 'tabla' ? '#FFFFFF' : 'transparent', tablaBorder: view === 'tabla' ? '#E2E7E4' : 'transparent',
+      revisionWeight: view === 'revision' ? 600 : 400, revisionColor: view === 'revision' ? '#161A19' : '#5A6360', revisionBg: view === 'revision' ? '#FFFFFF' : 'transparent', revisionBorder: view === 'revision' ? '#E2E7E4' : 'transparent',
+      hasSelection: count > 0,
+      selectedCount: count,
+      clearSelection: () => this.setState({ selected: {} }),
+      panelOpen: this.state.panelOpen,
+      openPanel: () => this.setState({ panelOpen: true }),
+      closePanel: () => this.setState({ panelOpen: false }),
+      movimientos: this.data.map((m, i) => ({ ...m, checked: !!sel[i], rowBg: sel[i] ? '#F6F8F7' : '#FFFFFF' }))
+    };
+  }
+}
+</script>
+</body>
+</html>

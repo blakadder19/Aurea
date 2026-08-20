@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #F6F8F7; font-family: Inter, system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+  a { color: #0F6B4F; }
+  a:hover { color: #0A5138; }
+  [data-focusable]:focus-visible { outline: 3px solid #0F6B4F; outline-offset: 2px; border-radius: 6px; }
+</style>
+</helmet>
+
+<div style="width: 1440px; min-height: 980px; margin: 0 auto; background: #F6F8F7; display: flex;">
+  <nav style="width: 250px; flex: none; background: #FFFFFF; border-right: 1px solid #E2E7E4; padding: 28px 20px; display: flex; flex-direction: column; gap: 26px;">
+    <div>
+      <div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 30px; font-weight: 700; color: #161A19;">Áurea</div>
+      <div style="font-size: 13px; color: #5A6360; margin-top: 2px;">Tu dinero, con perspectiva</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 22px;">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360; padding: 0 10px 6px;">Tu dinero</div>
+        <a href="Áurea.dc.html" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Inicio</a>
+        <a href="Áurea — Cuentas y patrimonio.dc.html" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Cuentas y patrimonio</a>
+        <a href="Áurea — Movimientos.dc.html" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Movimientos</a>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360; padding: 0 10px 6px;">Planes</div>
+        <a href="Áurea — Presupuesto.dc.html" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Presupuesto</a>
+        <a href="Áurea — Pagos y suscripciones.dc.html" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Pagos y suscripciones</a>
+        <a href="Áurea — Objetivos.dc.html" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Objetivos</a>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360; padding: 0 10px 6px;">Crecimiento</div>
+        <a href="Áurea — Inversiones.dc.html" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Inversiones</a>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; background: #E8F2EE; color: #0B563F; font-size: 16px; font-weight: 600; text-decoration: none;">Deudas</a>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Planificación</a>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360; padding: 0 10px 6px;">Herramientas</div>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Asistente e insights</a>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Conexiones y ajustes</a>
+      </div>
+    </div>
+    <div style="margin-top: auto; border-top: 1px solid #E2E7E4; padding-top: 16px; display: flex; align-items: center; gap: 12px;">
+      <div style="width: 40px; height: 40px; border-radius: 999px; background: #E8F2EE; color: #0B563F; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700;">MR</div>
+      <div><div style="font-size: 16px; font-weight: 600; color: #161A19;">Marta Ríos</div><div style="font-size: 13px; color: #5A6360;">Datos de demostración</div></div>
+    </div>
+  </nav>
+
+  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+    <header style="background: #FFFFFF; border-bottom: 1px solid #E2E7E4; padding: 20px 32px; display: flex; align-items: flex-start; justify-content: space-between; gap: 24px;">
+      <div>
+        <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 32px; font-weight: 600; color: #161A19;">Deudas</h1>
+        <div style="font-size: 16px; color: #5A6360; margin-top: 4px;">156.362,30 € pendientes en 4 deudas</div>
+      </div>
+      <button data-focusable="true" onClick="{{ openSim }}" style="font-family: Inter, sans-serif; font-size: 16px; font-weight: 600; color: #FFFFFF; background: #0F6B4F; border: 1px solid #0F6B4F; border-radius: 10px; padding: 10px 18px; min-height: 44px; cursor: pointer;">Simular pago extraordinario</button>
+    </header>
+
+    <main style="flex: 1; padding: 32px; display: flex; flex-direction: column; gap: 24px;">
+
+      <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 20px; overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums;">
+          <thead>
+            <tr style="background: #F6F8F7;">
+              <th style="text-align: left; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5A6360; padding: 14px 24px;">Deuda</th>
+              <th style="text-align: right; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5A6360; padding: 14px 0;">Saldo</th>
+              <th style="text-align: right; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5A6360; padding: 14px 0;">Tipo</th>
+              <th style="text-align: right; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5A6360; padding: 14px 0;">Cuota</th>
+              <th style="text-align: right; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5A6360; padding: 14px 24px;">Próxima fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="font-size: 17px; font-weight: 600; color: #161A19; padding: 16px 24px; border-bottom: 1px solid #F0F3F1;">Hipoteca · Bankinter</td><td style="font-size: 17px; font-weight: 700; color: #161A19; padding: 16px 0; border-bottom: 1px solid #F0F3F1; text-align: right;">148.320,00 €</td><td style="font-size: 16px; color: #5A6360; padding: 16px 0; border-bottom: 1px solid #F0F3F1; text-align: right;">2,85 %</td><td style="font-size: 16px; color: #161A19; padding: 16px 0; border-bottom: 1px solid #F0F3F1; text-align: right;">612,40 €/mes</td><td style="font-size: 16px; color: #5A6360; padding: 16px 24px; border-bottom: 1px solid #F0F3F1; text-align: right;">1 sep</td></tr>
+            <tr><td style="font-size: 17px; font-weight: 600; color: #161A19; padding: 16px 24px; border-bottom: 1px solid #F0F3F1;">Préstamo del coche</td><td style="font-size: 17px; font-weight: 700; color: #161A19; padding: 16px 0; border-bottom: 1px solid #F0F3F1; text-align: right;">6.480,00 €</td><td style="font-size: 16px; color: #5A6360; padding: 16px 0; border-bottom: 1px solid #F0F3F1; text-align: right;">6,40 %</td><td style="font-size: 16px; color: #161A19; padding: 16px 0; border-bottom: 1px solid #F0F3F1; text-align: right;">186,20 €/mes</td><td style="font-size: 16px; color: #5A6360; padding: 16px 24px; border-bottom: 1px solid #F0F3F1; text-align: right;">28 ago</td></tr>
+            <tr><td style="font-size: 17px; font-weight: 600; color: #161A19; padding: 16px 24px; border-bottom: 1px solid #F0F3F1;">Tarjeta de crédito</td><td style="font-size: 17px; font-weight: 700; color: #161A19; padding: 16px 0; border-bottom: 1px solid #F0F3F1; text-align: right;">842,30 €</td><td style="font-size: 16px; color: #5A6360; padding: 16px 0; border-bottom: 1px solid #F0F3F1; text-align: right;">19,90 %</td><td style="font-size: 16px; color: #161A19; padding: 16px 0; border-bottom: 1px solid #F0F3F1; text-align: right;">Saldo completo</td><td style="font-size: 16px; color: #5A6360; padding: 16px 24px; border-bottom: 1px solid #F0F3F1; text-align: right;">2 sep</td></tr>
+            <tr><td style="font-size: 17px; font-weight: 600; color: #161A19; padding: 16px 24px;">Portátil a plazos</td><td style="font-size: 17px; font-weight: 700; color: #161A19; padding: 16px 0; text-align: right;">720,00 €</td><td style="font-size: 16px; color: #5A6360; padding: 16px 0; text-align: right;">0 %</td><td style="font-size: 16px; color: #161A19; padding: 16px 0; text-align: right;">180,00 € × 4</td><td style="font-size: 16px; color: #5A6360; padding: 16px 24px; text-align: right;">15 sep</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 20px; padding: 28px 32px; display: flex; flex-direction: column; gap: 18px;">
+        <h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600; color: #161A19;">Bola de nieve o avalancha: mismos datos, distinto orden</h2>
+        <div style="font-size: 16px; color: #161A19; text-wrap: pretty;">Ninguna es "la correcta": la bola de nieve motiva con victorias rápidas, la avalancha ahorra más intereses. Aquí tienes ambas con tus cifras reales.</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+          <div style="border: 1px solid #E2E7E4; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+            <div style="font-size: 17px; font-weight: 700; color: #161A19;">Bola de nieve · de menor a mayor saldo</div>
+            <div style="font-size: 15px; color: #5A6360;">Orden: Portátil → Tarjeta → Coche → Hipoteca</div>
+            <div style="font-variant-numeric: tabular-nums; font-size: 16px; color: #161A19; display: flex; justify-content: space-between; border-top: 1px solid #E2E7E4; padding-top: 10px;"><span>Tiempo hasta liquidar todo</span><span style="font-weight: 700;">14 años y 2 meses</span></div>
+            <div style="font-variant-numeric: tabular-nums; font-size: 16px; color: #161A19; display: flex; justify-content: space-between;"><span>Intereses totales pagados</span><span style="font-weight: 700;">31.240 €</span></div>
+          </div>
+          <div style="border: 1px solid #E2E7E4; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+            <div style="font-size: 17px; font-weight: 700; color: #161A19;">Avalancha · de mayor a menor interés</div>
+            <div style="font-size: 15px; color: #5A6360;">Orden: Tarjeta → Coche → Hipoteca → Portátil</div>
+            <div style="font-variant-numeric: tabular-nums; font-size: 16px; color: #161A19; display: flex; justify-content: space-between; border-top: 1px solid #E2E7E4; padding-top: 10px;"><span>Tiempo hasta liquidar todo</span><span style="font-weight: 700;">14 años y 2 meses</span></div>
+            <div style="font-variant-numeric: tabular-nums; font-size: 16px; color: #0F6B4F; display: flex; justify-content: space-between;"><span>Intereses totales pagados</span><span style="font-weight: 700;">29.910 € (−1.330 €)</span></div>
+          </div>
+        </div>
+      </div>
+
+      <sc-if value="{{ simOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position: fixed; inset: 0; background: rgba(22,26,25,0.35); display: flex; justify-content: flex-end; z-index: 10;">
+          <div style="width: 460px; height: 100%; background: #FFFFFF; padding: 32px; display: flex; flex-direction: column; gap: 18px; overflow-y: auto;">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between;">
+              <h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 26px; font-weight: 600; color: #161A19;">Pago extraordinario</h2>
+              <button data-focusable="true" onClick="{{ closeSim }}" style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid #E2E7E4; background: #FFFFFF; font-size: 18px; color: #161A19; cursor: pointer;">✕</button>
+            </div>
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; color: #5A6360;">Deuda
+              <select style="font-size: 16px; padding: 11px 12px; border: 1px solid #E2E7E4; border-radius: 10px; min-height: 44px; background: #FFFFFF; color: #161A19;"><option>Hipoteca · Bankinter</option></select>
+            </label>
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; color: #5A6360;">Importe extra
+              <input value="3.000 €" style="font-size: 20px; font-weight: 700; padding: 12px 14px; border: 1px solid #E2E7E4; border-radius: 10px; min-height: 48px; font-family: Inter, sans-serif; font-variant-numeric: tabular-nums;"/>
+            </label>
+            <div style="background: #E8F2EE; border: 1px solid #C7DED5; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 10px; font-variant-numeric: tabular-nums;">
+              <div style="font-size: 14px; font-weight: 700; color: #0B563F;">Resultado de la simulación</div>
+              <div style="display: flex; justify-content: space-between; font-size: 17px; color: #161A19;"><span>Intereses que te ahorras</span><span style="font-weight: 700;">1.840 €</span></div>
+              <div style="display: flex; justify-content: space-between; font-size: 17px; color: #161A19;"><span>Tiempo que adelantas</span><span style="font-weight: 700;">7 meses</span></div>
+              <div style="display: flex; justify-content: space-between; font-size: 17px; color: #161A19;"><span>Nueva fecha de fin</span><span style="font-weight: 700;">nov 2050</span></div>
+            </div>
+            <button data-focusable="true" style="font-size: 16px; font-weight: 700; color: #FFFFFF; background: #0F6B4F; border: 1px solid #0F6B4F; border-radius: 10px; padding: 12px 16px; min-height: 44px; cursor: pointer;">Programar el pago extra</button>
+          </div>
+        </div>
+      </sc-if>
+
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1500,&quot;height&quot;:1300}}">
+class Component extends DCLogic {
+  state = { simOpen: false };
+  renderVals() {
+    return { simOpen: this.state.simOpen, openSim: () => this.setState({ simOpen: true }), closeSim: () => this.setState({ simOpen: false }) };
+  }
+}
+</script>
+</body>
+</html>

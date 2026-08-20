@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #EDEFEE; font-family: Inter, system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+  [data-focusable]:focus-visible { outline: 3px solid #0F6B4F; outline-offset: 2px; border-radius: 6px; }
+</style>
+</helmet>
+
+<div style="width: 390px; height: 844px; margin: 24px auto; background: #F6F8F7; border-radius: 28px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 8px 30px rgba(22,26,25,0.12);">
+
+  <div style="background: #FFFFFF; border-bottom: 1px solid #E2E7E4; padding: 16px 20px 14px; display: flex; flex-direction: column; gap: 4px; flex: none;">
+    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+      <div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 700; color: #161A19;">{{ screenTitle }}</div>
+      <div style="display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; color: #0B563F;">✓ 08:42</div>
+    </div>
+    <div style="font-size: 14px; color: #5A6360;">19 ago 2026 · agosto</div>
+  </div>
+
+  <div style="flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px;">
+
+    <sc-if value="{{ isInicio }}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5A6360;">Disponible hoy</div>
+          <div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 42px; line-height: 1; font-weight: 600; color: #161A19; font-variant-numeric: tabular-nums;">5.383,24 €</div>
+          <div style="font-size: 15px; color: #161A19;">Sin tocar ahorro ni inversiones.</div>
+          <a href="#" data-focusable="true" style="font-size: 15px; font-weight: 600; color: #0F6B4F; text-decoration: none;">Ver cómo se calcula</a>
+        </div>
+
+        <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;">
+            <div style="font-size: 17px; font-weight: 700; color: #161A19; line-height: 1.3;">Vas 145 € por encima del ritmo</div>
+            <span style="font-size: 13px; font-weight: 700; color: #7C4F09; background: #FDF3E3; border: 1px solid #E8D6B4; border-radius: 999px; padding: 4px 8px; white-space: nowrap;">▲</span>
+          </div>
+          <div style="height: 12px; background: #E8F2EE; border-radius: 999px; position: relative;"><div style="width: 67%; height: 100%; background: #0F6B4F; border-radius: 999px;"></div></div>
+          <div style="font-size: 14px; color: #5A6360; font-variant-numeric: tabular-nums;">1.612 € de 2.400 € · previsión 2.545 €</div>
+        </div>
+
+        <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 12px;">
+          <div style="font-size: 17px; font-weight: 700; color: #161A19;">Necesita tu atención</div>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="border: 1px solid #E2E7E4; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 6px;">
+              <span style="align-self: flex-start; font-size: 13px; font-weight: 700; color: #8A1912; background: #FBEBE9; border: 1px solid #EFC9C5; border-radius: 999px; padding: 3px 9px;">! Revisión</span>
+              <div style="font-size: 16px; font-weight: 600; color: #161A19;">4 movimientos por confirmar</div>
+            </div>
+            <div style="border: 1px solid #E2E7E4; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 6px;">
+              <span style="align-self: flex-start; font-size: 13px; font-weight: 700; color: #7C4F09; background: #FDF3E3; border: 1px solid #E8D6B4; border-radius: 999px; padding: 3px 9px;">▲ Precio</span>
+              <div style="font-size: 16px; font-weight: 600; color: #161A19;">Spotify sube a 11,99 € el 24 ago</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 12px;">
+          <div style="font-size: 17px; font-weight: 700; color: #161A19;">Próximos 14 días</div>
+          <div style="display: flex; flex-direction: column; gap: 10px; font-variant-numeric: tabular-nums;">
+            <div style="display: flex; justify-content: space-between; font-size: 15px;"><span style="color: #161A19;">22 ago · Netflix</span><span style="font-weight: 700; color: #A82018;">−13,99 €</span></div>
+            <div style="display: flex; justify-content: space-between; font-size: 15px;"><span style="color: #161A19;">25 ago · Luz</span><span style="font-weight: 700; color: #A82018;">−78,45 €</span></div>
+            <div style="display: flex; justify-content: space-between; font-size: 15px;"><span style="color: #0B563F; font-weight: 600;">31 ago · Nómina</span><span style="font-weight: 700; color: #0F6B4F;">+3.150,00 €</span></div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isMovimientos }}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <input aria-label="Buscar" placeholder="Buscar movimientos" style="font-size: 16px; padding: 12px 14px; border: 1px solid #E2E7E4; border-radius: 12px; min-height: 44px; font-family: Inter, sans-serif;"/>
+        <sc-for list="{{ movimientos }}" as="m" hint-placeholder-count="6">
+          <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+            <div>
+              <div style="font-size: 16px; font-weight: 600; color: #161A19;">{{ m.comercio }}</div>
+              <div style="font-size: 14px; color: #5A6360; margin-top: 2px;">{{ m.fecha }} · {{ m.categoria }}</div>
+            </div>
+            <div style="font-size: 17px; font-weight: 700; color: {{ m.color }}; font-variant-numeric: tabular-nums; white-space: nowrap;">{{ m.importe }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isPresupuesto }}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;">
+            <div style="font-size: 17px; font-weight: 700; color: #161A19; line-height: 1.3;">145 € por encima del ritmo</div>
+            <span style="font-size: 13px; font-weight: 700; color: #7C4F09; background: #FDF3E3; border: 1px solid #E8D6B4; border-radius: 999px; padding: 4px 8px; white-space: nowrap;">▲</span>
+          </div>
+          <div style="height: 12px; background: #E8F2EE; border-radius: 999px;"><div style="width: 67%; height: 100%; background: #0F6B4F; border-radius: 999px;"></div></div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-variant-numeric: tabular-nums; margin-top: 4px;">
+            <div><div style="font-size: 13px; color: #5A6360;">Gastado</div><div style="font-size: 20px; font-weight: 700; color: #161A19;">1.612 €</div></div>
+            <div><div style="font-size: 13px; color: #5A6360;">Restante</div><div style="font-size: 20px; font-weight: 700; color: #161A19;">500 €</div></div>
+          </div>
+        </div>
+        <sc-for list="{{ categorias }}" as="c" hint-placeholder-count="6">
+          <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <div style="font-size: 16px; font-weight: 600; color: #161A19;">{{ c.nombre }}</div>
+              <div style="font-size: 14px; color: #5A6360; font-variant-numeric: tabular-nums;">{{ c.gastado }} / {{ c.presupuestado }}</div>
+            </div>
+            <div style="height: 10px; background: #E8F2EE; border-radius: 999px; overflow: hidden;"><div style="width: {{ c.pct }}; height: 100%; background: {{ c.barColor }};"></div></div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isMas }}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 600; color: #161A19;">Cuentas y patrimonio</div>
+        <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 600; color: #161A19;">Pagos y suscripciones</div>
+        <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 600; color: #161A19;">Inversiones</div>
+        <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 600; color: #161A19;">Deudas</div>
+        <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 600; color: #161A19;">Planificación</div>
+        <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 600; color: #161A19;">Asistente e insights</div>
+        <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 600; color: #161A19;">Conexiones y ajustes</div>
+      </div>
+    </sc-if>
+
+  </div>
+
+  <nav style="flex: none; background: #FFFFFF; border-top: 1px solid #E2E7E4; display: grid; grid-template-columns: repeat(5, 1fr); padding: 6px 0 10px;">
+    <button data-focusable="true" onClick="{{ goInicio }}" style="display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; padding: 6px 0; min-height: 44px; cursor: pointer;"><span style="width: 8px; height: 8px; border-radius: 999px; background: {{ dotInicio }};"></span><span style="font-size: 12px; font-weight: {{ wInicio }}; color: {{ cInicio }};">Inicio</span></button>
+    <button data-focusable="true" onClick="{{ goMovimientos }}" style="display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; padding: 6px 0; min-height: 44px; cursor: pointer;"><span style="width: 8px; height: 8px; border-radius: 999px; background: {{ dotMov }};"></span><span style="font-size: 12px; font-weight: {{ wMov }}; color: {{ cMov }};">Movimientos</span></button>
+    <button data-focusable="true" onClick="{{ goPresupuesto }}" style="display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; padding: 6px 0; min-height: 44px; cursor: pointer;"><span style="width: 8px; height: 8px; border-radius: 999px; background: {{ dotPres }};"></span><span style="font-size: 12px; font-weight: {{ wPres }}; color: {{ cPres }};">Presupuesto</span></button>
+    <button data-focusable="true" style="display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; padding: 6px 0; min-height: 44px; cursor: pointer;"><span style="width: 8px; height: 8px; border-radius: 999px; background: transparent;"></span><span style="font-size: 12px; color: #5A6360;">Objetivos</span></button>
+    <button data-focusable="true" onClick="{{ goMas }}" style="display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; padding: 6px 0; min-height: 44px; cursor: pointer;"><span style="width: 8px; height: 8px; border-radius: 999px; background: {{ dotMas }};"></span><span style="font-size: 12px; font-weight: {{ wMas }}; color: {{ cMas }};">Más</span></button>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:460,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  state = { screen: 'inicio' };
+  titles = { inicio: 'Inicio', movimientos: 'Movimientos', presupuesto: 'Presupuesto', mas: 'Más' };
+  tab(name) {
+    const active = this.state.screen === name;
+    return { dot: active ? '#0F6B4F' : 'transparent', w: active ? 700 : 400, c: active ? '#161A19' : '#5A6360' };
+  }
+  renderVals() {
+    const s = this.state.screen;
+    const ti = this.tab('inicio'), tm = this.tab('movimientos'), tp = this.tab('presupuesto'), tma = this.tab('mas');
+    return {
+      screenTitle: this.titles[s],
+      isInicio: s === 'inicio', isMovimientos: s === 'movimientos', isPresupuesto: s === 'presupuesto', isMas: s === 'mas',
+      goInicio: () => this.setState({ screen: 'inicio' }),
+      goMovimientos: () => this.setState({ screen: 'movimientos' }),
+      goPresupuesto: () => this.setState({ screen: 'presupuesto' }),
+      goMas: () => this.setState({ screen: 'mas' }),
+      dotInicio: ti.dot, wInicio: ti.w, cInicio: ti.c,
+      dotMov: tm.dot, wMov: tm.w, cMov: tm.c,
+      dotPres: tp.dot, wPres: tp.w, cPres: tp.c,
+      dotMas: tma.dot, wMas: tma.w, cMas: tma.c,
+      movimientos: [
+        { fecha: '19 ago', comercio: 'Mercadona', categoria: 'Supermercado', importe: '−62,18 €', color: '#161A19' },
+        { fecha: '18 ago', comercio: 'Verdeo Café', categoria: 'Restaurantes', importe: '−9,40 €', color: '#161A19' },
+        { fecha: '18 ago', comercio: 'AMZN Mktp ES', categoria: 'Sin clasificar', importe: '−34,90 €', color: '#A82018' },
+        { fecha: '17 ago', comercio: 'Renfe', categoria: 'Transporte', importe: '−28,60 €', color: '#161A19' },
+        { fecha: '16 ago', comercio: 'Zara · devolución', categoria: 'Ingresos', importe: '+49,95 €', color: '#0F6B4F' },
+        { fecha: '15 ago', comercio: 'Iberdrola', categoria: 'Hogar', importe: '−78,45 €', color: '#161A19' }
+      ],
+      categorias: [
+        { nombre: 'Supermercado', presupuestado: '480 €', gastado: '312 €', pct: '65%', barColor: '#0F6B4F' },
+        { nombre: 'Restaurantes', presupuestado: '400 €', gastado: '312 €', pct: '78%', barColor: '#9A6410' },
+        { nombre: 'Hogar y facturas', presupuestado: '620 €', gastado: '404 €', pct: '65%', barColor: '#0F6B4F' },
+        { nombre: 'Transporte', presupuestado: '160 €', gastado: '96 €', pct: '60%', barColor: '#9A6410' },
+        { nombre: 'Ocio', presupuestado: '240 €', gastado: '148 €', pct: '62%', barColor: '#0F6B4F' },
+        { nombre: 'Otros', presupuestado: '180 €', gastado: '218 €', pct: '100%', barColor: '#A82018' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Áurea — sistema de tokens
+   Minimalista editorial. Prioridad número uno: claridad y legibilidad.
+   Blanco domina las superficies, grafito estructura, verde SOLO acción/positivo.
+--------------------------------------------------------------------------- */
+@theme {
+  --font-serif: "Source Serif 4", Charter, Georgia, serif;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Superficies y texto */
+  --color-surface: #ffffff;        /* tarjetas y paneles */
+  --color-canvas: #f6f8f7;         /* fondo de la app */
+  --color-ink: #161a19;            /* titulares y cifras */
+  --color-ink-muted: #5a6360;      /* descripciones y etiquetas */
+  --color-line: #e2e7e4;           /* filetes de 1 px */
+
+  /* Verde financiero: acción, progreso, positivo */
+  --color-green: #0f6b4f;
+  --color-green-hover: #0a5138;
+  --color-green-soft: #e8f2ee;
+  --color-green-soft-line: #c7ded5;
+  --color-green-text: #0b563f;
+
+  /* Semánticos: siempre color + icono + palabra, nunca solo color */
+  --color-warning: #9a6410;
+  --color-warning-bg: #fdf3e3;
+  --color-warning-line: #e8d6b4;
+  --color-warning-text: #7c4f09;
+
+  --color-danger: #a82018;
+  --color-danger-bg: #fbebe9;
+  --color-danger-line: #efc9c5;
+  --color-danger-text: #8a1912;
+
+  --color-info: #2e6e8e;
+  --color-info-bg: #eaf3f7;
+  --color-info-line: #c9dee7;
+
+  --color-plum: #6b5b95;
+  --color-plum-bg: #f1eef7;
+  --color-plum-line: #dcd3ea;
+
+  /* Series de datos */
+  --color-series-1: #0f6b4f;
+  --color-series-2: #2e6e8e;
+  --color-series-3: #9a6410;
+  --color-series-4: #6b5b95;
+  --color-series-5: #a82018;
+  --color-series-6: #5a6360;
+
+  /* Forma */
+  --radius-card: 20px;
+  --radius-lg: 16px;
+  --radius-md: 10px;
+  --radius-sm: 8px;
+
+  --shadow-card: 0 1px 2px rgba(22, 26, 25, 0.04);
+  --shadow-pop: 0 8px 30px -12px rgba(22, 26, 25, 0.28);
+}
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 16px;              /* mínimo absoluto de cuerpo */
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, .font-serif {
+    font-family: var(--font-serif);
+    letter-spacing: -0.01em;
+  }
+
+  /* Cifras tabulares en toda columna de dinero */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* Etiqueta de sección en versalitas */
+  .label-section {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+  }
+
+  /* Foco de teclado visible y grueso */
+  :focus-visible {
+    outline: 3px solid var(--color-green);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  ::selection { background: var(--color-green-soft); }
+
+  a { color: var(--color-green); }
+  a:hover { color: var(--color-green-hover); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

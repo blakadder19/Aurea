@@ -1,0 +1,79 @@
+import { Card } from '../../components/Card'
+import { Money } from '../../components/Money'
+import { ProgressBar } from '../../components/ProgressBar'
+import { budgetCategories, type BudgetCategory } from '../../data/demo'
+
+const VARIANT_FILL: Record<BudgetCategory['variant'], string> = {
+  success: 'bg-green',
+  warning: 'bg-warning',
+  danger: 'bg-danger',
+}
+
+const VARIANT_TEXT: Record<BudgetCategory['variant'], string> = {
+  success: 'text-green-text',
+  warning: 'text-warning-text',
+  danger: 'text-danger-text',
+}
+
+/** Solo en modo Detalle — "Dónde se va el presupuesto de agosto", 8 categorías. */
+export function BudgetBreakdownTable() {
+  return (
+    <Card className="flex flex-col gap-4" padding="lg">
+      <div>
+        <h2 className="font-serif text-2xl font-semibold text-ink">Dónde se va el presupuesto de agosto</h2>
+        <div className="mt-1.5 text-base text-ink-muted">
+          Solo gasto de consumo. Ahorro, inversión y transferencias van aparte.
+        </div>
+      </div>
+
+      <table className="w-full border-collapse tabular">
+        <thead>
+          <tr>
+            <th className="border-b border-line pr-4 pb-2.5 text-left text-[13px] font-semibold tracking-[0.06em] text-ink-muted uppercase">
+              Categoría
+            </th>
+            <th className="border-b border-line pr-4 pb-2.5 text-right text-[13px] font-semibold tracking-[0.06em] text-ink-muted uppercase">
+              Presupuestado
+            </th>
+            <th className="border-b border-line pr-4 pb-2.5 text-right text-[13px] font-semibold tracking-[0.06em] text-ink-muted uppercase">
+              Gastado
+            </th>
+            <th className="border-b border-line py-0 pb-2.5 pr-4 pl-6 text-left text-[13px] font-semibold tracking-[0.06em] text-ink-muted uppercase">
+              Ritmo
+            </th>
+            <th className="border-b border-line pb-2.5 text-left text-[13px] font-semibold tracking-[0.06em] text-ink-muted uppercase">
+              Estado
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {budgetCategories.map((c) => {
+            const pct = Math.min(100, (c.spent / c.budgeted) * 100)
+            return (
+              <tr key={c.name}>
+                <td className="border-b border-[#f0f3f1] py-3 pr-4 text-base font-semibold text-ink">{c.name}</td>
+                <td className="border-b border-[#f0f3f1] py-3 pr-4 text-right text-base text-ink-muted">
+                  <Money value={c.budgeted} decimals={0} />
+                </td>
+                <td className="border-b border-[#f0f3f1] py-3 pr-4 text-right text-base font-semibold text-ink">
+                  <Money value={c.spent} decimals={0} />
+                </td>
+                <td className="w-[30%] border-b border-[#f0f3f1] py-3 pr-4 pl-6">
+                  <ProgressBar
+                    percent={pct}
+                    fillClassName={VARIANT_FILL[c.variant]}
+                    heightPx={10}
+                    label={`${c.name}: ${Math.round(pct)}% del presupuesto`}
+                  />
+                </td>
+                <td className={`border-b border-[#f0f3f1] py-3 text-base font-semibold ${VARIANT_TEXT[c.variant]}`}>
+                  {c.status}
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </Card>
+  )
+}

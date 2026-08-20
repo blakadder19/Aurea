@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #F6F8F7; font-family: Inter, system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+  a { color: #0F6B4F; }
+  a:hover { color: #0A5138; }
+  [data-focusable]:focus-visible { outline: 3px solid #0F6B4F; outline-offset: 2px; border-radius: 6px; }
+</style>
+</helmet>
+
+<div style="width: 1440px; min-height: 980px; margin: 0 auto; background: #F6F8F7; display: flex;">
+
+  <nav style="width: 250px; flex: none; background: #FFFFFF; border-right: 1px solid #E2E7E4; padding: 28px 20px; display: flex; flex-direction: column; gap: 26px;">
+    <div>
+      <div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 30px; font-weight: 700; color: #161A19; letter-spacing: -0.01em;">Áurea</div>
+      <div style="font-size: 13px; color: #5A6360; margin-top: 2px;">Tu dinero, con perspectiva</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 22px;">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360; padding: 0 10px 6px;">Tu dinero</div>
+        <a href="Áurea.dc.html" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Inicio</a>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; background: #E8F2EE; color: #0B563F; font-size: 16px; font-weight: 600; text-decoration: none;">Cuentas y patrimonio</a>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Movimientos<span style="font-size: 13px; font-weight: 700; color: #8A1912; background: #FBEBE9; border: 1px solid #EFC9C5; border-radius: 999px; padding: 2px 8px;">4</span></a>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360; padding: 0 10px 6px;">Planes</div>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Presupuesto</a>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Pagos y suscripciones</a>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Objetivos</a>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360; padding: 0 10px 6px;">Crecimiento</div>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Inversiones</a>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Deudas</a>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Planificación</a>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360; padding: 0 10px 6px;">Herramientas</div>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Asistente e insights</a>
+        <a href="#" data-focusable="true" style="display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 10px; color: #161A19; font-size: 16px; text-decoration: none;">Conexiones y ajustes</a>
+      </div>
+    </div>
+    <div style="margin-top: auto; border-top: 1px solid #E2E7E4; padding-top: 16px; display: flex; align-items: center; gap: 12px;">
+      <div style="width: 40px; height: 40px; border-radius: 999px; background: #E8F2EE; color: #0B563F; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700;">MR</div>
+      <div><div style="font-size: 16px; font-weight: 600; color: #161A19;">Marta Ríos</div><div style="font-size: 13px; color: #5A6360;">Datos de demostración</div></div>
+    </div>
+  </nav>
+
+  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+    <header style="background: #FFFFFF; border-bottom: 1px solid #E2E7E4; padding: 20px 32px; display: flex; flex-direction: column; gap: 16px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px;">
+        <div>
+          <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 32px; font-weight: 600; color: #161A19;">Cuentas y patrimonio</h1>
+          <div style="font-size: 16px; color: #5A6360; margin-top: 4px;">Miércoles 19 ago 2026 · agosto de 2026</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="display: inline-flex; align-items: center; gap: 8px; background: #E8F2EE; border: 1px solid #C7DED5; color: #0B563F; border-radius: 10px; padding: 9px 12px; font-size: 14px; font-weight: 600; min-height: 44px;">✓ Sincronizado · 08:42</div>
+          <button data-focusable="true" style="font-family: Inter, sans-serif; font-size: 16px; font-weight: 600; color: #FFFFFF; background: #0F6B4F; border: 1px solid #0F6B4F; border-radius: 10px; padding: 10px 18px; min-height: 44px; cursor: pointer;">Añadir cuenta</button>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 24px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360;">Periodo</span>
+          <div style="display: flex; gap: 4px; background: #F6F8F7; border: 1px solid #E2E7E4; border-radius: 12px; padding: 4px;">
+            <button data-focusable="true" style="font-family: Inter, sans-serif; font-size: 15px; font-weight: 600; color: #161A19; background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 8px; padding: 8px 14px; min-height: 40px;">Mes actual</button>
+            <button data-focusable="true" style="font-family: Inter, sans-serif; font-size: 15px; color: #5A6360; background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 8px 14px; min-height: 40px;">3 meses</button>
+            <button data-focusable="true" style="font-family: Inter, sans-serif; font-size: 15px; color: #5A6360; background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 8px 14px; min-height: 40px;">Año</button>
+            <button data-focusable="true" style="font-family: Inter, sans-serif; font-size: 15px; color: #5A6360; background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 8px 14px; min-height: 40px;">Personalizado</button>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360;">Vista</span>
+          <div style="display: flex; gap: 4px; background: #F6F8F7; border: 1px solid #E2E7E4; border-radius: 12px; padding: 4px;">
+            <button data-focusable="true" onClick="{{ setResumen }}" style="font-family: Inter, sans-serif; font-size: 15px; font-weight: {{ resumenWeight }}; color: {{ resumenColor }}; background: {{ resumenBg }}; border: 1px solid {{ resumenBorder }}; border-radius: 8px; padding: 8px 18px; min-height: 40px; cursor: pointer;">Resumen</button>
+            <button data-focusable="true" onClick="{{ setDetalle }}" style="font-family: Inter, sans-serif; font-size: 15px; font-weight: {{ detalleWeight }}; color: {{ detalleColor }}; background: {{ detalleBg }}; border: 1px solid {{ detalleBorder }}; border-radius: 8px; padding: 8px 18px; min-height: 40px; cursor: pointer;">Detalle</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main style="flex: 1; padding: 32px; display: flex; flex-direction: column; gap: 24px;">
+
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
+        <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360;">Activos</div>
+          <div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 36px; font-weight: 600; color: #161A19; font-variant-numeric: tabular-nums;">344.526,57 €</div>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360;">Pasivos</div>
+          <div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 36px; font-weight: 600; color: #A82018; font-variant-numeric: tabular-nums;">−156.362,30 €</div>
+        </div>
+        <div style="background: #E8F2EE; border: 1px solid #C7DED5; border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #0B563F;">Patrimonio neto</div>
+          <div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 36px; font-weight: 600; color: #161A19; font-variant-numeric: tabular-nums;">188.164,27 €</div>
+          <div style="font-size: 14px; font-weight: 600; color: #0B563F;">▲ +1.284 € este mes</div>
+        </div>
+      </div>
+
+      <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 20px; padding: 28px 32px; display: flex; flex-direction: column; gap: 20px;">
+        <h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 24px; font-weight: 600; color: #161A19;">Tus cuentas por función</h2>
+
+        <table style="width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums;">
+          <thead>
+            <tr>
+              <th style="text-align: left; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5A6360; padding-bottom: 10px; border-bottom: 1px solid #E2E7E4;">Cuenta</th>
+              <th style="text-align: left; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5A6360; padding-bottom: 10px; border-bottom: 1px solid #E2E7E4;">Función</th>
+              <th style="text-align: left; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5A6360; padding-bottom: 10px; border-bottom: 1px solid #E2E7E4;">Institución</th>
+              <th style="text-align: right; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5A6360; padding-bottom: 10px; border-bottom: 1px solid #E2E7E4;">Saldo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-size: 17px; font-weight: 600; color: #161A19; padding: 14px 0; border-bottom: 1px solid #F0F3F1;">Nómina</td>
+              <td style="padding: 14px 0; border-bottom: 1px solid #F0F3F1;"><span style="font-size: 14px; font-weight: 600; color: #0B563F; background: #E8F2EE; border: 1px solid #C7DED5; border-radius: 999px; padding: 5px 10px;">Para gastar</span></td>
+              <td style="font-size: 16px; color: #5A6360; padding: 14px 0; border-bottom: 1px solid #F0F3F1;">Openbank</td>
+              <td style="font-size: 17px; font-weight: 700; color: #161A19; padding: 14px 0; border-bottom: 1px solid #F0F3F1; text-align: right;">4.238,64 €</td>
+            </tr>
+            <tr>
+              <td style="font-size: 17px; font-weight: 600; color: #161A19; padding: 14px 0; border-bottom: 1px solid #F0F3F1;">Cuenta compartida</td>
+              <td style="padding: 14px 0; border-bottom: 1px solid #F0F3F1;"><span style="font-size: 14px; font-weight: 600; color: #0B563F; background: #E8F2EE; border: 1px solid #C7DED5; border-radius: 999px; padding: 5px 10px;">Para gastar</span></td>
+              <td style="font-size: 16px; color: #5A6360; padding: 14px 0; border-bottom: 1px solid #F0F3F1;">CaixaBank</td>
+              <td style="font-size: 17px; font-weight: 700; color: #161A19; padding: 14px 0; border-bottom: 1px solid #F0F3F1; text-align: right;">1.120,45 €</td>
+            </tr>
+            <tr onClick="{{ openRevolut }}" style="cursor: pointer;">
+              <td style="font-size: 17px; font-weight: 600; color: #161A19; padding: 14px 0; border-bottom: 1px solid #F0F3F1;">Revolut <span style="font-size: 14px; font-weight: 400; color: #5A6360;">· 1.860,00 USD</span></td>
+              <td style="padding: 14px 0; border-bottom: 1px solid #F0F3F1;"><span style="font-size: 14px; font-weight: 600; color: #0B563F; background: #E8F2EE; border: 1px solid #C7DED5; border-radius: 999px; padding: 5px 10px;">Para gastar</span></td>
+              <td style="font-size: 16px; color: #5A6360; padding: 14px 0; border-bottom: 1px solid #F0F3F1;">Revolut · tipo 0,9180 (19 ago)</td>
+              <td style="font-size: 17px; font-weight: 700; color: #161A19; padding: 14px 0; border-bottom: 1px solid #F0F3F1; text-align: right;">1.707,48 €</td>
+            </tr>
+            <tr>
+              <td style="font-size: 17px; font-weight: 600; color: #161A19; padding: 14px 0; border-bottom: 1px solid #F0F3F1;">Efectivo</td>
+              <td style="padding: 14px 0; border-bottom: 1px solid #F0F3F1;"><span style="font-size: 14px; font-weight: 600; color: #0B563F; background: #E8F2EE; border: 1px solid #C7DED5; border-radius: 999px; padding: 5px 10px;">Para gastar</span></td>
+              <td style="font-size: 16px; color: #5A6360; padding: 14px 0; border-bottom: 1px solid #F0F3F1;">Manual</td>
+              <td style="font-size: 17px; font-weight: 700; color: #161A19; padding: 14px 0; border-bottom: 1px solid #F0F3F1; text-align: right;">180,00 €</td>
+            </tr>
+            <tr>
+              <td style="font-size: 17px; font-weight: 600; color: #161A19; padding: 14px 0; border-bottom: 1px solid #F0F3F1;">Ahorro</td>
+              <td style="padding: 14px 0; border-bottom: 1px solid #F0F3F1;"><span style="font-size: 14px; font-weight: 600; color: #2E6E8E; background: #EAF3F7; border: 1px solid #C9DEE7; border-radius: 999px; padding: 5px 10px;">Ahorro</span></td>
+              <td style="font-size: 16px; color: #5A6360; padding: 14px 0; border-bottom: 1px solid #F0F3F1;">ING</td>
+              <td style="font-size: 17px; font-weight: 700; color: #161A19; padding: 14px 0; border-bottom: 1px solid #F0F3F1; text-align: right;">12.400,00 €</td>
+            </tr>
+            <tr>
+              <td style="font-size: 17px; font-weight: 600; color: #161A19; padding: 14px 0; border-bottom: 1px solid #F0F3F1;">Hucha «Viaje Japón»</td>
+              <td style="padding: 14px 0; border-bottom: 1px solid #F0F3F1;"><span style="font-size: 14px; font-weight: 600; color: #5A6360; background: #F6F8F7; border: 1px dashed #C4CCC8; border-radius: 999px; padding: 5px 10px;">◌ Por confirmar</span></td>
+              <td style="font-size: 16px; color: #5A6360; padding: 14px 0; border-bottom: 1px solid #F0F3F1;">CaixaBank</td>
+              <td style="font-size: 17px; font-weight: 700; color: #161A19; padding: 14px 0; border-bottom: 1px solid #F0F3F1; text-align: right;">2.150,00 €</td>
+            </tr>
+            <tr>
+              <td style="font-size: 17px; font-weight: 600; color: #161A19; padding: 14px 0; border-bottom: 1px solid #F0F3F1;">Fondo indexado</td>
+              <td style="padding: 14px 0; border-bottom: 1px solid #F0F3F1;"><span style="font-size: 14px; font-weight: 600; color: #6B5B95; background: #F1EEF7; border: 1px solid #DCD3EA; border-radius: 999px; padding: 5px 10px;">Inversión</span></td>
+              <td style="font-size: 16px; color: #5A6360; padding: 14px 0; border-bottom: 1px solid #F0F3F1;">MyInvestor</td>
+              <td style="font-size: 17px; font-weight: 700; color: #161A19; padding: 14px 0; border-bottom: 1px solid #F0F3F1; text-align: right;">38.920,00 €</td>
+            </tr>
+            <tr>
+              <td style="font-size: 17px; font-weight: 600; color: #161A19; padding: 14px 0; border-bottom: 1px solid #F0F3F1;">Cripto</td>
+              <td style="padding: 14px 0; border-bottom: 1px solid #F0F3F1;"><span style="font-size: 14px; font-weight: 600; color: #6B5B95; background: #F1EEF7; border: 1px solid #DCD3EA; border-radius: 999px; padding: 5px 10px;">Inversión</span></td>
+              <td style="font-size: 16px; color: #5A6360; padding: 14px 0; border-bottom: 1px solid #F0F3F1;">Coinbase</td>
+              <td style="font-size: 17px; font-weight: 700; color: #161A19; padding: 14px 0; border-bottom: 1px solid #F0F3F1; text-align: right;">4.310,00 €</td>
+            </tr>
+            <tr>
+              <td style="font-size: 17px; font-weight: 600; color: #161A19; padding: 14px 0; border-bottom: 1px solid #F0F3F1;">Piso · valor estimado</td>
+              <td style="padding: 14px 0; border-bottom: 1px solid #F0F3F1;"><span style="font-size: 14px; font-weight: 600; color: #5A6360; background: #F6F8F7; border: 1px solid #E2E7E4; border-radius: 999px; padding: 5px 10px;">Activo manual</span></td>
+              <td style="font-size: 16px; color: #5A6360; padding: 14px 0; border-bottom: 1px solid #F0F3F1;">Tasación 2024</td>
+              <td style="font-size: 17px; font-weight: 700; color: #161A19; padding: 14px 0; border-bottom: 1px solid #F0F3F1; text-align: right;">285.000,00 €</td>
+            </tr>
+            <tr>
+              <td style="font-size: 17px; font-weight: 600; color: #161A19; padding: 14px 0; border-bottom: 1px solid #F0F3F1;">Hipoteca</td>
+              <td style="padding: 14px 0; border-bottom: 1px solid #F0F3F1;"><span style="font-size: 14px; font-weight: 600; color: #A82018; background: #FBEBE9; border: 1px solid #EFC9C5; border-radius: 999px; padding: 5px 10px;">Deuda</span></td>
+              <td style="font-size: 16px; color: #5A6360; padding: 14px 0; border-bottom: 1px solid #F0F3F1;">Bankinter</td>
+              <td style="font-size: 17px; font-weight: 700; color: #A82018; padding: 14px 0; border-bottom: 1px solid #F0F3F1; text-align: right;">−148.320,00 €</td>
+            </tr>
+            <tr>
+              <td style="font-size: 17px; font-weight: 600; color: #161A19; padding: 14px 0;">Préstamo coche, tarjeta y portátil</td>
+              <td style="padding: 14px 0;"><span style="font-size: 14px; font-weight: 600; color: #A82018; background: #FBEBE9; border: 1px solid #EFC9C5; border-radius: 999px; padding: 5px 10px;">Deuda</span></td>
+              <td style="font-size: 16px; color: #5A6360; padding: 14px 0;">Varias</td>
+              <td style="font-size: 17px; font-weight: 700; color: #A82018; padding: 14px 0; text-align: right;">−8.042,30 €</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <sc-if value="{{ isDetalle }}" hint-placeholder-val="{{ false }}">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+          <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 16px;">
+            <h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600; color: #161A19;">Por clase de activo</h2>
+            <div style="display: flex; flex-direction: column; gap: 10px; font-variant-numeric: tabular-nums;">
+              <div style="display: flex; justify-content: space-between; font-size: 16px; color: #161A19;"><span>Efectivo y cuentas</span><span style="font-weight: 700;">18.836,57 €</span></div>
+              <div style="display: flex; justify-content: space-between; font-size: 16px; color: #161A19;"><span>Inmuebles</span><span style="font-weight: 700;">285.000,00 €</span></div>
+              <div style="display: flex; justify-content: space-between; font-size: 16px; color: #161A19;"><span>Inversiones y cripto</span><span style="font-weight: 700;">43.230,00 €</span></div>
+              <div style="display: flex; justify-content: space-between; font-size: 16px; color: #A82018; border-top: 1px solid #E2E7E4; padding-top: 10px;"><span>Deudas</span><span style="font-weight: 700;">−156.362,30 €</span></div>
+            </div>
+          </div>
+          <div style="background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 16px;">
+            <h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600; color: #161A19;">Por institución</h2>
+            <div style="display: flex; flex-direction: column; gap: 10px; font-variant-numeric: tabular-nums;">
+              <div style="display: flex; justify-content: space-between; font-size: 16px; color: #161A19;"><span>Openbank</span><span style="font-weight: 700;">4.238,64 €</span></div>
+              <div style="display: flex; justify-content: space-between; font-size: 16px; color: #161A19;"><span>CaixaBank</span><span style="font-weight: 700;">3.270,45 €</span></div>
+              <div style="display: flex; justify-content: space-between; font-size: 16px; color: #161A19;"><span>ING</span><span style="font-weight: 700;">12.400,00 €</span></div>
+              <div style="display: flex; justify-content: space-between; font-size: 16px; color: #161A19;"><span>MyInvestor</span><span style="font-weight: 700;">38.920,00 €</span></div>
+              <div style="display: flex; justify-content: space-between; font-size: 16px; color: #161A19;"><span>Bankinter</span><span style="font-weight: 700;">−148.320,00 €</span></div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position: fixed; inset: 0; background: rgba(22,26,25,0.35); display: flex; justify-content: flex-end; z-index: 10;">
+          <div style="width: 460px; height: 100%; background: #FFFFFF; padding: 32px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto;">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between;">
+              <div>
+                <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5A6360;">Detalle de cuenta</div>
+                <h2 style="margin: 4px 0 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 28px; font-weight: 600; color: #161A19;">Revolut</h2>
+              </div>
+              <button data-focusable="true" onClick="{{ closePanel }}" style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid #E2E7E4; background: #FFFFFF; font-size: 18px; color: #161A19; cursor: pointer;">✕</button>
+            </div>
+            <div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 40px; font-weight: 600; color: #161A19; font-variant-numeric: tabular-nums;">1.707,48 €</div>
+            <div style="font-size: 16px; color: #5A6360;">1.860,00 USD al tipo 0,9180 · actualizado 19 ago, 08:42</div>
+            <div style="border: 1px solid #E2E7E4; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 8px;">
+              <div style="display: flex; justify-content: space-between; font-size: 15px; color: #5A6360;"><span>Función</span><span style="font-weight: 600; color: #161A19;">Para gastar</span></div>
+              <div style="display: flex; justify-content: space-between; font-size: 15px; color: #5A6360;"><span>Institución</span><span style="font-weight: 600; color: #161A19;">Revolut</span></div>
+              <div style="display: flex; justify-content: space-between; font-size: 15px; color: #5A6360;"><span>Divisa</span><span style="font-weight: 600; color: #161A19;">USD</span></div>
+              <div style="display: flex; justify-content: space-between; font-size: 15px; color: #5A6360;"><span>Cuenta en Disponible hoy</span><span style="font-weight: 600; color: #0B563F;">Sí</span></div>
+            </div>
+            <h3 style="margin: 8px 0 0; font-size: 17px; font-weight: 700; color: #161A19;">Movimientos recientes</h3>
+            <div style="display: flex; flex-direction: column; gap: 10px; font-variant-numeric: tabular-nums;">
+              <div style="display: flex; justify-content: space-between; font-size: 15px;"><span style="color: #161A19;">18 ago · Verdeo Café</span><span style="font-weight: 700; color: #161A19;">−9,40 €</span></div>
+              <div style="display: flex; justify-content: space-between; font-size: 15px;"><span style="color: #161A19;">12 ago · Ingreso freelance USD</span><span style="font-weight: 700; color: #0F6B4F;">+380,00 €</span></div>
+            </div>
+            <button data-focusable="true" style="align-self: flex-start; font-size: 16px; font-weight: 600; color: #161A19; background: #FFFFFF; border: 1px solid #E2E7E4; border-radius: 10px; padding: 10px 16px; min-height: 44px; cursor: pointer;">Editar función y ajustes</button>
+          </div>
+        </div>
+      </sc-if>
+
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1500,&quot;height&quot;:1300}}">
+class Component extends DCLogic {
+  state = { mode: 'resumen', panelOpen: false };
+  renderVals() {
+    const d = this.state.mode === 'detalle';
+    return {
+      isDetalle: d,
+      setResumen: () => this.setState({ mode: 'resumen' }),
+      setDetalle: () => this.setState({ mode: 'detalle' }),
+      resumenWeight: d ? 400 : 600, resumenColor: d ? '#5A6360' : '#161A19', resumenBg: d ? 'transparent' : '#FFFFFF', resumenBorder: d ? 'transparent' : '#E2E7E4',
+      detalleWeight: d ? 600 : 400, detalleColor: d ? '#161A19' : '#5A6360', detalleBg: d ? '#FFFFFF' : 'transparent', detalleBorder: d ? '#E2E7E4' : 'transparent',
+      panelOpen: this.state.panelOpen,
+      openRevolut: () => this.setState({ panelOpen: true }),
+      closePanel: () => this.setState({ panelOpen: false })
+    };
+  }
+}
+</script>
+</body>
+</html>
