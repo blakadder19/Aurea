@@ -27,7 +27,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: 'Presupuesto', to: '/presupuesto' },
       { label: 'Pagos y suscripciones', to: '/pagos' },
-      { label: 'Objetivos' },
+      { label: 'Objetivos', to: '/objetivos' },
     ],
   },
   {

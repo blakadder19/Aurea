@@ -5,6 +5,7 @@ import { TransactionsPage } from '../features/transactions/TransactionsPage'
 import { BudgetPage } from '../features/budget/BudgetPage'
 import { AccountsPage } from '../features/accounts/AccountsPage'
 import { RecurringPage } from '../features/recurring/RecurringPage'
+import { GoalsPage } from '../features/goals/GoalsPage'
 
 export function App() {
   return (
@@ -15,6 +16,7 @@ export function App() {
         <Route path="/presupuesto" element={<BudgetPage />} />
         <Route path="/cuentas" element={<AccountsPage />} />
         <Route path="/pagos" element={<RecurringPage />} />
+        <Route path="/objetivos" element={<GoalsPage />} />
       </Route>
     </Routes>
   )
