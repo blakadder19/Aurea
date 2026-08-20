@@ -1,0 +1,106 @@
+import { useState } from 'react'
+import { AccountDetailPanel } from './AccountDetailPanel'
+import { AccountsTable } from './AccountsTable'
+import { DetailBreakdowns } from './DetailBreakdowns'
+import { NetWorthKpis } from './NetWorthKpis'
+import { useAccountsStore, type AccountsView } from './store'
+import { CONTEXT_DATE, syncedAt } from '../../data/demo'
+import { formatMonthYearLong, formatWeekdayDate } from '../../lib/format'
+
+const PERIODS = ['Mes actual', '3 meses', 'Año', 'Personalizado']
+const VIEWS: { value: AccountsView; label: string }[] = [
+  { value: 'resumen', label: 'Resumen' },
+  { value: 'detalle', label: 'Detalle' },
+]
+
+function Header() {
+  const mode = useAccountsStore((s) => s.mode)
+  const setMode = useAccountsStore((s) => s.setMode)
+  const [period, setPeriod] = useState(PERIODS[0])
+
+  const dateLabel = `${formatWeekdayDate(CONTEXT_DATE)} · ${formatMonthYearLong(
+    CONTEXT_DATE.getMonth(),
+    CONTEXT_DATE.getFullYear(),
+  )}`
+
+  return (
+    <header className="flex flex-col gap-4 border-b border-line bg-surface px-4 py-5 lg:px-8">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-serif text-[32px] font-semibold tracking-[-0.01em] text-ink">Cuentas y patrimonio</h1>
+          <div className="mt-1 text-base text-ink-muted">{dateLabel}</div>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex min-h-11 items-center gap-2 rounded-md border border-green-soft-line bg-green-soft px-3 py-2 text-sm font-semibold text-green-text">
+            <span aria-hidden="true">✓</span> Sincronizado · {syncedAt}
+          </div>
+          <button
+            type="button"
+            className="min-h-11 rounded-md border border-green bg-green px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-green-hover"
+          >
+            Añadir cuenta
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <span className="text-[13px] font-semibold tracking-[0.08em] text-ink-muted uppercase">Periodo</span>
+          <div className="flex flex-wrap gap-1 rounded-md border border-line bg-canvas p-1">
+            {PERIODS.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPeriod(p)}
+                aria-pressed={period === p}
+                className={`min-h-11 rounded-sm px-3.5 py-2 text-[15px] font-semibold ${
+                  period === p ? 'border border-line bg-surface text-ink' : 'border border-transparent text-ink-muted hover:text-ink'
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5">
+          <span className="text-[13px] font-semibold tracking-[0.08em] text-ink-muted uppercase">Vista</span>
+          <div className="flex flex-wrap gap-1 rounded-md border border-line bg-canvas p-1">
+            {VIEWS.map((v) => (
+              <button
+                key={v.value}
+                type="button"
+                onClick={() => setMode(v.value)}
+                aria-pressed={mode === v.value}
+                className={`min-h-11 rounded-sm px-[18px] py-2 text-[15px] ${
+                  mode === v.value
+                    ? 'border border-line bg-surface font-semibold text-ink'
+                    : 'border border-transparent text-ink-muted hover:text-ink'
+                }`}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </header>
+  )
+}
+
+/** Pantalla Cuentas y patrimonio: KPIs, tabla de cuentas y desgloses en Detalle. */
+export function AccountsPage() {
+  const isDetalle = useAccountsStore((s) => s.mode === 'detalle')
+
+  return (
+    <>
+      <Header />
+      <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
+        <NetWorthKpis />
+        <AccountsTable />
+        {isDetalle && <DetailBreakdowns />}
+      </main>
+      <AccountDetailPanel />
+    </>
+  )
+}

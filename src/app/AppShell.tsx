@@ -18,7 +18,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: 'Tu dinero',
     items: [
       { label: 'Inicio', to: '/' },
-      { label: 'Cuentas y patrimonio' },
+      { label: 'Cuentas y patrimonio', to: '/cuentas' },
       { label: 'Movimientos', to: '/movimientos' },
     ],
   },
