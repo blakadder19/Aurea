@@ -42,3 +42,34 @@ recurrentes», con el mismo importe que en Inicio. La Tarjeta (842,30 €) del m
 de criterios **no** se añade como recurrente: es un pago de saldo de tarjeta variable
 mes a mes, no una cuota fija, así que no encaja como "pago recurrente"; no se muestra
 ningún importe de tarjeta en esta pantalla que pudiera contradecir Inicio.
+
+## Corte 9 — Planificación
+
+**Duda 1:** el `.dc.html` muestra cifras de proyección fijas («412.600 €» este escenario
+frente a «368.200 €» escenario base) que no se pueden derivar de ningún cálculo real a
+partir de los valores por defecto de los sliders (que son, precisamente, los mismos que
+definen el escenario base) — con esos valores por defecto ambas líneas deberían coincidir.
+
+**Decisión:** se implementa una fórmula real de capitalización (aportación mensual
+capitalizada a la rentabilidad real = rentabilidad − inflación; el resto del ahorro
+disponible se suma sin capitalizar; el pago extra de deuda se trata como el interés medio
+ponderado de las deudas actuales —3,08 %, calculado a partir de `data/debts.ts`— que se
+deja de pagar) en vez de copiar las cifras fijas del `.dc.html`. Con esto, "este escenario"
+y "escenario base" coinciden al cargar la pantalla (ambos parten de los mismos supuestos)
+y solo divergen cuando el usuario mueve un control — es el comportamiento correcto para una
+herramienta que se anuncia como "en vivo". La tarjeta «Base» de escenarios guardados usa la
+misma fórmula, así que siempre cuadra exactamente con la línea base del gráfico.
+
+**Duda 2:** el bloque de independencia financiera necesita una edad actual para calcular
+la «edad estimada de llegada», y ningún corte anterior define la edad de Marta Ríos.
+
+**Decisión:** se asume una edad actual de **34 años** (`ASSUMED_CURRENT_AGE` en
+`data/planning.ts`), razonable para el perfil financiero ya establecido (hipoteca, coche,
+ingresos ~3.790 €/mes). El capital objetivo sí es un cálculo exacto y verificable: gastos
+anuales ÷ tasa de retirada (2.400 × 12 ÷ 4 % = 720.000 €, coincide con el `.dc.html`).
+
+**Duda 3:** el escenario «Pesimista» del `.dc.html` menciona «un imprevisto grande» sin
+dar una cifra.
+
+**Decisión:** se asume un imprevisto de **12.000 €** (`compraExtraordinaria` del escenario
+pesimista en `data/planning.ts`), restado del patrimonio de partida antes de proyectar.

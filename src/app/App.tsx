@@ -8,6 +8,7 @@ import { RecurringPage } from '../features/recurring/RecurringPage'
 import { GoalsPage } from '../features/goals/GoalsPage'
 import { InvestmentsPage } from '../features/investments/InvestmentsPage'
 import { DebtsPage } from '../features/debts/DebtsPage'
+import { PlanningPage } from '../features/planning/PlanningPage'
 
 export function App() {
   return (
@@ -21,6 +22,7 @@ export function App() {
         <Route path="/objetivos" element={<GoalsPage />} />
         <Route path="/inversiones" element={<InvestmentsPage />} />
         <Route path="/deudas" element={<DebtsPage />} />
+        <Route path="/planificacion" element={<PlanningPage />} />
       </Route>
     </Routes>
   )
