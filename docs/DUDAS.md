@@ -107,3 +107,38 @@ Inicio, así que la respuesta cuadra automáticamente con esa pantalla.
 `simulateExtraPayment` de `features/debts/domain.ts` — el mismo cálculo del simulador de
 la pantalla Deudas, no una fórmula nueva — para que ambas pantallas cuadren si se
 comparan.
+
+## Corte 11 — Conexiones y ajustes
+
+**Duda 1:** el punto 3 del alcance del README («Ajustes básicos: moneda, formato de
+fecha, inicio del mes presupuestario, y borrado de datos de demostración») no aparece en
+ningún sitio del `.dc.html`, que solo muestra la lista de conexiones y el asistente de
+importación CSV.
+
+**Decisión:** se añade una tarjeta «Ajustes básicos» propia (`SettingsBasics.tsx`) con los
+cuatro controles que pide el README, siguiendo el mismo lenguaje visual del resto de la
+pantalla (selects de 44 px, tarjeta con el mismo padding). «Borrar datos de demostración»
+no borra nada de verdad — es una demo sin backend — pero sí es interactivo: confirma con
+un badge en vez de quedarse inerte, coherente con el resto de acciones «reales» del
+proyecto (AdjustBudgetPanel, AllocatePanel, ExtraPaymentPanel).
+
+**Duda 2:** el criterio de aceptación exige que el asistente CSV navegue «adelante y
+atrás sin perder lo mapeado», pero el `.dc.html` solo tiene botones `Continuar` (nunca
+`Atrás`) y no expone ninguna forma de retroceder.
+
+**Decisión:** se añade un botón «Atrás» en los pasos 2 y 3, y los círculos de paso 1/2/3
+son también botones clicables hacia cualquier paso ya alcanzado (`maxStepReached` en
+`features/settings/store.ts`). El mapeo de columnas vive en el store, no en estado local
+del paso 1, así que sobrevive a ir y volver.
+
+**Duda 3:** el README pide mapear cuatro campos (fecha, concepto, importe, cuenta) pero
+el `.dc.html` solo muestra tres filas de mapeo (sin «cuenta»).
+
+**Decisión:** se añade una cuarta fila `Cuenta_Origen → Cuenta`, seleccionable como las
+otras tres, para cubrir el alcance completo del README.
+
+**Puntos de integración real marcados con TODO** (criterio de aceptación explícito):
+`features/settings/store.ts`, acciones `reconnect` y `confirmImport` — ambas simulan el
+resultado con `setTimeout`/datos fijos de `data/settings.ts` en vez de llamar a Enable
+Banking o Supabase. Se documentarán también en `docs/CURRENT.md` al cerrar todos los
+cortes.
