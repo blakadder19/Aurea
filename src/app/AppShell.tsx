@@ -32,7 +32,11 @@ const NAV_SECTIONS: NavSection[] = [
   },
   {
     title: 'Crecimiento',
-    items: [{ label: 'Inversiones', to: '/inversiones' }, { label: 'Deudas' }, { label: 'Planificación' }],
+    items: [
+      { label: 'Inversiones', to: '/inversiones' },
+      { label: 'Deudas', to: '/deudas' },
+      { label: 'Planificación' },
+    ],
   },
   {
     title: 'Herramientas',
