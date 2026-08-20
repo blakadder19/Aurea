@@ -73,3 +73,37 @@ dar una cifra.
 
 **Decisión:** se asume un imprevisto de **12.000 €** (`compraExtraordinaria` del escenario
 pesimista en `data/planning.ts`), restado del patrimonio de partida antes de proyectar.
+
+## Corte 10 — Asistente e insights
+
+**Duda 1:** las cuatro preguntas sugeridas que pide el README («¿Puedo permitirme un viaje
+de 1.200 €?», «¿En qué se me va más dinero que el mes pasado?», «¿Cuándo llego a los 6
+meses de colchón?», «¿Me conviene amortizar el coche?») no son las mismas que las cuatro
+del `.dc.html` («¿Cuánto puedo gastar hoy sin problema?», «¿Por qué voy por encima en
+restaurantes?», «¿Cuándo termino de pagar la hipoteca?», «¿Voy bien para el fondo de
+emergencia?»), y el `.dc.html` solo tiene respuesta programada para dos de sus cuatro
+botones (los otros dos son inertes en la demo original).
+
+**Decisión:** se usan las cuatro preguntas del README (es el documento de alcance
+explícito de este corte) y se construye una respuesta real y completa para las cuatro,
+no solo para dos — el criterio de aceptación exige badge, cálculo visible, enlace y acción
+en «cada respuesta», sin excepción. El patrón visual de la tarjeta de respuesta (cita de
+la pregunta, badge de tipo, cifra en serif, caja de cálculo, badge de recomendación
+opcional, enlace y acción) se recrea del `.dc.html` tal cual.
+
+**Duda 2:** «¿En qué se me va más dinero que el mes pasado?» no se puede responder con
+datos reales porque ningún corte anterior guarda cifras de un mes anterior por categoría
+— todos los datos de Presupuesto son del mes en curso (agosto 2026).
+
+**Decisión:** se reutiliza el insight ya canónico de Inicio (`insight` en `data/demo.ts`:
++145 € sobre lo previsto, con el desglose de Restaurantes +109 € y Transporte +36 €) en
+vez de inventar un mes anterior de la nada, que arriesgaba contradecir un futuro corte.
+Es la decisión más conservadora: la cifra ya existe, ya está verificada y ya se muestra en
+Inicio, así que la respuesta cuadra automáticamente con esa pantalla.
+
+**Duda 3:** «¿Me conviene amortizar el coche?» no fija un importe de amortización.
+
+**Decisión:** se simulan 1.500 € (razonable frente al saldo de 6.480 €), reutilizando
+`simulateExtraPayment` de `features/debts/domain.ts` — el mismo cálculo del simulador de
+la pantalla Deudas, no una fórmula nueva — para que ambas pantallas cuadren si se
+comparan.

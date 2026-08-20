@@ -40,7 +40,7 @@ const NAV_SECTIONS: NavSection[] = [
   },
   {
     title: 'Herramientas',
-    items: [{ label: 'Asistente e insights' }, { label: 'Conexiones y ajustes' }],
+    items: [{ label: 'Asistente e insights', to: '/asistente' }, { label: 'Conexiones y ajustes' }],
   },
 ]
 
