@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react'
 import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
 import { SectionLabel } from '../../components/SectionLabel'
+import { Skeleton } from '../../components/states/Skeleton'
 import {
   availableToday,
   commitments14d,
@@ -12,10 +14,32 @@ import {
 } from '../../data/demo'
 import { useHomeUIStore } from '../../store/useHomeUIStore'
 
+const LOADING_MS = 600
+
 /** Bloque 1 — Disponible hoy. Cifra hero + desglose expandible in-place (no modal). */
 export function AvailableTodayCard() {
   const showCalc = useHomeUIStore((s) => s.showCalc)
   const toggleCalc = useHomeUIStore((s) => s.toggleCalc)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const id = setTimeout(() => setLoading(false), LOADING_MS)
+    return () => clearTimeout(id)
+  }, [])
+
+  if (loading) {
+    return (
+      <Card className="flex flex-col gap-5" padding="lg">
+        <SectionLabel>Disponible hoy</SectionLabel>
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-[48px] w-64 lg:h-[72px] lg:w-80" label="Cargando tu Disponible hoy…" />
+          <Skeleton className="h-4 w-3/5" />
+          <Skeleton className="h-4 w-2/5" />
+        </div>
+        <div className="text-[15px] text-ink-muted">Cargando tu Disponible hoy…</div>
+      </Card>
+    )
+  }
 
   return (
     <Card className="flex flex-col gap-5" padding="lg">

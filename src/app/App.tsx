@@ -12,6 +12,7 @@ import { PlanningPage } from '../features/planning/PlanningPage'
 import { AssistantPage } from '../features/assistant/AssistantPage'
 import { SettingsPage } from '../features/settings/SettingsPage'
 import { MorePage } from './MorePage'
+import { StatesPage } from '../features/states/StatesPage'
 
 export function App() {
   return (
@@ -29,6 +30,7 @@ export function App() {
         <Route path="/asistente" element={<AssistantPage />} />
         <Route path="/ajustes" element={<SettingsPage />} />
         <Route path="/mas" element={<MorePage />} />
+        <Route path="/estados" element={<StatesPage />} />
       </Route>
     </Routes>
   )

@@ -4,8 +4,9 @@ import { ReviewCenter } from './ReviewCenter'
 import { TransactionPanel } from './TransactionPanel'
 import { TransactionsTable } from './TransactionsTable'
 import { useTransactionsStore, type TransactionsView } from './store'
+import { ErrorState } from '../../components/states/ErrorState'
 import { UndoBar } from '../../components/UndoBar'
-import { defaultUndoMessage, monthContextLabel, totalMovementsThisMonth } from '../../data/transactions'
+import { defaultUndoMessage, monthContextLabel, totalMovementsThisMonth, transactions } from '../../data/transactions'
 import { syncedAt } from '../../data/demo'
 
 const VIEWS: { value: TransactionsView; label: (reviewCount: number) => string }[] = [
@@ -75,12 +76,22 @@ export function TransactionsPage() {
       <Header />
       <main className="flex flex-1 flex-col gap-5 overflow-y-auto p-4 lg:p-8">
         {view === 'tabla' ? (
-          <>
-            <FilterBar />
-            <BulkActionsBar />
-            <TransactionsTable />
-            <UndoBar message={undoMessage ?? defaultUndoMessage} onUndo={dismissUndo} />
-          </>
+          transactions.length === 0 ? (
+            // No hay backend real que reintentar: este estado documenta el punto de
+            // integración para cuando exista (ver docs/DUDAS.md, corte 13).
+            <ErrorState
+              headline="No hemos podido cargar tus movimientos"
+              body="Puede ser un problema temporal de conexión con tu banco."
+              onRetry={() => {}}
+            />
+          ) : (
+            <>
+              <FilterBar />
+              <BulkActionsBar />
+              <TransactionsTable />
+              <UndoBar message={undoMessage ?? defaultUndoMessage} onUndo={dismissUndo} />
+            </>
+          )
         ) : (
           <>
             <ReviewCenter />

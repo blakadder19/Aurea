@@ -2,6 +2,7 @@ import { AllocatePanel } from './AllocatePanel'
 import { EmergencyFundCard } from './EmergencyFundCard'
 import { GoalCard } from './GoalCard'
 import { useGoalsStore } from './store'
+import { EmptyState } from '../../components/states/EmptyState'
 import { UndoBar } from '../../components/UndoBar'
 import { goals } from '../../data/goals'
 
@@ -30,17 +31,26 @@ function Header() {
 export function GoalsPage() {
   const undoMessage = useGoalsStore((s) => s.undoMessage)
   const undoLastContribution = useGoalsStore((s) => s.undoLastContribution)
+  const openPanel = useGoalsStore((s) => s.openPanel)
 
   return (
     <>
       <Header />
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
         <EmergencyFundCard />
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {goals.map((g) => (
-            <GoalCard key={g.id} goal={g} />
-          ))}
-        </div>
+        {goals.length === 0 ? (
+          <EmptyState
+            headline="Todavía no hay objetivos"
+            body="Crea el primero para ver aquí tu progreso real frente al previsto."
+            action={{ label: 'Crear un objetivo', onClick: openPanel }}
+          />
+        ) : (
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {goals.map((g) => (
+              <GoalCard key={g.id} goal={g} />
+            ))}
+          </div>
+        )}
         {undoMessage && <UndoBar message={undoMessage} onUndo={undoLastContribution} />}
       </main>
       <AllocatePanel />

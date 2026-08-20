@@ -1,8 +1,13 @@
+import { StaleDataNotice } from '../../components/states/StaleDataNotice'
+import { connections } from '../../data/settings'
+import { useSettingsStore } from '../settings/store'
 import { AllocationCard } from './AllocationCard'
 import { PortfolioSummaryCard } from './PortfolioSummaryCard'
 import { PositionsTable } from './PositionsTable'
 import { ProductTypeBreakdown } from './ProductTypeBreakdown'
 import { useInvestmentsStore, type InvestmentsView } from './store'
+
+const myInvestorBase = connections.find((c) => c.id === 'myinvestor')!
 
 const VIEWS: { value: InvestmentsView; label: string }[] = [
   { value: 'resumen', label: 'Resumen' },
@@ -55,11 +60,20 @@ function Header() {
 /** Pantalla Inversiones: valor y evolución, posiciones, y asignación frente a objetivo. */
 export function InvestmentsPage() {
   const isDetalle = useInvestmentsStore((s) => s.mode === 'detalle')
+  const myInvestorStatus = useSettingsStore((s) => s.connectionOverrides.myinvestor?.status ?? myInvestorBase.status)
+  const reconnect = useSettingsStore((s) => s.reconnect)
 
   return (
     <>
       <Header />
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
+        {myInvestorStatus === 'error' && (
+          <StaleDataNotice
+            ageLabel="hace 3 días"
+            body="MyInvestor no responde desde el 16 ago. Las cifras de Inversiones pueden no ser exactas."
+            onReconnect={() => reconnect('myinvestor')}
+          />
+        )}
         <PortfolioSummaryCard />
         <PositionsTable />
         {isDetalle && <ProductTypeBreakdown />}

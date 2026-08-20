@@ -1,5 +1,6 @@
 import type { KeyboardEvent } from 'react'
 import { Money } from '../../components/Money'
+import { NoSearchResults } from '../../components/states/NoSearchResults'
 import { transactions, type Transaction } from '../../data/transactions'
 import { useTransactionsStore } from './store'
 
@@ -108,6 +109,7 @@ function MobileCard({ transaction }: { transaction: Transaction }) {
 /** Tabla de movimientos con selección múltiple; tarjetas de fila por debajo de 1024 px. Busca en vivo por comercio. */
 export function TransactionsTable() {
   const searchQuery = useTransactionsStore((s) => s.searchQuery)
+  const setSearchQuery = useTransactionsStore((s) => s.setSearchQuery)
   const selectedIds = useTransactionsStore((s) => s.selectedIds)
   const setSelectedIds = useTransactionsStore((s) => s.setSelectedIds)
   const clearSelection = useTransactionsStore((s) => s.clearSelection)
@@ -118,8 +120,8 @@ export function TransactionsTable() {
 
   if (filtered.length === 0) {
     return (
-      <div className="shrink-0 rounded-card border border-line bg-surface px-5 py-16 text-center text-base text-ink-muted">
-        Ningún movimiento coincide con «{searchQuery}».
+      <div className="shrink-0">
+        <NoSearchResults query={searchQuery} onClearFilters={() => setSearchQuery('')} />
       </div>
     )
   }

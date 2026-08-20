@@ -181,3 +181,37 @@ diseña el patrón para Movimientos y las categorías de Presupuesto).
 línea secundaria con el resto de columnas) a las cuatro tablas restantes, manteniendo
 todas las columnas de la versión de escritorio — ninguna cifra se omite en la variante
 móvil.
+
+## Corte 13 — Estados de sistema
+
+Corte transversal: siete componentes compartidos en `src/components/states/` (`Skeleton`,
+`EmptyState`, `ErrorState`, `StaleDataNotice`, `SyncingNotice`, `NoSearchResults`; el
+séptimo, `UndoBar`, ya existía desde el corte 1 y ya se usaba en cinco features, así que
+no se duplica). Catálogo demostrable en `/estados` (enlazado desde una sección
+«Desarrollo» al final de Más, sin tocar las secciones del sidebar que el corte 11 dejó
+cerradas).
+
+**Duda 1:** los datos ficticios del proyecto son estáticos — no hay backend real que
+pueda fallar, tardar o traer resultados vacíos —, así que «vacío» y «error» no tienen
+ningún disparador natural en los datos actuales de Objetivos ni de Movimientos.
+
+**Decisión:** en vez de fabricar un interruptor de desarrollo en cada pantalla, se
+conectan los siete estados donde sí hay una razón real:
+- `Skeleton` en `AvailableTodayCard` (Inicio): carga real de 600 ms en cada visita,
+  respetando la silueta del bloque (mismo alto de cifra hero, mismas dos líneas de
+  párrafo).
+- `StaleDataNotice` en Inversiones y `SyncingNotice` en Cuentas y patrimonio: ambos leen
+  el mismo `connections` de `data/settings.ts` que ya usa la pantalla Ajustes (MyInvestor
+  en error, Revolut sincronizando) — no son datos nuevos, son los mismos, así que
+  «Reconectar ahora» en Inversiones dispara el mismo `reconnect()` del store de Ajustes y
+  el aviso desaparece de verdad en las dos pantallas a la vez.
+- `NoSearchResults` sustituye el texto plano que ya tenía `TransactionsTable` para
+  búsquedas sin resultado — se demuestra buscando cualquier texto que no exista en
+  Movimientos, y «Quitar filtros» limpia la búsqueda de verdad.
+- `EmptyState` (Objetivos, si `goals.length === 0`) y `ErrorState` (Movimientos, si
+  `transactions.length === 0`) quedan como rutas de código reales pero no alcanzables con
+  los datos fijos actuales — la decisión más conservadora era dejarlas conectadas sin
+  inventar un modo "vacío" o "caído" temporal solo para poder verlas, ya que `/estados`
+  ya las muestra sin necesidad de mutar datos reales. El botón "Reintentar" de ese
+  `ErrorState` no tiene nada que reintentar todavía (no hay backend); queda documentado
+  como punto de integración real, igual que `reconnect`/`confirmImport` del corte 11.

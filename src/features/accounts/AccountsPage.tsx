@@ -6,6 +6,11 @@ import { NetWorthKpis } from './NetWorthKpis'
 import { useAccountsStore, type AccountsView } from './store'
 import { CONTEXT_DATE, syncedAt } from '../../data/demo'
 import { formatMonthYearLong, formatWeekdayDate } from '../../lib/format'
+import { SyncingNotice } from '../../components/states/SyncingNotice'
+import { connections } from '../../data/settings'
+import { useSettingsStore } from '../settings/store'
+
+const revolutBase = connections.find((c) => c.id === 'revolut')!
 
 const PERIODS = ['Mes actual', '3 meses', 'Año', 'Personalizado']
 const VIEWS: { value: AccountsView; label: string }[] = [
@@ -91,11 +96,15 @@ function Header() {
 /** Pantalla Cuentas y patrimonio: KPIs, tabla de cuentas y desgloses en Detalle. */
 export function AccountsPage() {
   const isDetalle = useAccountsStore((s) => s.mode === 'detalle')
+  const revolutStatus = useSettingsStore((s) => s.connectionOverrides.revolut?.status ?? revolutBase.status)
 
   return (
     <>
       <Header />
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
+        {revolutStatus === 'syncing' && (
+          <SyncingNotice accountLabel="Revolut" body="Puede tardar hasta un minuto. Las demás cuentas ya están actualizadas." />
+        )}
         <NetWorthKpis />
         <AccountsTable />
         {isDetalle && <DetailBreakdowns />}
