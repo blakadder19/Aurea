@@ -1,0 +1,88 @@
+import { renderHook, waitFor } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
+import type { Session } from '@supabase/supabase-js'
+
+/**
+ * Query builder falso: cada método de encadenado se devuelve a sí mismo;
+ * `then` resuelve el fixture de esa tabla — mimetiza a propósito el
+ * query builder real de supabase-js, que también es thenable.
+ */
+function chainable(data: unknown[]) {
+  const builder: Record<string, unknown> = {}
+  for (const method of ['select', 'neq', 'order', 'in', 'limit']) {
+    builder[method] = () => builder
+  }
+  // oxlint-disable-next-line unicorn/no-thenable -- imita a propósito el query builder real de supabase-js.
+  builder.then = (resolve: (v: { data: unknown[] }) => unknown) => Promise.resolve(resolve({ data }))
+  return builder
+}
+
+const fixtures: Record<string, unknown[]> = {
+  accounts: [
+    { id: 'acc-1', name: 'Nómina', product: null, connection_id: 'conn-1', account_function: 'gastar' },
+    { id: 'acc-2', name: null, product: 'Cuenta ahorro', connection_id: 'conn-1', account_function: 'ahorro' },
+  ],
+  bank_connections: [{ id: 'conn-1', aspsp_name: 'Openbank' }],
+  balances: [
+    { account_id: 'acc-1', amount_cents: 423864 },
+    { account_id: 'acc-2', amount_cents: 1000000 },
+  ],
+  transactions: [
+    { account_id: 'acc-1', booking_date: '2026-08-19', value_date: null, description: 'Mercadona', amount_cents: -6218 },
+  ],
+}
+
+const mockFrom = vi.fn((table: string) => chainable(fixtures[table] ?? []))
+
+vi.mock('../../lib/supabase/client', () => ({
+  isSupabaseConfigured: true,
+  supabase: {
+    from: (table: string) => mockFrom(table),
+    auth: {
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+      onAuthStateChange: vi.fn(),
+    },
+  },
+}))
+
+const activeSession = { user: { id: 'user-1' } } as unknown as Session
+
+const { useAuthStore } = await import('../../lib/supabase/useAuth')
+const { useRealAccounts } = await import('./useRealAccounts')
+
+describe('useRealAccounts', () => {
+  it('sin sesión, devuelve accounts=null sin consultar Supabase', () => {
+    useAuthStore.setState({ session: null })
+    const { result } = renderHook(() => useRealAccounts())
+    expect(result.current.loading).toBe(false)
+    expect(result.current.accounts).toBeNull()
+  })
+
+  it('con sesión, arma Account[] a partir de accounts+balances+bank_connections+transactions', async () => {
+    useAuthStore.setState({ session: activeSession })
+    const { result } = renderHook(() => useRealAccounts())
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    expect(result.current.accounts).toEqual([
+      {
+        id: 'acc-1',
+        name: 'Nómina',
+        institution: 'Openbank',
+        fn: 'Para gastar',
+        balance: 4238.64,
+        countsInAvailableToday: true,
+        recentMovements: [{ date: '19 ago', label: 'Mercadona', amount: -62.18 }],
+      },
+      {
+        id: 'acc-2',
+        name: 'Cuenta ahorro',
+        institution: 'Openbank',
+        fn: 'Ahorro',
+        balance: 10000,
+        countsInAvailableToday: false,
+        recentMovements: [],
+      },
+    ])
+  })
+})

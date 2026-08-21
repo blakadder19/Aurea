@@ -13,10 +13,14 @@ import { AssistantPage } from '../features/assistant/AssistantPage'
 import { SettingsPage } from '../features/settings/SettingsPage'
 import { MorePage } from './MorePage'
 import { StatesPage } from '../features/states/StatesPage'
+import { LoginPage } from '../features/auth/LoginPage'
+import { BankConnectionCallback } from '../features/settings/BankConnectionCallback'
 
 export function App() {
   return (
     <Routes>
+      <Route path="/entrar" element={<LoginPage />} />
+      <Route path="/ajustes/banco/callback" element={<BankConnectionCallback />} />
       <Route element={<AppShell />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/movimientos" element={<TransactionsPage />} />

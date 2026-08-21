@@ -1,6 +1,8 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { currentUser } from '../data/demo'
 import { useTransactionsStore } from '../features/transactions/store'
+import { isSupabaseConfigured } from '../lib/supabase/client'
+import { useAuthStore } from '../lib/supabase/useAuth'
 import { BottomNav } from './BottomNav'
 
 export interface NavItem {
@@ -106,16 +108,48 @@ function Sidebar() {
         ))}
       </div>
 
-      <div className="flex items-center gap-3 border-t border-line pt-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-soft text-base font-bold text-green-text">
-          {currentUser.initials}
+      <div className="flex flex-col gap-3 border-t border-line pt-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-soft text-base font-bold text-green-text">
+            {currentUser.initials}
+          </div>
+          <div>
+            <div className="text-base font-semibold text-ink">{currentUser.name}</div>
+            <div className="text-[13px] text-ink-muted">{currentUser.note}</div>
+          </div>
         </div>
-        <div>
-          <div className="text-base font-semibold text-ink">{currentUser.name}</div>
-          <div className="text-[13px] text-ink-muted">{currentUser.note}</div>
-        </div>
+        <AuthLink />
       </div>
     </nav>
+  )
+}
+
+/** Enlace de acceso real: entrar (con tu banco) o cerrar la sesión real ya iniciada. */
+function AuthLink() {
+  const session = useAuthStore((s) => s.session)
+  const signOut = useAuthStore((s) => s.signOut)
+
+  if (!isSupabaseConfigured) return null
+
+  if (session) {
+    return (
+      <button
+        type="button"
+        onClick={() => void signOut()}
+        className="min-h-11 rounded-md border border-line px-3 text-left text-[15px] font-semibold text-ink-muted hover:bg-canvas"
+      >
+        Cerrar sesión real
+      </button>
+    )
+  }
+
+  return (
+    <Link
+      to="/entrar"
+      className="min-h-11 rounded-md border border-line px-3 py-2.5 text-[15px] font-semibold text-green hover:bg-canvas"
+    >
+      Entrar con tu banco real
+    </Link>
   )
 }
 

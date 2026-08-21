@@ -2,7 +2,7 @@ import type { KeyboardEvent } from 'react'
 import { Badge, type BadgeVariant } from '../../components/Badge'
 import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
-import { accounts, type Account, type AccountFunction } from '../../data/accounts'
+import { accounts as demoAccounts, type Account, type AccountFunction } from '../../data/accounts'
 import { useAccountsStore } from './store'
 
 const FUNCTION_BADGE: Record<AccountFunction, BadgeVariant> = {
@@ -123,7 +123,7 @@ function MobileCard({ account }: { account: Account }) {
 }
 
 /** Tabla de cuentas por función; tarjetas de fila por debajo de 1024 px. Cada fila abre el panel de detalle. */
-export function AccountsTable() {
+export function AccountsTable({ accounts = demoAccounts }: { accounts?: Account[] }) {
   return (
     <Card padding="lg" className="flex flex-col gap-5">
       <h2 className="font-serif text-2xl font-semibold text-ink">Tus cuentas por función</h2>

@@ -1,0 +1,120 @@
+import { useEffect, useState } from 'react'
+import type { Account, AccountFunction } from '../../data/accounts'
+import { supabase } from '../../lib/supabase/client'
+import { useAuthStore } from '../../lib/supabase/useAuth'
+
+/** account_function (esquema real) → AccountFunction (forma que ya consume la UI). */
+const FUNCTION_MAP: Record<string, AccountFunction> = {
+  gastar: 'Para gastar',
+  pagos: 'Para gastar',
+  ahorro: 'Ahorro',
+  inversion: 'Inversión',
+  deuda: 'Deuda',
+  activo_manual: 'Activo manual',
+  por_confirmar: 'Por confirmar',
+}
+
+interface RealAccountsResult {
+  loading: boolean
+  /** null mientras carga o si no hay sesión — no confundir con "cero cuentas". */
+  accounts: Account[] | null
+}
+
+/**
+ * Cuentas reales del usuario autenticado (Fase 1): accounts + balances +
+ * últimos movimientos por cuenta, con la misma forma que `Account` en
+ * data/accounts.ts — así AccountsTable/AccountDetailPanel no cambian nada.
+ * Las cuentas con account_function = 'excluida' no se muestran.
+ */
+export function useRealAccounts(): RealAccountsResult {
+  const session = useAuthStore((s) => s.session)
+  const [loading, setLoading] = useState(true)
+  const [accounts, setAccounts] = useState<Account[] | null>(null)
+
+  useEffect(() => {
+    if (!supabase || !session) {
+      setAccounts(null)
+      setLoading(false)
+      return
+    }
+
+    let cancelled = false
+    setLoading(true)
+
+    async function load() {
+      if (!supabase) return
+      const [{ data: accountRows }, { data: connectionRows }] = await Promise.all([
+        supabase
+          .from('accounts')
+          .select('id, name, product, connection_id, account_function')
+          .neq('account_function', 'excluida')
+          .order('created_at', { ascending: true }),
+        supabase.from('bank_connections').select('id, aspsp_name'),
+      ])
+      if (cancelled || !accountRows) return
+
+      const institutionByConnection = new Map((connectionRows ?? []).map((c) => [c.id, c.aspsp_name as string]))
+      const accountIds = accountRows.map((a) => a.id as string)
+      if (accountIds.length === 0) {
+        setAccounts([])
+        setLoading(false)
+        return
+      }
+
+      const [{ data: balanceRows }, { data: transactionRows }] = await Promise.all([
+        supabase.from('balances').select('account_id, amount_cents').in('account_id', accountIds),
+        supabase
+          .from('transactions')
+          .select('account_id, booking_date, value_date, description, amount_cents')
+          .in('account_id', accountIds)
+          .order('booking_date', { ascending: false })
+          .limit(80),
+      ])
+      if (cancelled) return
+
+      const balanceByAccount = new Map((balanceRows ?? []).map((b) => [b.account_id as string, b.amount_cents as number]))
+      const movementsByAccount = new Map<string, { date: string; label: string; amount: number }[]>()
+      for (const tx of transactionRows ?? []) {
+        const list = movementsByAccount.get(tx.account_id as string) ?? []
+        if (list.length >= 2) continue
+        const isoDate = (tx.booking_date as string | null) ?? (tx.value_date as string | null)
+        list.push({
+          date: isoDate ? formatShortDate(isoDate) : '',
+          label: (tx.description as string | null) || 'Movimiento',
+          amount: (tx.amount_cents as number) / 100,
+        })
+        movementsByAccount.set(tx.account_id as string, list)
+      }
+
+      const mapped: Account[] = accountRows.map((row) => {
+        const fn = FUNCTION_MAP[row.account_function as string] ?? 'Por confirmar'
+        return {
+          id: row.id as string,
+          name: (row.name as string | null) || (row.product as string | null) || 'Cuenta',
+          institution: institutionByConnection.get(row.connection_id as string) ?? 'Banco conectado',
+          fn,
+          balance: (balanceByAccount.get(row.id as string) ?? 0) / 100,
+          countsInAvailableToday: fn === 'Para gastar',
+          recentMovements: movementsByAccount.get(row.id as string) ?? [],
+        }
+      })
+
+      setAccounts(mapped)
+      setLoading(false)
+    }
+
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [session])
+
+  return { loading, accounts }
+}
+
+const MONTHS_ABBR = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+
+function formatShortDate(isoDate: string): string {
+  const [, month, day] = isoDate.split('-').map(Number)
+  return `${day} ${MONTHS_ABBR[month - 1]}`
+}

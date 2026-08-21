@@ -3,7 +3,7 @@ import { useRef } from 'react'
 import { Money } from '../../components/Money'
 import { SectionLabel } from '../../components/SectionLabel'
 import { SidePanel } from '../../components/SidePanel'
-import { accounts, type Account } from '../../data/accounts'
+import { accounts as demoAccounts, type Account } from '../../data/accounts'
 import { focusRowById } from '../../lib/dom'
 import { useAccountsStore } from './store'
 
@@ -99,7 +99,7 @@ function PanelContent({ account }: { account: Account }) {
 }
 
 /** Panel lateral de detalle de cuenta: se abre al hacer click en una fila. */
-export function AccountDetailPanel() {
+export function AccountDetailPanel({ accounts = demoAccounts }: { accounts?: Account[] }) {
   const accountId = useAccountsStore((s) => s.panelAccountId)
   const closePanel = useAccountsStore((s) => s.closePanel)
   const account = accounts.find((a) => a.id === accountId) ?? null

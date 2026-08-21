@@ -3,11 +3,15 @@ import { AccountDetailPanel } from './AccountDetailPanel'
 import { AccountsTable } from './AccountsTable'
 import { DetailBreakdowns } from './DetailBreakdowns'
 import { NetWorthKpis } from './NetWorthKpis'
+import { useRealAccounts } from './useRealAccounts'
+import { startBankConnection } from '../settings/bankConnection'
 import { useAccountsStore, type AccountsView } from './store'
 import { CONTEXT_DATE, syncedAt } from '../../data/demo'
 import { formatMonthYearLong, formatWeekdayDate } from '../../lib/format'
+import { EmptyState } from '../../components/states/EmptyState'
 import { SyncingNotice } from '../../components/states/SyncingNotice'
 import { connections } from '../../data/settings'
+import { useAuthStore } from '../../lib/supabase/useAuth'
 import { useSettingsStore } from '../settings/store'
 
 const revolutBase = connections.find((c) => c.id === 'revolut')!
@@ -97,19 +101,42 @@ function Header() {
 export function AccountsPage() {
   const isDetalle = useAccountsStore((s) => s.mode === 'detalle')
   const revolutStatus = useSettingsStore((s) => s.connectionOverrides.revolut?.status ?? revolutBase.status)
+  const session = useAuthStore((s) => s.session)
+  const { loading: loadingReal, accounts: realAccounts } = useRealAccounts()
+
+  const isAuthenticated = session !== null
+  const hasRealAccounts = isAuthenticated && !loadingReal && realAccounts !== null && realAccounts.length > 0
+
+  const realKpis = hasRealAccounts
+    ? realAccounts!.reduce(
+        (acc, a) => (a.balance >= 0 ? { ...acc, assets: acc.assets + a.balance } : { ...acc, liabilities: acc.liabilities - a.balance }),
+        { assets: 0, liabilities: 0 },
+      )
+    : null
 
   return (
     <>
       <Header />
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
-        {revolutStatus === 'syncing' && (
+        {!isAuthenticated && revolutStatus === 'syncing' && (
           <SyncingNotice accountLabel="Revolut" body="Puede tardar hasta un minuto. Las demás cuentas ya están actualizadas." />
         )}
-        <NetWorthKpis />
-        <AccountsTable />
-        {isDetalle && <DetailBreakdowns />}
+
+        {isAuthenticated && !loadingReal && realAccounts?.length === 0 ? (
+          <EmptyState
+            headline="Todavía no has conectado ningún banco"
+            body="Conecta tu banco para ver aquí tus cuentas y tu patrimonio real."
+            action={{ label: 'Conectar mi banco', onClick: () => void startBankConnection() }}
+          />
+        ) : (
+          <>
+            <NetWorthKpis kpis={hasRealAccounts ? { ...realKpis!, netWorth: realKpis!.assets - realKpis!.liabilities } : undefined} />
+            <AccountsTable accounts={hasRealAccounts ? realAccounts! : undefined} />
+            {isDetalle && !isAuthenticated && <DetailBreakdowns />}
+          </>
+        )}
       </main>
-      <AccountDetailPanel />
+      <AccountDetailPanel accounts={hasRealAccounts ? realAccounts! : undefined} />
     </>
   )
 }
