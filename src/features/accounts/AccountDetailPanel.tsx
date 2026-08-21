@@ -4,6 +4,7 @@ import { Money } from '../../components/Money'
 import { SectionLabel } from '../../components/SectionLabel'
 import { SidePanel } from '../../components/SidePanel'
 import { accounts, type Account } from '../../data/accounts'
+import { focusRowById } from '../../lib/dom'
 import { useAccountsStore } from './store'
 
 function PanelContent({ account }: { account: Account }) {
@@ -115,9 +116,7 @@ export function AccountDetailPanel() {
       onCloseAutoFocus={(event) => {
         event.preventDefault()
         const id = lastOpenedId.current
-        setTimeout(() => {
-          document.querySelector<HTMLElement>(`[data-row-id="${id}"]`)?.focus()
-        }, 0)
+        setTimeout(() => focusRowById(id), 0)
       }}
     >
       {account && <PanelContent key={account.id} account={account} />}

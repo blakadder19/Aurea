@@ -6,6 +6,7 @@ import { SectionLabel } from '../../components/SectionLabel'
 import { SidePanel } from '../../components/SidePanel'
 import { recurringItems, type RecurringItem } from '../../data/recurring'
 import { useRecurringStore } from './store'
+import { focusRowById } from '../../lib/dom'
 
 function PanelContent({ item, onResolve }: { item: RecurringItem; onResolve: (message: string) => void }) {
   return (
@@ -122,9 +123,7 @@ export function SubscriptionDetailPanel() {
       onCloseAutoFocus={(event) => {
         event.preventDefault()
         const id = lastOpenedId.current
-        setTimeout(() => {
-          document.querySelector<HTMLElement>(`[data-row-id="${id}"]`)?.focus()
-        }, 0)
+        setTimeout(() => focusRowById(id), 0)
       }}
     >
       {item && (

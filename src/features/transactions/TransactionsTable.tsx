@@ -73,6 +73,7 @@ function MobileCard({ transaction }: { transaction: Transaction }) {
     <div
       tabIndex={0}
       role="button"
+      data-row-id={transaction.id}
       aria-label={`Editar movimiento de ${transaction.comercio}`}
       onClick={() => openPanel(transaction.id)}
       onKeyDown={(e) => e.key === 'Enter' && openPanel(transaction.id)}

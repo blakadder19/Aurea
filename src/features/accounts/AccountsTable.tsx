@@ -79,6 +79,7 @@ function MobileCard({ account }: { account: Account }) {
     <div
       tabIndex={0}
       role="button"
+      data-row-id={account.id}
       aria-label={`Ver detalle de ${account.name}`}
       onClick={() => openPanel(account.id)}
       onKeyDown={(e) => e.key === 'Enter' && openPanel(account.id)}

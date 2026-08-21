@@ -5,6 +5,7 @@ import { SectionLabel } from '../../components/SectionLabel'
 import { SidePanel } from '../../components/SidePanel'
 import { filterCategories, transactions, type Transaction } from '../../data/transactions'
 import { useTransactionsStore } from './store'
+import { focusRowById } from '../../lib/dom'
 
 interface PanelContentProps {
   transaction: Transaction
@@ -116,9 +117,7 @@ export function TransactionPanel() {
         const id = lastOpenedId.current
         // Radix aún puede tener el fondo marcado inert/aria-hidden en este
         // instante; se aplaza al siguiente tick para que el foco no se pierda.
-        setTimeout(() => {
-          document.querySelector<HTMLElement>(`[data-row-id="${id}"]`)?.focus()
-        }, 0)
+        setTimeout(() => focusRowById(id), 0)
       }}
     >
       {transaction && (
