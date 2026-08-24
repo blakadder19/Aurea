@@ -1,0 +1,215 @@
+import { useEffect, useState } from 'react'
+import type { BudgetCategory } from '../../data/budget'
+import type { BudgetStatus } from '../../lib/budgetCalc'
+import { computeCategoryPace, daysElapsedInMonth, daysInMonth, forecastCents } from '../../lib/budgetCalc'
+import { formatMonthYearLong } from '../../lib/format'
+import { supabase } from '../../lib/supabase/client'
+import { useAuthStore } from '../../lib/supabase/useAuth'
+import type { RealCategory } from '../transactions/useRealCategories'
+import type { RealVerdict } from './MonthVerdictCard'
+
+export interface RealBudgetCategory {
+  categoryId: string
+  name: string
+  budgetedCents: number
+  spentCents: number
+  remainingCents: number
+  expectedPaceCents: number | null
+  paceDeltaCents: number | null
+  status: BudgetStatus
+}
+
+export interface RealBudgetSummary {
+  monthLabel: string
+  dayOfMonth: number
+  daysInMonthCount: number
+  totalBudgetedCents: number
+  totalSpentCents: number
+  totalRemainingCents: number
+  forecastCents: number
+  paceDeltaCents: number | null
+  categories: RealBudgetCategory[]
+}
+
+interface RealBudgetResult {
+  loading: boolean
+  /** null mientras carga, sin sesión, o mientras las categorías siguen cargando. */
+  budget: RealBudgetSummary | null
+  refetch: () => void
+}
+
+function monthStartIso(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
+}
+
+/**
+ * Presupuesto real del mes en curso: gasto por categoría calculado en vivo
+ * desde transactions (sin tabla de agregados), cruzado con los límites que
+ * el usuario haya guardado en budgets. Mismo patrón que useRealTransactions.
+ */
+export function useRealBudget(categories: RealCategory[] | null): RealBudgetResult {
+  const session = useAuthStore((s) => s.session)
+  const [loading, setLoading] = useState(true)
+  const [budget, setBudget] = useState<RealBudgetSummary | null>(null)
+  const [version, setVersion] = useState(0)
+
+  useEffect(() => {
+    if (!supabase || !session || categories === null) {
+      if (!supabase || !session) {
+        setBudget(null)
+        setLoading(false)
+      }
+      return
+    }
+
+    let cancelled = false
+    setLoading(true)
+
+    async function load() {
+      if (!supabase) return
+      const now = new Date()
+      const from = monthStartIso(now)
+      const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+      const to = monthStartIso(nextMonth)
+      const totalDays = daysInMonth(now.getFullYear(), now.getMonth())
+      const daysElapsed = daysElapsedInMonth(now)
+
+      const dateFilter =
+        `and(booking_date.gte.${from},booking_date.lt.${to}),` +
+        `and(booking_date.is.null,value_date.gte.${from},value_date.lt.${to})`
+
+      const [{ data: budgetRows, error: budgetError }, { data: txRows, error: txError }] = await Promise.all([
+        supabase.from('budgets').select('category_id, amount_cents').eq('month', from),
+        supabase.from('transactions').select('category_id, amount_cents').not('category_id', 'is', null).or(dateFilter),
+      ])
+      if (cancelled) return
+      if (budgetError || txError) {
+        console.error('useRealBudget: fallo al leer budgets/transactions', budgetError ?? txError)
+        setBudget(null)
+        setLoading(false)
+        return
+      }
+
+      const budgetedByCategory = new Map((budgetRows ?? []).map((b) => [b.category_id as string, b.amount_cents as number]))
+      const spentByCategory = new Map<string, number>()
+      for (const tx of txRows ?? []) {
+        const amount = tx.amount_cents as number
+        if (amount >= 0) continue // solo gasto: los ingresos no cuentan en el ritmo del presupuesto.
+        const categoryId = tx.category_id as string
+        spentByCategory.set(categoryId, (spentByCategory.get(categoryId) ?? 0) - amount)
+      }
+
+      const realCategories: RealBudgetCategory[] = (categories ?? []).map((c) => {
+        const budgetedCents = budgetedByCategory.get(c.id) ?? 0
+        const spentCents = spentByCategory.get(c.id) ?? 0
+        const pace = computeCategoryPace(budgetedCents, spentCents, daysElapsed, totalDays)
+        return { categoryId: c.id, name: c.name, ...pace }
+      })
+
+      const totalBudgetedCents = realCategories.reduce((sum, c) => sum + c.budgetedCents, 0)
+      const totalSpentCents = realCategories.reduce((sum, c) => sum + c.spentCents, 0)
+      const totalPace = computeCategoryPace(totalBudgetedCents, totalSpentCents, daysElapsed, totalDays)
+
+      setBudget({
+        monthLabel: formatMonthYearLong(now.getMonth(), now.getFullYear()),
+        dayOfMonth: daysElapsed,
+        daysInMonthCount: totalDays,
+        totalBudgetedCents,
+        totalSpentCents,
+        totalRemainingCents: totalPace.remainingCents,
+        forecastCents: forecastCents(totalSpentCents, daysElapsed, totalDays),
+        paceDeltaCents: totalPace.paceDeltaCents,
+        categories: realCategories,
+      })
+      setLoading(false)
+    }
+
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [session, categories, version])
+
+  return { loading, budget, refetch: () => setVersion((v) => v + 1) }
+}
+
+/** Guarda el presupuesto de una categoría para el mes en curso (upsert). RLS asegura que solo toca lo suyo. */
+export async function saveCategoryBudget(categoryId: string, amountCents: number): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  if (!Number.isInteger(amountCents) || amountCents < 0) return 'El importe debe ser un número entero mayor o igual que 0.'
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return 'Inicia sesión de nuevo para guardar el presupuesto.'
+
+  const month = monthStartIso(new Date())
+  const { error } = await supabase
+    .from('budgets')
+    .upsert({ user_id: user.id, category_id: categoryId, month, amount_cents: amountCents }, { onConflict: 'user_id,category_id,month' })
+  if (error) {
+    console.error('saveCategoryBudget: fallo al guardar', error)
+    return 'No hemos podido guardar el presupuesto. Inténtalo de nuevo.'
+  }
+  return null
+}
+
+const euros = (cents: number) => Math.round(cents / 100)
+
+function categoryDetail(c: RealBudgetCategory): string {
+  if (c.budgetedCents === 0) return 'Aún no le has puesto presupuesto a esta categoría.'
+  if (c.expectedPaceCents === null || c.paceDeltaCents === null) return ''
+  const deltaEur = euros(Math.abs(c.paceDeltaCents))
+  const pct = Math.round((c.expectedPaceCents / c.budgetedCents) * 100)
+  return c.paceDeltaCents > 0
+    ? `Ritmo esperado hoy: ${pct} %. Vas ${deltaEur} € por encima del ritmo.`
+    : `Ritmo esperado hoy: ${pct} %. Vas ${deltaEur} € por debajo del ritmo.`
+}
+
+/** Convierte el resumen real (céntimos) a la misma forma (euros) que ya consumen MonthVerdictCard/CategoryList. */
+export function toBudgetViewModel(real: RealBudgetSummary): { verdict: RealVerdict; categories: BudgetCategory[] } {
+  const { totalBudgetedCents, totalSpentCents, paceDeltaCents } = real
+
+  let headline: string
+  let badgeLabel: string
+  let badgeVariant: RealVerdict['badgeVariant']
+  if (totalBudgetedCents === 0) {
+    headline = 'Aún no has puesto presupuesto este mes'
+    badgeLabel = 'Sin presupuesto'
+    badgeVariant = 'neutral'
+  } else if (paceDeltaCents !== null && paceDeltaCents > 0) {
+    headline = `Vas ${euros(paceDeltaCents)} € por encima del ritmo previsto`
+    badgeLabel = 'Por encima'
+    badgeVariant = 'warning'
+  } else {
+    headline = 'Vas al ritmo previsto'
+    badgeLabel = 'Al día'
+    badgeVariant = 'success'
+  }
+
+  const paceRealPct = totalBudgetedCents > 0 ? (totalSpentCents / totalBudgetedCents) * 100 : null
+  const paceExpectedPct =
+    totalBudgetedCents > 0 ? (real.categories.reduce((s, c) => s + (c.expectedPaceCents ?? 0), 0) / totalBudgetedCents) * 100 : null
+
+  return {
+    verdict: {
+      headline,
+      badgeLabel,
+      badgeVariant,
+      paceRealPct,
+      paceExpectedPct,
+      presupuestado: euros(totalBudgetedCents),
+      gastado: euros(totalSpentCents),
+      restante: euros(real.totalRemainingCents),
+      previsionCierre: euros(real.forecastCents),
+    },
+    categories: real.categories.map((c) => ({
+      id: c.categoryId,
+      name: c.name,
+      budgeted: euros(c.budgetedCents),
+      spent: euros(c.spentCents),
+      status: c.status,
+      detail: categoryDetail(c),
+    })),
+  }
+}

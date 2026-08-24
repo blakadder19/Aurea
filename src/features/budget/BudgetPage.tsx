@@ -3,15 +3,18 @@ import { CategoryList } from './CategoryList'
 import { MonthVerdictCard } from './MonthVerdictCard'
 import { NonSpendCards } from './NonSpendCards'
 import { useBudgetStore, type BudgetView } from './store'
+import { saveCategoryBudget, toBudgetViewModel, useRealBudget } from './useRealBudget'
+import { useRealCategories } from '../transactions/useRealCategories'
 import { UndoBar } from '../../components/UndoBar'
 import { budgetSummary } from '../../data/budget'
+import { useAuthStore } from '../../lib/supabase/useAuth'
 
 const VIEWS: { value: BudgetView; label: string }[] = [
   { value: 'resumen', label: 'Resumen' },
   { value: 'detalle', label: 'Detalle' },
 ]
 
-function Header() {
+function Header({ isAuthenticated, monthLabel, dayOfMonth, daysInMonthCount }: { isAuthenticated: boolean; monthLabel: string; dayOfMonth: number; daysInMonthCount: number }) {
   const mode = useBudgetStore((s) => s.mode)
   const setMode = useBudgetStore((s) => s.setMode)
   const openPanel = useBudgetStore((s) => s.openPanel)
@@ -22,7 +25,7 @@ function Header() {
         <div>
           <h1 className="font-serif text-[32px] font-semibold tracking-[-0.01em] text-ink">Presupuesto</h1>
           <div className="mt-1 text-base text-ink-muted">
-            {budgetSummary.monthLabel} · día {budgetSummary.dayOfMonth} de {budgetSummary.daysInMonth}
+            {monthLabel} · día {dayOfMonth} de {daysInMonthCount}
           </div>
         </div>
         <button
@@ -55,6 +58,11 @@ function Header() {
           ))}
         </div>
       </div>
+      {isAuthenticated && (
+        <p className="text-sm text-ink-muted">
+          Sin "Comprometido": todavía no hay movimientos planificados en Aurea, solo lo ya gastado.
+        </p>
+      )}
     </header>
   )
 }
@@ -63,17 +71,44 @@ function Header() {
 export function BudgetPage() {
   const savedMessage = useBudgetStore((s) => s.savedMessage)
   const undoSave = useBudgetStore((s) => s.undoSave)
+  const session = useAuthStore((s) => s.session)
+
+  const { categories: realCategories } = useRealCategories()
+  const { loading: loadingReal, budget: realBudget, refetch } = useRealBudget(realCategories)
+
+  const isAuthenticated = session !== null
+  const hasRealBudget = isAuthenticated && !loadingReal && realBudget !== null
+  const viewModel = hasRealBudget ? toBudgetViewModel(realBudget!) : null
+
+  async function handleSaveCategoryBudget(categoryId: string, amountCents: number) {
+    return saveCategoryBudget(categoryId, amountCents)
+  }
 
   return (
     <>
-      <Header />
+      <Header
+        isAuthenticated={isAuthenticated}
+        monthLabel={hasRealBudget ? realBudget!.monthLabel : budgetSummary.monthLabel}
+        dayOfMonth={hasRealBudget ? realBudget!.dayOfMonth : budgetSummary.dayOfMonth}
+        daysInMonthCount={hasRealBudget ? realBudget!.daysInMonthCount : budgetSummary.daysInMonth}
+      />
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
-        <MonthVerdictCard />
-        <CategoryList />
-        <NonSpendCards />
+        <MonthVerdictCard real={viewModel?.verdict} />
+        <CategoryList categories={viewModel?.categories} />
+        {!isAuthenticated && <NonSpendCards />}
         {savedMessage && <UndoBar message={savedMessage} onUndo={undoSave} />}
       </main>
-      <AdjustBudgetPanel />
+      <AdjustBudgetPanel
+        real={
+          hasRealBudget
+            ? {
+                categories: realBudget!.categories.map((c) => ({ categoryId: c.categoryId, name: c.name, budgetedCents: c.budgetedCents })),
+                onSave: handleSaveCategoryBudget,
+                onSaved: refetch,
+              }
+            : undefined
+        }
+      />
     </>
   )
 }
