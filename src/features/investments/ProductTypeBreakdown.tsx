@@ -1,9 +1,9 @@
 import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
-import { positions } from '../../data/investments'
+import { positions as demoPositions, type Position } from '../../data/investments'
 
 /** Solo en Detalle: desglose por tipo de producto (no repite la tabla de posiciones). */
-export function ProductTypeBreakdown() {
+export function ProductTypeBreakdown({ positions = demoPositions }: { positions?: Position[] }) {
   const byType = new Map<string, number>()
   for (const p of positions) {
     byType.set(p.productType, (byType.get(p.productType) ?? 0) + p.value)
