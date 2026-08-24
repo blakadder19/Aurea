@@ -1,11 +1,17 @@
+import { useState } from 'react'
 import { DebtsTable } from './DebtsTable'
+import { EditDebtDetailPanel } from './EditDebtDetailPanel'
 import { ExtraPaymentPanel } from './ExtraPaymentPanel'
 import { StrategyComparisonCard } from './StrategyComparisonCard'
 import { useDebtsStore } from './store'
+import { saveDebtDetails, toDebtTableRow, useRealDebts } from './useRealDebts'
+import { useRealAccounts } from '../accounts/useRealAccounts'
+import { EmptyState } from '../../components/states/EmptyState'
 import { Money } from '../../components/Money'
 import { totalDebt } from '../../data/debts'
+import { useAuthStore } from '../../lib/supabase/useAuth'
 
-function Header() {
+function Header({ isAuthenticated, totalCents, count }: { isAuthenticated: boolean; totalCents: number; count: number }) {
   const openSimulator = useDebtsStore((s) => s.openSimulator)
 
   return (
@@ -13,7 +19,12 @@ function Header() {
       <div>
         <h1 className="font-serif text-[32px] font-semibold tracking-[-0.01em] text-ink">Deudas</h1>
         <div className="mt-1 text-base text-ink-muted tabular">
-          <Money value={totalDebt} /> pendientes en 4 deudas
+          {isAuthenticated ? (
+            <Money value={totalCents / 100} />
+          ) : (
+            <Money value={totalDebt} />
+          )}{' '}
+          pendientes en {count} deuda{count === 1 ? '' : 's'}
         </div>
       </div>
       <button
@@ -30,14 +41,56 @@ function Header() {
 
 /** Pantalla Deudas: tabla, comparación de estrategias, y simulador de pago extraordinario. */
 export function DebtsPage() {
+  const session = useAuthStore((s) => s.session)
+  const [editingAccountId, setEditingAccountId] = useState<string | null>(null)
+
+  const { loading: loadingAccounts, accounts: realAccounts } = useRealAccounts()
+  const { loading: loadingDebts, debts: realDebts, refetch } = useRealDebts(realAccounts)
+
+  const isAuthenticated = session !== null
+  const loadingReal = loadingAccounts || loadingDebts
+  const hasRealDebts = isAuthenticated && !loadingReal && realDebts !== null && realDebts.length > 0
+  const today = new Date()
+
+  const totalCents = realDebts?.reduce((sum, d) => sum + d.balanceCents, 0) ?? 0
+  const editingDebt = realDebts?.find((d) => d.accountId === editingAccountId) ?? null
+
+  async function handleSaveDetail(accountId: string, annualRateBps: number, monthlyPaymentCents: number | null, nextPaymentDate: string | null) {
+    return saveDebtDetails(accountId, annualRateBps, monthlyPaymentCents, nextPaymentDate)
+  }
+
   return (
     <>
-      <Header />
+      <Header isAuthenticated={isAuthenticated} totalCents={totalCents} count={isAuthenticated ? (realDebts?.length ?? 0) : 4} />
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
-        <DebtsTable />
-        <StrategyComparisonCard />
+        {isAuthenticated && !loadingReal && realDebts?.length === 0 ? (
+          <EmptyState
+            headline="No tienes ninguna cuenta marcada como Deuda"
+            body="Clasifica una cuenta como «Deuda» en Cuentas y patrimonio para verla aquí."
+            action={{ label: 'Ir a Cuentas y patrimonio', to: '/cuentas' }}
+          />
+        ) : (
+          <>
+            <DebtsTable
+              debts={hasRealDebts ? realDebts!.map(toDebtTableRow) : undefined}
+              asOf={hasRealDebts ? today : undefined}
+              syncNote={hasRealDebts ? null : undefined}
+              onEditDetail={hasRealDebts ? setEditingAccountId : undefined}
+            />
+            {!isAuthenticated && <StrategyComparisonCard />}
+          </>
+        )}
       </main>
-      <ExtraPaymentPanel />
+      <ExtraPaymentPanel debts={hasRealDebts ? realDebts!.map(toDebtTableRow) : undefined} asOf={hasRealDebts ? today : undefined} />
+      <EditDebtDetailPanel
+        debt={editingDebt}
+        onClose={() => setEditingAccountId(null)}
+        onSave={handleSaveDetail}
+        onDone={() => {
+          refetch()
+          setEditingAccountId(null)
+        }}
+      />
     </>
   )
 }

@@ -2,21 +2,32 @@ import { Link } from 'react-router-dom'
 import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
 import { CONTEXT_DATE, syncedAt } from '../../data/demo'
-import { debts } from '../../data/debts'
+import { debts as demoDebts, type Debt } from '../../data/debts'
 import { formatMonthYearShort, monthsToPayoff } from './domain'
 
 const TH = 'border-b border-line pb-2.5 text-right text-[13px] font-semibold tracking-[0.06em] text-ink-muted uppercase'
 const TD = 'border-b border-[#f0f3f1] py-4 text-right text-base whitespace-nowrap'
 
-function payoffLabelFor(d: (typeof debts)[number]): string {
+function payoffLabelFor(d: Debt, asOf: Date): string {
   const months = d.monthlyPayment ? monthsToPayoff(d.balance, d.annualRate, d.monthlyPayment) : null
   if (months === null) return 'Según uso'
   if (!Number.isFinite(months)) return 'Indefinido'
-  return formatMonthYearShort(new Date(CONTEXT_DATE.getFullYear(), CONTEXT_DATE.getMonth() + months, 1))
+  return formatMonthYearShort(new Date(asOf.getFullYear(), asOf.getMonth() + months, 1))
 }
 
-/** Tabla de las cuatro deudas: saldo, tipo, cuota, próximo pago y fin previsto. */
-export function DebtsTable() {
+/** Tabla de deudas: saldo, tipo, cuota, próximo pago y fin previsto. */
+export function DebtsTable({
+  debts = demoDebts,
+  asOf = CONTEXT_DATE,
+  syncNote = `Sincronizado hoy a las ${syncedAt}`,
+  onEditDetail,
+}: {
+  debts?: Debt[]
+  asOf?: Date
+  syncNote?: string | null
+  /** Solo en real: abre el panel para editar tipo/cuota/próximo pago de esa deuda. */
+  onEditDetail?: (accountId: string) => void
+}) {
   return (
     <Card padding="lg" className="flex flex-col gap-4">
       <div className="hidden overflow-x-auto -m-1 p-1 lg:block">
@@ -43,6 +54,11 @@ export function DebtsTable() {
                       Ver en Pagos y suscripciones
                     </Link>
                   )}
+                  {onEditDetail && (
+                    <button type="button" onClick={() => onEditDetail(d.id)} className="ml-2 border-b border-green text-sm font-semibold text-green">
+                      Editar detalle
+                    </button>
+                  )}
                 </td>
                 <td className={`${TD} font-bold text-danger-text`}>
                   <Money value={-d.balance} />
@@ -54,7 +70,7 @@ export function DebtsTable() {
                 </td>
                 <td className={`${TD} text-ink`}>{d.paymentLabel}</td>
                 <td className={`${TD} text-ink-muted`}>{d.nextPaymentLabel}</td>
-                <td className={`${TD} text-ink-muted`}>{payoffLabelFor(d)}</td>
+                <td className={`${TD} text-ink-muted`}>{payoffLabelFor(d, asOf)}</td>
               </tr>
             ))}
           </tbody>
@@ -75,15 +91,20 @@ export function DebtsTable() {
                 Ver en Pagos y suscripciones
               </Link>
             )}
+            {onEditDetail && (
+              <button type="button" onClick={() => onEditDetail(d.id)} className="self-start border-b border-green text-sm font-semibold text-green">
+                Editar detalle
+              </button>
+            )}
             <div className="text-sm text-ink-muted">
               {d.annualRate === 0 ? '0 %' : `${(d.annualRate * 100).toLocaleString('es-ES', { minimumFractionDigits: 2 })} %`} ·{' '}
-              {d.paymentLabel} · próximo pago {d.nextPaymentLabel} · fin previsto {payoffLabelFor(d)}
+              {d.paymentLabel} · próximo pago {d.nextPaymentLabel} · fin previsto {payoffLabelFor(d, asOf)}
             </div>
           </div>
         ))}
       </div>
 
-      <div className="text-sm text-ink-muted">Sincronizado hoy a las {syncedAt}</div>
+      {syncNote && <div className="text-sm text-ink-muted">{syncNote}</div>}
     </Card>
   )
 }

@@ -4,18 +4,28 @@ import { Money } from '../../components/Money'
 import { SectionLabel } from '../../components/SectionLabel'
 import { SidePanel } from '../../components/SidePanel'
 import { CONTEXT_DATE } from '../../data/demo'
-import { debts } from '../../data/debts'
+import { debts as demoDebts, type Debt } from '../../data/debts'
 import { formatDuration, formatMonthYearShort, simulateExtraPayment } from './domain'
 import { useDebtsStore } from './store'
 
-const amortizingDebts = debts.filter((d) => d.monthlyPayment !== null)
-
-function SimulatorForm() {
-  const [debtId, setDebtId] = useState(amortizingDebts[0].id)
+function SimulatorForm({ debts, asOf }: { debts: Debt[]; asOf: Date }) {
+  const amortizingDebts = debts.filter((d) => d.monthlyPayment !== null)
+  const [debtId, setDebtId] = useState(amortizingDebts[0]?.id ?? '')
   const [extra, setExtra] = useState(3000)
   const debt = amortizingDebts.find((d) => d.id === debtId) ?? amortizingDebts[0]
 
-  const result = simulateExtraPayment(debt.balance, debt.annualRate, debt.monthlyPayment!, extra, CONTEXT_DATE)
+  if (!debt) {
+    return (
+      <>
+        <Dialog.Title className="font-serif text-[26px] font-semibold text-ink">Pago extraordinario</Dialog.Title>
+        <p className="text-base text-ink-muted">
+          Ninguna deuda tiene cuota mensual definida todavía — añade el detalle de una deuda en la tabla para poder simular.
+        </p>
+      </>
+    )
+  }
+
+  const result = simulateExtraPayment(debt.balance, debt.annualRate, debt.monthlyPayment!, extra, asOf)
 
   return (
     <>
@@ -92,7 +102,7 @@ function SimulatorForm() {
 }
 
 /** Panel simulador de pago extraordinario: importe → intereses ahorrados, tiempo y nueva fecha de fin. */
-export function ExtraPaymentPanel() {
+export function ExtraPaymentPanel({ debts = demoDebts, asOf = CONTEXT_DATE }: { debts?: Debt[]; asOf?: Date }) {
   const open = useDebtsStore((s) => s.simulatorOpen)
   const closeSimulator = useDebtsStore((s) => s.closeSimulator)
 
@@ -107,7 +117,7 @@ export function ExtraPaymentPanel() {
         }, 0)
       }}
     >
-      {open && <SimulatorForm />}
+      {open && <SimulatorForm debts={debts} asOf={asOf} />}
     </SidePanel>
   )
 }
