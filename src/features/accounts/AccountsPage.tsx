@@ -3,7 +3,7 @@ import { AccountDetailPanel } from './AccountDetailPanel'
 import { AccountsTable } from './AccountsTable'
 import { DetailBreakdowns } from './DetailBreakdowns'
 import { NetWorthKpis } from './NetWorthKpis'
-import { updateAccountFunction, useRealAccounts } from './useRealAccounts'
+import { updateAccountFunction, updateAccountSharePercent, useRealAccounts } from './useRealAccounts'
 import type { AccountFunction } from '../../data/accounts'
 import { startBankConnection } from '../settings/bankConnection'
 import { useAccountsStore, type AccountsView } from './store'
@@ -118,12 +118,21 @@ export function AccountsPage() {
     return error
   }
 
+  async function handleChangeSharePercent(accountId: string, percent: number) {
+    const error = await updateAccountSharePercent(accountId, percent)
+    if (!error) refetch()
+    return error
+  }
+
   const isAuthenticated = session !== null
   const hasRealAccounts = isAuthenticated && !loadingReal && realAccounts !== null && realAccounts.length > 0
 
   const realKpis = hasRealAccounts
     ? realAccounts!.reduce(
-        (acc, a) => (a.balance >= 0 ? { ...acc, assets: acc.assets + a.balance } : { ...acc, liabilities: acc.liabilities - a.balance }),
+        (acc, a) => {
+          const share = a.balance * ((a.sharePercent ?? 100) / 100)
+          return share >= 0 ? { ...acc, assets: acc.assets + share } : { ...acc, liabilities: acc.liabilities - share }
+        },
         { assets: 0, liabilities: 0 },
       )
     : null
@@ -154,6 +163,7 @@ export function AccountsPage() {
       <AccountDetailPanel
         accounts={hasRealAccounts ? realAccounts! : undefined}
         onChangeFunction={hasRealAccounts ? handleChangeFunction : undefined}
+        onChangeSharePercent={hasRealAccounts ? handleChangeSharePercent : undefined}
       />
     </>
   )

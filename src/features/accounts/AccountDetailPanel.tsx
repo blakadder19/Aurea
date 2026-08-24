@@ -12,12 +12,17 @@ const ASSIGNABLE_FUNCTIONS: AccountFunction[] = ['Para gastar', 'Ahorro', 'Inver
 function PanelContent({
   account,
   onChangeFunction,
+  onChangeSharePercent,
 }: {
   account: Account
   onChangeFunction?: (accountId: string, fn: AccountFunction) => Promise<string | null>
+  onChangeSharePercent?: (accountId: string, percent: number) => Promise<string | null>
 }) {
   const [savingFn, setSavingFn] = useState(false)
   const [fnError, setFnError] = useState<string | null>(null)
+  const [shareInput, setShareInput] = useState(String(account.sharePercent ?? 100))
+  const [savingShare, setSavingShare] = useState(false)
+  const [shareError, setShareError] = useState<string | null>(null)
 
   async function handleFunctionChange(fn: AccountFunction) {
     if (!onChangeFunction) return
@@ -26,6 +31,20 @@ function PanelContent({
     const error = await onChangeFunction(account.id, fn)
     if (error) setFnError(error)
     setSavingFn(false)
+  }
+
+  async function handleSaveSharePercent() {
+    if (!onChangeSharePercent) return
+    const percent = Number(shareInput)
+    if (!Number.isInteger(percent) || percent < 0 || percent > 100) {
+      setShareError('Debe ser un número entero entre 0 y 100.')
+      return
+    }
+    setSavingShare(true)
+    setShareError(null)
+    const error = await onChangeSharePercent(account.id, percent)
+    if (error) setShareError(error)
+    setSavingShare(false)
   }
 
   return (
@@ -98,6 +117,36 @@ function PanelContent({
             {account.countsInAvailableToday ? 'Sí' : 'No'}
           </span>
         </div>
+        {onChangeSharePercent && (
+          <div className="flex items-center justify-between text-[15px] text-ink-muted">
+            <span>% que cuenta como tuyo</span>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={100}
+                aria-label="Porcentaje que cuenta como patrimonio propio"
+                value={shareInput}
+                disabled={savingShare}
+                onChange={(e) => setShareInput(e.target.value)}
+                className="min-h-11 w-[72px] rounded-md border border-line bg-surface px-2 text-right text-[15px] font-semibold text-ink"
+              />
+              <span className="font-semibold text-ink">%</span>
+              {shareInput !== String(account.sharePercent ?? 100) && (
+                <button
+                  type="button"
+                  disabled={savingShare}
+                  onClick={() => void handleSaveSharePercent()}
+                  className="min-h-11 rounded-md border border-green px-3 text-sm font-semibold text-green"
+                >
+                  Guardar
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+        {shareError && <p className="text-right text-sm text-danger-text">{shareError}</p>}
       </div>
 
       <h3 className="mt-2 text-[17px] font-bold text-ink">Movimientos recientes</h3>
@@ -146,9 +195,11 @@ function PanelContent({
 export function AccountDetailPanel({
   accounts = demoAccounts,
   onChangeFunction,
+  onChangeSharePercent,
 }: {
   accounts?: Account[]
   onChangeFunction?: (accountId: string, fn: AccountFunction) => Promise<string | null>
+  onChangeSharePercent?: (accountId: string, percent: number) => Promise<string | null>
 }) {
   const accountId = useAccountsStore((s) => s.panelAccountId)
   const closePanel = useAccountsStore((s) => s.closePanel)
@@ -169,7 +220,14 @@ export function AccountDetailPanel({
         setTimeout(() => focusRowById(id), 0)
       }}
     >
-      {account && <PanelContent key={account.id} account={account} onChangeFunction={onChangeFunction} />}
+      {account && (
+        <PanelContent
+          key={account.id}
+          account={account}
+          onChangeFunction={onChangeFunction}
+          onChangeSharePercent={onChangeSharePercent}
+        />
+      )}
     </SidePanel>
   )
 }

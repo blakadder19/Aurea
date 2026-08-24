@@ -36,6 +36,22 @@ export async function updateAccountFunction(accountId: string, fn: AccountFuncti
   return null
 }
 
+/**
+ * Escribe qué porcentaje del saldo de una cuenta cuenta como patrimonio
+ * propio del usuario (0-100, 100 por defecto) — pensado para cuentas
+ * compartidas (p. ej. una cuenta conjunta), pero aplicable a cualquier cuenta.
+ */
+export async function updateAccountSharePercent(accountId: string, percent: number): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  if (!Number.isInteger(percent) || percent < 0 || percent > 100) return 'Debe ser un número entero entre 0 y 100.'
+  const { error } = await supabase.from('accounts').update({ share_percent: percent }).eq('id', accountId)
+  if (error) {
+    console.error('updateAccountSharePercent: fallo al guardar', error)
+    return 'No hemos podido guardar el cambio. Inténtalo de nuevo.'
+  }
+  return null
+}
+
 interface RealAccountsResult {
   loading: boolean
   /** null mientras carga o si no hay sesión — no confundir con "cero cuentas". */
@@ -71,7 +87,7 @@ export function useRealAccounts(): RealAccountsResult {
       const [{ data: accountRows, error: accountsError }, { data: connectionRows }] = await Promise.all([
         supabase
           .from('accounts')
-          .select('id, name, product, connection_id, account_function')
+          .select('id, name, product, connection_id, account_function, share_percent')
           .neq('account_function', 'excluida')
           .order('created_at', { ascending: true }),
         supabase.from('bank_connections').select('id, aspsp_name'),
@@ -125,6 +141,7 @@ export function useRealAccounts(): RealAccountsResult {
           institution: institutionByConnection.get(row.connection_id as string) ?? 'Banco conectado',
           fn,
           balance: (balanceByAccount.get(row.id as string) ?? 0) / 100,
+          sharePercent: (row.share_percent as number | null) ?? 100,
           countsInAvailableToday: fn === 'Para gastar',
           recentMovements: movementsByAccount.get(row.id as string) ?? [],
         }

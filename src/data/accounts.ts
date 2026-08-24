@@ -34,6 +34,8 @@ export interface Account {
   foreign?: { amount: number; currency: string; rate: number; rateDate: string }
   countsInAvailableToday: boolean
   recentMovements: AccountMovement[]
+  /** % del saldo que cuenta como patrimonio propio (cuentas compartidas). undefined = 100, como siempre. */
+  sharePercent?: number
 }
 
 export const accounts: Account[] = [
