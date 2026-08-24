@@ -106,12 +106,18 @@ function PanelContent({ item, onResolve }: { item: RecurringItem; onResolve: (me
   )
 }
 
+interface SubscriptionDetailPanelProps {
+  items?: RecurringItem[]
+  onResolve?: (item: RecurringItem, message: string) => void
+}
+
 /** Panel genérico de detalle: se abre desde cualquier fila de la lista o el calendario. */
-export function SubscriptionDetailPanel() {
+export function SubscriptionDetailPanel({ items: itemsProp, onResolve: onResolveProp }: SubscriptionDetailPanelProps = {}) {
   const itemId = useRecurringStore((s) => s.panelItemId)
   const closePanel = useRecurringStore((s) => s.closePanel)
   const showUndo = useRecurringStore((s) => s.showUndo)
-  const item = recurringItems.find((i) => i.id === itemId) ?? null
+  const source = itemsProp ?? recurringItems
+  const item = source.find((i) => i.id === itemId) ?? null
 
   const lastOpenedId = useRef<string | null>(null)
   if (itemId) lastOpenedId.current = itemId
@@ -131,7 +137,8 @@ export function SubscriptionDetailPanel() {
           key={item.id}
           item={item}
           onResolve={(message) => {
-            showUndo(message)
+            if (onResolveProp) onResolveProp(item, message)
+            else showUndo(message)
             closePanel()
           }}
         />

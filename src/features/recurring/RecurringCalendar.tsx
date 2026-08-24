@@ -1,19 +1,57 @@
 import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
-import { augustCalendarDays, income31Ago } from '../../data/recurring'
+import { augustCalendarDays, income31Ago, type RecurringItem } from '../../data/recurring'
+import { monthCalendarDays, type DetectedGroup } from '../../lib/recurringCalc'
 
 const WEEKDAY_HEADERS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+const MONTHS_FULL = [
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
+]
+
+interface RealCalendarProps {
+  groups: DetectedGroup[]
+  items: RecurringItem[]
+}
+
+interface RecurringCalendarProps {
+  real?: RealCalendarProps
+}
 
 /**
- * Vista Calendario: rejilla de agosto con el total del día en una sola línea.
+ * Vista Calendario: rejilla del mes con el total del día en una sola línea.
  * Solo informativo (como la referencia): el detalle se abre desde la Lista.
+ * En real, sin ingreso fabricado: solo se muestran cargos detectados.
  */
-export function RecurringCalendar() {
-  const cells = augustCalendarDays()
+export function RecurringCalendar({ real }: RecurringCalendarProps = {}) {
+  const today = new Date()
+  const year = real ? today.getFullYear() : 2026
+  const monthIndex0 = real ? today.getMonth() : 7
+  const todayDay = real ? today.getDate() : 19
+
+  const itemById = new Map((real?.items ?? []).map((i) => [i.id, i]))
+  const cells = real
+    ? monthCalendarDays(year, monthIndex0, real.groups).map((c) => ({
+        day: c.day,
+        items: c.dedupeKeys.map((k) => itemById.get(k)).filter((i): i is RecurringItem => !!i),
+      }))
+    : augustCalendarDays()
 
   return (
     <Card padding="lg">
-      <div className="mb-4 text-xl font-bold text-ink">Agosto de 2026</div>
+      <div className="mb-4 text-xl font-bold text-ink">
+        {MONTHS_FULL[monthIndex0]} de {year}
+      </div>
 
       <div className="mb-2 grid grid-cols-7 gap-2 text-center text-[13px] font-semibold text-ink-muted">
         {WEEKDAY_HEADERS.map((d) => (
@@ -25,9 +63,9 @@ export function RecurringCalendar() {
         {cells.map((cell, i) => {
           if (cell.day === null) return <div key={`empty-${i}`} />
 
-          const isToday = cell.day === 19
+          const isToday = cell.day === todayDay
           const total = cell.items.reduce((sum, item) => sum + item.amount, 0)
-          const income = cell.day === 31 ? income31Ago.amount : 0
+          const income = !real && cell.day === 31 ? income31Ago.amount : 0
           const label = cell.items.length > 1 ? `${cell.items.length} cargos` : cell.items[0]?.shortName
 
           return (

@@ -17,7 +17,7 @@ const HIGHLIGHT_BG: Record<'warning' | 'danger' | 'info', string> = {
   info: 'bg-info-bg',
 }
 
-function Row({ item }: { item: RecurringItem }) {
+function Row({ item, onResolveHighlight }: { item: RecurringItem; onResolveHighlight?: (item: RecurringItem) => void }) {
   const openPanel = useRecurringStore((s) => s.openPanel)
   const showUndo = useRecurringStore((s) => s.showUndo)
 
@@ -65,6 +65,7 @@ function Row({ item }: { item: RecurringItem }) {
                 onClick={(e) => {
                   e.stopPropagation()
                   if (action.kind === 'view') openPanel(item.id)
+                  else if (onResolveHighlight) onResolveHighlight(item)
                   else showUndo(item.highlight!.resolvedMessage)
                 }}
                 className="min-h-11 rounded-md border border-line bg-surface px-4 py-2.5 text-base font-semibold whitespace-nowrap text-ink"
@@ -79,14 +80,21 @@ function Row({ item }: { item: RecurringItem }) {
   )
 }
 
+interface RecurringListProps {
+  items?: RecurringItem[]
+  onResolveHighlight?: (item: RecurringItem) => void
+}
+
 /** Vista Lista: tres bloques agrupados, con subtotales calculados a partir de los datos reales. */
-export function RecurringList() {
+export function RecurringList({ items: itemsProp, onResolveHighlight }: RecurringListProps = {}) {
+  const source = itemsProp ?? recurringItems
   const categories: RecurringItem['category'][] = ['esenciales', 'suscripciones', 'otros']
 
   return (
     <div className="flex flex-col gap-6">
       {categories.map((category) => {
-        const items = recurringItems.filter((i) => i.category === category)
+        const items = source.filter((i) => i.category === category)
+        if (items.length === 0) return null
         const subtotal = items.reduce((sum, i) => sum + i.amount, 0)
         return (
           <div key={category}>
@@ -96,7 +104,7 @@ export function RecurringList() {
             </SectionLabel>
             <div className="overflow-hidden rounded-card border border-line bg-surface">
               {items.map((item) => (
-                <Row key={item.id} item={item} />
+                <Row key={item.id} item={item} onResolveHighlight={onResolveHighlight} />
               ))}
             </div>
           </div>
