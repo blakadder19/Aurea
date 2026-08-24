@@ -10,11 +10,11 @@ import { useGoalsStore } from './store'
 const FILL_BY_STATUS = { success: 'bg-green', danger: 'bg-danger' } as const
 
 /** Una tarjeta de objetivo con badge de estado, progreso y fecha estimada. */
-export function GoalCard({ goal }: { goal: Goal }) {
+export function GoalCard({ goal, asOf = CONTEXT_DATE }: { goal: Goal; asOf?: Date }) {
   const extra = useGoalsStore((s) => s.extraSaved[goal.id] ?? 0)
   const saved = goal.saved + extra
 
-  const { progressPct, projectedDate } = goalForecast(saved, goal.target, goal.monthlyContribution, CONTEXT_DATE)
+  const { progressPct, projectedDate } = goalForecast(saved, goal.target, goal.monthlyContribution, asOf)
 
   return (
     <Card className="flex flex-col gap-4" padding="lg">

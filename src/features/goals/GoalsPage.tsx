@@ -1,28 +1,43 @@
+import { useState } from 'react'
 import { AllocatePanel } from './AllocatePanel'
 import { EmergencyFundCard } from './EmergencyFundCard'
 import { GoalCard } from './GoalCard'
+import { RealGoalPanel, type RealGoalPanelMode } from './RealGoalPanel'
 import { useGoalsStore } from './store'
+import { contributeToGoal, createGoal, toGoalCardProps, useRealGoals } from './useRealGoals'
 import { EmptyState } from '../../components/states/EmptyState'
 import { UndoBar } from '../../components/UndoBar'
-import { goals } from '../../data/goals'
+import { goals as demoGoals } from '../../data/goals'
+import { useAuthStore } from '../../lib/supabase/useAuth'
 
-function Header() {
+function Header({ isAuthenticated, count, onCreate, onContribute }: { isAuthenticated: boolean; count: number; onCreate: () => void; onContribute: () => void }) {
   const openPanel = useGoalsStore((s) => s.openPanel)
 
   return (
     <header className="flex flex-wrap items-start justify-between gap-4 border-b border-line bg-surface px-4 py-5 lg:px-8">
       <div>
         <h1 className="font-serif text-[32px] font-semibold tracking-[-0.01em] text-ink">Objetivos</h1>
-        <div className="mt-1 text-base text-ink-muted">{goals.length + 1} objetivos activos</div>
+        <div className="mt-1 text-base text-ink-muted">{count} objetivo{count === 1 ? '' : 's'} activo{count === 1 ? '' : 's'}</div>
       </div>
-      <button
-        type="button"
-        id="registrar-aportacion-btn"
-        onClick={openPanel}
-        className="min-h-11 rounded-md border border-green bg-green px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-green-hover"
-      >
-        Registrar aportación
-      </button>
+      <div className="flex flex-wrap gap-2.5">
+        {isAuthenticated && (
+          <button
+            type="button"
+            onClick={onCreate}
+            className="min-h-11 rounded-md border border-line bg-surface px-[18px] py-2.5 text-base font-semibold text-ink hover:bg-canvas"
+          >
+            Nuevo objetivo
+          </button>
+        )}
+        <button
+          type="button"
+          id="registrar-aportacion-btn"
+          onClick={isAuthenticated ? onContribute : openPanel}
+          className="min-h-11 rounded-md border border-green bg-green px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-green-hover"
+        >
+          Registrar aportación
+        </button>
+      </div>
     </header>
   )
 }
@@ -31,29 +46,65 @@ function Header() {
 export function GoalsPage() {
   const undoMessage = useGoalsStore((s) => s.undoMessage)
   const undoLastContribution = useGoalsStore((s) => s.undoLastContribution)
-  const openPanel = useGoalsStore((s) => s.openPanel)
+  const session = useAuthStore((s) => s.session)
+  const [panelMode, setPanelMode] = useState<RealGoalPanelMode>(null)
+
+  const { loading: loadingReal, goals: realGoals, refetch } = useRealGoals()
+
+  const isAuthenticated = session !== null
+  const hasRealGoals = isAuthenticated && !loadingReal && realGoals !== null && realGoals.length > 0
+  const today = new Date()
+
+  async function handleCreate(name: string, targetCents: number, monthlyContributionCents: number) {
+    return createGoal(name, targetCents, monthlyContributionCents)
+  }
+
+  async function handleContribute(goalId: string, currentSavedCents: number, amountCents: number) {
+    return contributeToGoal(goalId, currentSavedCents, amountCents)
+  }
+
+  const count = isAuthenticated ? (realGoals?.length ?? 0) : demoGoals.length + 1
 
   return (
     <>
-      <Header />
+      <Header
+        isAuthenticated={isAuthenticated}
+        count={count}
+        onCreate={() => setPanelMode('create')}
+        onContribute={() => setPanelMode('contribute')}
+      />
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
-        <EmergencyFundCard />
-        {goals.length === 0 ? (
+        {!isAuthenticated && <EmergencyFundCard />}
+        {isAuthenticated && !loadingReal && realGoals?.length === 0 ? (
           <EmptyState
             headline="Todavía no hay objetivos"
             body="Crea el primero para ver aquí tu progreso real frente al previsto."
-            action={{ label: 'Crear un objetivo', onClick: openPanel }}
+            action={{ label: 'Crear un objetivo', onClick: () => setPanelMode('create') }}
           />
         ) : (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {goals.map((g) => (
-              <GoalCard key={g.id} goal={g} />
-            ))}
+            {hasRealGoals
+              ? realGoals!.map((g) => <GoalCard key={g.id} goal={toGoalCardProps(g)} asOf={today} />)
+              : demoGoals.map((g) => <GoalCard key={g.id} goal={g} />)}
           </div>
         )}
-        {undoMessage && <UndoBar message={undoMessage} onUndo={undoLastContribution} />}
+        {!isAuthenticated && undoMessage && <UndoBar message={undoMessage} onUndo={undoLastContribution} />}
       </main>
-      <AllocatePanel />
+      {isAuthenticated ? (
+        <RealGoalPanel
+          mode={panelMode}
+          goals={realGoals ?? []}
+          onClose={() => setPanelMode(null)}
+          onCreate={handleCreate}
+          onContribute={handleContribute}
+          onDone={() => {
+            refetch()
+            setPanelMode(null)
+          }}
+        />
+      ) : (
+        <AllocatePanel />
+      )}
     </>
   )
 }
