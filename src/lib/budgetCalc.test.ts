@@ -17,11 +17,11 @@ describe('daysElapsedInMonth', () => {
 })
 
 describe('computeCategoryPace', () => {
-  it('sin presupuesto (0), no hay ritmo esperado ni delta', () => {
+  it('sin presupuesto (0), no hay ritmo esperado ni delta, y el estado es "Sin presupuesto" (no "Al día")', () => {
     const pace = computeCategoryPace(0, 5000, 19, 31)
     expect(pace.expectedPaceCents).toBeNull()
     expect(pace.paceDeltaCents).toBeNull()
-    expect(pace.status).toBe('Al día')
+    expect(pace.status).toBe('Sin presupuesto')
   })
 
   it('gasto por encima del ritmo esperado → Por encima', () => {

@@ -15,7 +15,7 @@ export const budgetSummary = {
   paceExpected: 61,
 }
 
-export type CategoryStatus = 'Al día' | 'Por encima' | 'Agotado'
+export type CategoryStatus = 'Al día' | 'Por encima' | 'Agotado' | 'Sin presupuesto'
 
 export interface BudgetCategory {
   id: string

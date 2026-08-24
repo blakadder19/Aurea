@@ -6,7 +6,7 @@
  * movimientos planificados todavía), sin jerarquía de categorías.
  */
 
-export type BudgetStatus = 'Al día' | 'Por encima' | 'Agotado'
+export type BudgetStatus = 'Al día' | 'Por encima' | 'Agotado' | 'Sin presupuesto'
 
 export interface CategoryPace {
   budgetedCents: number
@@ -33,9 +33,11 @@ export function computeCategoryPace(budgetedCents: number, spentCents: number, d
   const expectedPaceCents = budgetedCents > 0 ? Math.round((budgetedCents * daysElapsed) / totalDays) : null
   const paceDeltaCents = expectedPaceCents !== null ? spentCents - expectedPaceCents : null
 
-  let status: BudgetStatus = 'Al día'
-  if (budgetedCents > 0 && spentCents >= budgetedCents) status = 'Agotado'
+  let status: BudgetStatus
+  if (budgetedCents === 0) status = 'Sin presupuesto'
+  else if (spentCents >= budgetedCents) status = 'Agotado'
   else if (paceDeltaCents !== null && paceDeltaCents > 0) status = 'Por encima'
+  else status = 'Al día'
 
   return { budgetedCents, spentCents, remainingCents, expectedPaceCents, paceDeltaCents, status }
 }

@@ -7,13 +7,14 @@ const STATUS_STYLE = {
   'Al día': { chip: 'bg-green-soft text-green-text', fill: 'bg-green' },
   'Por encima': { chip: 'bg-warning-bg text-warning-text', fill: 'bg-warning' },
   Agotado: { chip: 'bg-danger-bg text-danger-text', fill: 'bg-danger' },
+  'Sin presupuesto': { chip: 'bg-canvas text-ink-muted', fill: 'bg-ink-muted' },
 } as const
 
 /** Una fila de categoría: nombre, cifras, chip de estado, barra y (en Detalle) explicación. */
 export function CategoryRow({ category }: { category: BudgetCategory }) {
   const isDetalle = useBudgetStore((s) => s.mode === 'detalle')
   const budgeted = useBudgetStore((s) => s.categoryBudgets[category.id] ?? category.budgeted)
-  const pct = (category.spent / budgeted) * 100
+  const pct = budgeted > 0 ? (category.spent / budgeted) * 100 : 0
   const style = STATUS_STYLE[category.status]
 
   return (
