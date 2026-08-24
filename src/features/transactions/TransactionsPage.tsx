@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BulkActionsBar } from './BulkActionsBar'
 import { FilterBar } from './FilterBar'
 import { RealReviewCenter } from './RealReviewCenter'
@@ -82,6 +83,7 @@ export function TransactionsPage() {
   const view = useTransactionsStore((s) => s.view)
   const undoMessage = useTransactionsStore((s) => s.undoMessage)
   const dismissUndo = useTransactionsStore((s) => s.dismissUndo)
+  const clearSelection = useTransactionsStore((s) => s.clearSelection)
   const session = useAuthStore((s) => s.session)
 
   const { categories: realCategories } = useRealCategories()
@@ -90,6 +92,13 @@ export function TransactionsPage() {
   const isAuthenticated = session !== null
   const hasRealTransactions = isAuthenticated && !loadingReal && realTransactions !== null && realTransactions.length > 0
   const realReviewCount = realTransactions?.filter((t) => !t.categoryId || t.needsReview).length ?? 0
+
+  // La selección por defecto de la demo (AMZN/Zara) no tiene sentido en real:
+  // esos ids nunca corresponden a un movimiento real, pero seguirían contando
+  // como "seleccionados" en la barra de acciones en lote.
+  useEffect(() => {
+    if (isAuthenticated) clearSelection()
+  }, [isAuthenticated, clearSelection])
 
   async function handleSaveCategory(id: string, categoryId: string) {
     const error = await updateTransactionCategory(id, categoryId || null)
