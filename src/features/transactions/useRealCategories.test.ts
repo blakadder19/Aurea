@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { Session } from '@supabase/supabase-js'
 
 /**
- * Query builder falso: select/order son no-op; insert() sustituye los datos
+ * Query builder falso: select/order son no-op; upsert() sustituye los datos
  * por las filas sembradas (con id sintético) — así el mismo builder sirve
  * para "ya tenía categorías" y para "las siembra porque no tenía ninguna".
  */
@@ -12,7 +12,7 @@ function chainable(initialData: unknown[]) {
   const builder: Record<string, unknown> = {}
   builder.select = () => builder
   builder.order = () => builder
-  builder.insert = (rows: { name: string; category_group: string }[]) => {
+  builder.upsert = (rows: { name: string; category_group: string }[]) => {
     data = rows.map((r, i) => ({ id: `seed-${i}`, name: r.name }))
     return builder
   }

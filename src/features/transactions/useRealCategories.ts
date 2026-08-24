@@ -67,7 +67,10 @@ export function useRealCategories(): RealCategoriesResult {
 
       const { data: seeded, error: seedError } = await supabase
         .from('categories')
-        .insert(DEFAULT_CATEGORIES.map((c) => ({ user_id: userId, name: c.name, category_group: c.group })))
+        .upsert(
+          DEFAULT_CATEGORIES.map((c) => ({ user_id: userId, name: c.name, category_group: c.group })),
+          { onConflict: 'user_id,name' },
+        )
         .select('id, name')
       if (cancelled) return
       if (seedError) {
