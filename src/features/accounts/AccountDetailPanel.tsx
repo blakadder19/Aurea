@@ -9,6 +9,11 @@ import { useAccountsStore } from './store'
 
 const ASSIGNABLE_FUNCTIONS: AccountFunction[] = ['Para gastar', 'Ahorro', 'Inversión', 'Deuda', 'Activo manual']
 
+/** Enable Banking pone "NOMBRE1 & NOMBRE2" cuando la cuenta tiene más de un titular. */
+function looksJoint(name: string): boolean {
+  return / & /.test(name)
+}
+
 function PanelContent({
   account,
   onChangeFunction,
@@ -117,7 +122,7 @@ function PanelContent({
             {account.countsInAvailableToday ? 'Sí' : 'No'}
           </span>
         </div>
-        {onChangeSharePercent && (
+        {onChangeSharePercent && looksJoint(account.name) && (
           <div className="flex items-center justify-between text-[15px] text-ink-muted">
             <span>% que cuenta como tuyo</span>
             <div className="flex items-center gap-2">
