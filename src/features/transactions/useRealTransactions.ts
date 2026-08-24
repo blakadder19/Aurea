@@ -158,9 +158,14 @@ export async function createRuleFromTransaction(
   const value = matchValue.trim()
   if (!value) return { error: 'No hay texto de comercio con el que crear la regla.', appliedCount: 0 }
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'Inicia sesión de nuevo para crear la regla.', appliedCount: 0 }
+
   const { error: insertError } = await supabase
     .from('rules')
-    .insert({ match_field: 'description', match_value: value, category_id: categoryId })
+    .insert({ user_id: user.id, match_field: 'description', match_value: value, category_id: categoryId })
   if (insertError) {
     console.error('createRuleFromTransaction: fallo al crear la regla', insertError)
     return { error: 'No hemos podido crear la regla. Inténtalo de nuevo.', appliedCount: 0 }

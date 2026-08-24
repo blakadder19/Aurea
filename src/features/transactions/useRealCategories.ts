@@ -46,6 +46,7 @@ export function useRealCategories(): RealCategoriesResult {
 
     let cancelled = false
     setLoading(true)
+    const userId = session.user.id
 
     async function load() {
       if (!supabase) return
@@ -66,7 +67,7 @@ export function useRealCategories(): RealCategoriesResult {
 
       const { data: seeded, error: seedError } = await supabase
         .from('categories')
-        .insert(DEFAULT_CATEGORIES.map((c) => ({ name: c.name, category_group: c.group })))
+        .insert(DEFAULT_CATEGORIES.map((c) => ({ user_id: userId, name: c.name, category_group: c.group })))
         .select('id, name')
       if (cancelled) return
       if (seedError) {
