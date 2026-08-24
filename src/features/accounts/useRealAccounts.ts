@@ -43,7 +43,7 @@ export function useRealAccounts(): RealAccountsResult {
 
     async function load() {
       if (!supabase) return
-      const [{ data: accountRows }, { data: connectionRows }] = await Promise.all([
+      const [{ data: accountRows, error: accountsError }, { data: connectionRows }] = await Promise.all([
         supabase
           .from('accounts')
           .select('id, name, product, connection_id, account_function')
@@ -51,7 +51,13 @@ export function useRealAccounts(): RealAccountsResult {
           .order('created_at', { ascending: true }),
         supabase.from('bank_connections').select('id, aspsp_name'),
       ])
-      if (cancelled || !accountRows) return
+      if (cancelled) return
+      if (accountsError || !accountRows) {
+        console.error('useRealAccounts: fallo al leer accounts', accountsError)
+        setAccounts([])
+        setLoading(false)
+        return
+      }
 
       const institutionByConnection = new Map((connectionRows ?? []).map((c) => [c.id, c.aspsp_name as string]))
       const accountIds = accountRows.map((a) => a.id as string)
