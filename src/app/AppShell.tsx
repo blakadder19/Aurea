@@ -1,6 +1,8 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { currentUser } from '../data/demo'
 import { useTransactionsStore } from '../features/transactions/store'
+import { useRealCategories } from '../features/transactions/useRealCategories'
+import { useRealTransactions } from '../features/transactions/useRealTransactions'
 import { isSupabaseConfigured } from '../lib/supabase/client'
 import { useAuthStore } from '../lib/supabase/useAuth'
 import { BottomNav } from './BottomNav'
@@ -53,7 +55,14 @@ export const NAV_SECTIONS: NavSection[] = [
 /** Barra lateral fija de 250 px. Inicio, Movimientos y Presupuesto navegan: el resto llega en cortes posteriores. */
 function Sidebar() {
   const location = useLocation()
-  const reviewCount = useTransactionsStore((s) => s.reviewItems.length)
+  const session = useAuthStore((s) => s.session)
+  const demoReviewCount = useTransactionsStore((s) => s.reviewItems.length)
+  const { categories: realCategories } = useRealCategories()
+  const { transactions: realTransactions } = useRealTransactions(realCategories)
+  const reviewCount =
+    session !== null && realTransactions !== null
+      ? realTransactions.filter((t) => !t.categoryId || t.needsReview).length
+      : demoReviewCount
 
   return (
     <nav className="hidden w-[250px] shrink-0 flex-col gap-6 border-r border-line bg-surface p-5 py-7 lg:flex">

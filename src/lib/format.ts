@@ -53,6 +53,12 @@ export function formatDayMonth(day: number, monthIndex0: number): string {
   return `${day} ${MONTHS_ABBR[monthIndex0]}`
 }
 
+/** "19 ago", a partir de una fecha ISO "2026-08-19" (evita líos de huso horario parseando a mano). */
+export function formatIsoDayMonth(isoDate: string): string {
+  const [, month, day] = isoDate.split('-').map(Number)
+  return formatDayMonth(day, month - 1)
+}
+
 /** "19 ago 2026" */
 export function formatDayMonthYear(day: number, monthIndex0: number, year: number): string {
   return `${formatDayMonth(day, monthIndex0)} ${year}`

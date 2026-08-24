@@ -1,21 +1,31 @@
 import { useState } from 'react'
 import { filterAccounts, filterCategories } from '../../data/transactions'
-import { useTransactionsStore } from './store'
+import { ALL_ACCOUNTS, ALL_CATEGORIES, useTransactionsStore } from './store'
 
 const SELECT_CLASSES =
   'min-h-11 rounded-md border border-line bg-surface px-3 py-2.5 text-[15px] text-ink'
 
 /**
- * Buscador (filtra de verdad por comercio) + 4 selects reales con estado
- * que no filtran todavía (llegan en cortes posteriores).
+ * Buscador + filtros de Cuenta y Categoría (filtran de verdad, en demo y en
+ * real). Fecha y Estado siguen siendo cosméticos: no hay un equivalente
+ * real claro todavía (un movimiento sincronizado del banco no tiene un
+ * "estado" binario, y "Este mes" no encaja con la ventana de sincronización).
  */
-export function FilterBar() {
+export function FilterBar({
+  accounts = filterAccounts,
+  categories = filterCategories,
+}: {
+  accounts?: string[]
+  categories?: string[]
+}) {
   const searchQuery = useTransactionsStore((s) => s.searchQuery)
   const setSearchQuery = useTransactionsStore((s) => s.setSearchQuery)
+  const account = useTransactionsStore((s) => s.accountFilter)
+  const setAccount = useTransactionsStore((s) => s.setAccountFilter)
+  const category = useTransactionsStore((s) => s.categoryFilter)
+  const setCategory = useTransactionsStore((s) => s.setCategoryFilter)
 
   const [date, setDate] = useState('Este mes')
-  const [account, setAccount] = useState('Todas las cuentas')
-  const [category, setCategory] = useState('Todas las categorías')
   const [status, setStatus] = useState('Cualquier estado')
 
   return (
@@ -41,8 +51,8 @@ export function FilterBar() {
         onChange={(e) => setAccount(e.target.value)}
         className={SELECT_CLASSES}
       >
-        <option>Todas las cuentas</option>
-        {filterAccounts.map((a) => (
+        <option>{ALL_ACCOUNTS}</option>
+        {accounts.map((a) => (
           <option key={a}>{a}</option>
         ))}
       </select>
@@ -52,8 +62,8 @@ export function FilterBar() {
         onChange={(e) => setCategory(e.target.value)}
         className={SELECT_CLASSES}
       >
-        <option>Todas las categorías</option>
-        {filterCategories.map((c) => (
+        <option>{ALL_CATEGORIES}</option>
+        {categories.map((c) => (
           <option key={c}>{c}</option>
         ))}
       </select>

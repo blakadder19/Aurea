@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Account, AccountFunction } from '../../data/accounts'
+import { formatIsoDayMonth } from '../../lib/format'
 import { supabase } from '../../lib/supabase/client'
 import { useAuthStore } from '../../lib/supabase/useAuth'
 
@@ -126,7 +127,7 @@ export function useRealAccounts(): RealAccountsResult {
         if (list.length >= 2) continue
         const isoDate = (tx.booking_date as string | null) ?? (tx.value_date as string | null)
         list.push({
-          date: isoDate ? formatShortDate(isoDate) : '',
+          date: isoDate ? formatIsoDayMonth(isoDate) : '',
           label: (tx.description as string | null) || 'Movimiento',
           amount: (tx.amount_cents as number) / 100,
         })
@@ -159,11 +160,4 @@ export function useRealAccounts(): RealAccountsResult {
   }, [session, version])
 
   return { loading, accounts, refetch: () => setVersion((v) => v + 1) }
-}
-
-const MONTHS_ABBR = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
-
-function formatShortDate(isoDate: string): string {
-  const [, month, day] = isoDate.split('-').map(Number)
-  return `${day} ${MONTHS_ABBR[month - 1]}`
 }

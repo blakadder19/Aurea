@@ -3,18 +3,167 @@ import { useRef, useState } from 'react'
 import { Money } from '../../components/Money'
 import { SectionLabel } from '../../components/SectionLabel'
 import { SidePanel } from '../../components/SidePanel'
-import { filterCategories, transactions, type Transaction } from '../../data/transactions'
-import { useTransactionsStore } from './store'
+import { filterCategories, transactions as demoTransactions, type Transaction } from '../../data/transactions'
 import { focusRowById } from '../../lib/dom'
+import { useTransactionsStore } from './store'
+import type { RealCategory } from './useRealCategories'
+import type { RealTransaction } from './useRealTransactions'
 
-interface PanelContentProps {
-  transaction: Transaction
-  onSave: (category: string) => void
-}
+const LABEL_CLASSES = 'flex flex-col gap-1.5 text-sm font-semibold text-ink-muted'
+const INPUT_CLASSES = 'min-h-11 rounded-md border border-line px-3 py-[11px] text-base text-ink'
+const SECONDARY_BUTTON = 'min-h-11 self-start rounded-md border border-line px-4 py-2.5 text-base font-semibold text-ink'
 
-function PanelContent({ transaction, onSave }: PanelContentProps) {
+/** Categoría/Etiquetas/Notas de la demo: nada se persiste, "Guardar" solo enseña un toast de deshacer. */
+function DemoFields({ transaction, onSave }: { transaction: Transaction; onSave: (category: string) => void }) {
   const [category, setCategory] = useState(transaction.categoria)
 
+  return (
+    <>
+      <label className={LABEL_CLASSES}>
+        Categoría
+        <select value={category} onChange={(e) => setCategory(e.target.value)} className={INPUT_CLASSES}>
+          {filterCategories.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className={LABEL_CLASSES}>
+        Etiquetas
+        <input placeholder="p. ej. compra semanal" className={INPUT_CLASSES} />
+      </label>
+      <label className={LABEL_CLASSES}>
+        Notas
+        <textarea rows={3} className={`resize-y ${INPUT_CLASSES}`} />
+      </label>
+      <button type="button" className={SECONDARY_BUTTON}>
+        Dividir en varias categorías
+      </button>
+      <button type="button" className={SECONDARY_BUTTON}>
+        Adjuntar recibo
+      </button>
+      <button
+        type="button"
+        onClick={() => onSave(category)}
+        className="mt-2 min-h-11 rounded-md border border-green bg-green px-4 py-3 text-base font-bold text-surface hover:bg-green-hover"
+      >
+        Guardar cambios
+      </button>
+    </>
+  )
+}
+
+interface RealFieldsProps {
+  transaction: RealTransaction
+  categories: RealCategory[]
+  onSaveCategory: (id: string, categoryId: string) => Promise<string | null>
+  onSaveNotesAndTags: (id: string, note: string, tags: string[]) => Promise<string | null>
+  onCreateRule: (matchValue: string, categoryId: string) => Promise<{ error: string | null; appliedCount: number }>
+  onClose: () => void
+}
+
+/** Categoría/Etiquetas/Notas reales: cada cambio persiste de verdad en Supabase, bajo RLS. */
+function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTags, onCreateRule, onClose }: RealFieldsProps) {
+  const [categoryId, setCategoryId] = useState(transaction.categoryId ?? '')
+  const [tagsInput, setTagsInput] = useState(transaction.tags.join(', '))
+  const [noteInput, setNoteInput] = useState(transaction.userNote)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [ruleMessage, setRuleMessage] = useState<string | null>(null)
+
+  async function handleSave() {
+    setSaving(true)
+    setError(null)
+    const tags = tagsInput
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean)
+    const errors = await Promise.all([
+      categoryId !== (transaction.categoryId ?? '') ? onSaveCategory(transaction.id, categoryId) : null,
+      onSaveNotesAndTags(transaction.id, noteInput, tags),
+    ])
+    setSaving(false)
+    const firstError = errors.find((e): e is string => Boolean(e))
+    if (firstError) setError(firstError)
+    else onClose()
+  }
+
+  async function handleCreateRule() {
+    if (!categoryId) return
+    setSaving(true)
+    setError(null)
+    const { error: err, appliedCount } = await onCreateRule(transaction.comercio, categoryId)
+    setSaving(false)
+    if (err) setError(err)
+    else setRuleMessage(`Regla creada. ${appliedCount} movimiento${appliedCount === 1 ? '' : 's'} clasificado${appliedCount === 1 ? '' : 's'} con «${transaction.comercio}».`)
+  }
+
+  return (
+    <>
+      <label className={LABEL_CLASSES}>
+        Categoría
+        <select
+          value={categoryId}
+          disabled={saving}
+          onChange={(e) => setCategoryId(e.target.value)}
+          className={INPUT_CLASSES}
+        >
+          {!categoryId && <option value="">Sin clasificar</option>}
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className={LABEL_CLASSES}>
+        Etiquetas
+        <input
+          value={tagsInput}
+          disabled={saving}
+          onChange={(e) => setTagsInput(e.target.value)}
+          placeholder="p. ej. compra semanal, separadas por comas"
+          className={INPUT_CLASSES}
+        />
+      </label>
+      <label className={LABEL_CLASSES}>
+        Notas
+        <textarea
+          rows={3}
+          value={noteInput}
+          disabled={saving}
+          onChange={(e) => setNoteInput(e.target.value)}
+          className={`resize-y ${INPUT_CLASSES}`}
+        />
+      </label>
+      {categoryId && (
+        <button type="button" disabled={saving} onClick={() => void handleCreateRule()} className={SECONDARY_BUTTON}>
+          Crear regla para «{transaction.comercio}»
+        </button>
+      )}
+      {ruleMessage && <p className="text-sm text-green-text">{ruleMessage}</p>}
+      {error && <p className="text-sm text-danger-text">{error}</p>}
+      <button
+        type="button"
+        disabled={saving}
+        onClick={() => void handleSave()}
+        className="mt-2 min-h-11 rounded-md border border-green bg-green px-4 py-3 text-base font-bold text-surface hover:bg-green-hover"
+      >
+        Guardar cambios
+      </button>
+    </>
+  )
+}
+
+interface PanelContentProps {
+  transaction: Transaction | RealTransaction
+  real?: Omit<RealFieldsProps, 'transaction' | 'onClose'>
+  onSave: (category: string) => void
+  onClose: () => void
+}
+
+function PanelContent({ transaction, real, onSave, onClose }: PanelContentProps) {
   return (
     <>
       <div className="flex items-start justify-between">
@@ -44,59 +193,22 @@ function PanelContent({ transaction, onSave }: PanelContentProps) {
         {transaction.fecha} 2026 · {transaction.cuenta}
       </div>
 
-      <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-muted">
-        Categoría
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="min-h-11 rounded-md border border-line bg-surface px-3 py-[11px] text-base text-ink"
-        >
-          {filterCategories.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-muted">
-        Etiquetas
-        <input
-          placeholder="p. ej. compra semanal"
-          className="min-h-11 rounded-md border border-line px-3 py-[11px] text-base text-ink"
-        />
-      </label>
-
-      <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-muted">
-        Notas
-        <textarea rows={3} className="resize-y rounded-md border border-line px-3 py-[11px] text-base text-ink" />
-      </label>
-
-      <button
-        type="button"
-        className="min-h-11 self-start rounded-md border border-green px-4 py-2.5 text-base font-semibold text-green"
-      >
-        Dividir en varias categorías
-      </button>
-      <button
-        type="button"
-        className="min-h-11 self-start rounded-md border border-line px-4 py-2.5 text-base font-semibold text-ink"
-      >
-        Adjuntar recibo
-      </button>
-      <button
-        type="button"
-        onClick={() => onSave(category)}
-        className="mt-2 min-h-11 rounded-md border border-green bg-green px-4 py-3 text-base font-bold text-surface hover:bg-green-hover"
-      >
-        Guardar cambios
-      </button>
+      {real ? (
+        <RealFields transaction={transaction as RealTransaction} onClose={onClose} {...real} />
+      ) : (
+        <DemoFields transaction={transaction} onSave={onSave} />
+      )}
     </>
   )
 }
 
+interface TransactionPanelProps {
+  transactions?: Transaction[] | RealTransaction[]
+  real?: Omit<RealFieldsProps, 'transaction' | 'onClose'>
+}
+
 /** Panel lateral de edición: se abre al hacer click en una fila de la tabla. */
-export function TransactionPanel() {
+export function TransactionPanel({ transactions = demoTransactions, real }: TransactionPanelProps) {
   const transactionId = useTransactionsStore((s) => s.panelTransactionId)
   const closePanel = useTransactionsStore((s) => s.closePanel)
   const showUndo = useTransactionsStore((s) => s.showUndo)
@@ -124,6 +236,8 @@ export function TransactionPanel() {
         <PanelContent
           key={transaction.id}
           transaction={transaction}
+          real={real}
+          onClose={closePanel}
           onSave={(category) => {
             showUndo(`Categoría de «${transaction.comercio}» cambiada a ${category}.`)
             closePanel()

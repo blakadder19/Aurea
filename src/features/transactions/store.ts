@@ -3,12 +3,20 @@ import { defaultSelectedIds, initialReviewItems, type ReviewItem } from '../../d
 
 export type TransactionsView = 'tabla' | 'revision'
 
+export const ALL_ACCOUNTS = 'Todas las cuentas'
+export const ALL_CATEGORIES = 'Todas las categorías'
+
 interface TransactionsUIState {
   view: TransactionsView
   setView: (view: TransactionsView) => void
 
   searchQuery: string
   setSearchQuery: (query: string) => void
+
+  accountFilter: string
+  setAccountFilter: (account: string) => void
+  categoryFilter: string
+  setCategoryFilter: (category: string) => void
 
   selectedIds: Set<string>
   toggleSelected: (id: string) => void
@@ -33,6 +41,11 @@ export const useTransactionsStore = create<TransactionsUIState>((set) => ({
 
   searchQuery: '',
   setSearchQuery: (searchQuery) => set({ searchQuery }),
+
+  accountFilter: ALL_ACCOUNTS,
+  setAccountFilter: (accountFilter) => set({ accountFilter }),
+  categoryFilter: ALL_CATEGORIES,
+  setCategoryFilter: (categoryFilter) => set({ categoryFilter }),
 
   selectedIds: new Set(defaultSelectedIds),
   toggleSelected: (id) =>

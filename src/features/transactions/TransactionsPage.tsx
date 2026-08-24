@@ -1,23 +1,35 @@
 import { BulkActionsBar } from './BulkActionsBar'
 import { FilterBar } from './FilterBar'
+import { RealReviewCenter } from './RealReviewCenter'
 import { ReviewCenter } from './ReviewCenter'
 import { TransactionPanel } from './TransactionPanel'
 import { TransactionsTable } from './TransactionsTable'
 import { useTransactionsStore, type TransactionsView } from './store'
+import {
+  bulkUpdateTransactionCategory,
+  createRuleFromTransaction,
+  updateTransactionCategory,
+  updateTransactionNotesAndTags,
+  useRealTransactions,
+} from './useRealTransactions'
+import { useRealCategories } from './useRealCategories'
 import { ErrorState } from '../../components/states/ErrorState'
+import { EmptyState } from '../../components/states/EmptyState'
 import { UndoBar } from '../../components/UndoBar'
-import { defaultUndoMessage, monthContextLabel, totalMovementsThisMonth, transactions } from '../../data/transactions'
+import { defaultUndoMessage, monthContextLabel, totalMovementsThisMonth, transactions as demoTransactions } from '../../data/transactions'
 import { syncedAt } from '../../data/demo'
+import { useAuthStore } from '../../lib/supabase/useAuth'
 
 const VIEWS: { value: TransactionsView; label: (reviewCount: number) => string }[] = [
   { value: 'tabla', label: () => 'Todos los movimientos' },
   { value: 'revision', label: (n) => `Centro de revisión (${n})` },
 ]
 
-function Header() {
+function Header({ isAuthenticated, realCount, realReviewCount }: { isAuthenticated: boolean; realCount: number; realReviewCount: number }) {
   const view = useTransactionsStore((s) => s.view)
   const setView = useTransactionsStore((s) => s.setView)
-  const reviewCount = useTransactionsStore((s) => s.reviewItems.length)
+  const demoReviewCount = useTransactionsStore((s) => s.reviewItems.length)
+  const reviewCount = isAuthenticated ? realReviewCount : demoReviewCount
 
   return (
     <header className="flex flex-col gap-4 border-b border-line bg-surface px-4 py-5 lg:px-8">
@@ -25,7 +37,7 @@ function Header() {
         <div>
           <h1 className="font-serif text-[32px] font-semibold tracking-[-0.01em] text-ink">Movimientos</h1>
           <div className="mt-1 text-base text-ink-muted">
-            {totalMovementsThisMonth} movimientos en {monthContextLabel}
+            {isAuthenticated ? `${realCount} movimientos sincronizados` : `${totalMovementsThisMonth} movimientos en ${monthContextLabel}`}
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -70,13 +82,60 @@ export function TransactionsPage() {
   const view = useTransactionsStore((s) => s.view)
   const undoMessage = useTransactionsStore((s) => s.undoMessage)
   const dismissUndo = useTransactionsStore((s) => s.dismissUndo)
+  const session = useAuthStore((s) => s.session)
+
+  const { categories: realCategories } = useRealCategories()
+  const { loading: loadingReal, transactions: realTransactions, refetch } = useRealTransactions(realCategories)
+
+  const isAuthenticated = session !== null
+  const hasRealTransactions = isAuthenticated && !loadingReal && realTransactions !== null && realTransactions.length > 0
+  const realReviewCount = realTransactions?.filter((t) => !t.categoryId || t.needsReview).length ?? 0
+
+  async function handleSaveCategory(id: string, categoryId: string) {
+    const error = await updateTransactionCategory(id, categoryId || null)
+    if (!error) refetch()
+    return error
+  }
+
+  async function handleSaveNotesAndTags(id: string, note: string, tags: string[]) {
+    const error = await updateTransactionNotesAndTags(id, note, tags)
+    if (!error) refetch()
+    return error
+  }
+
+  async function handleCreateRule(matchValue: string, categoryId: string) {
+    const result = await createRuleFromTransaction(matchValue, categoryId)
+    if (!result.error) refetch()
+    return result
+  }
+
+  async function handleBulkCategorize(ids: string[], categoryId: string) {
+    const error = await bulkUpdateTransactionCategory(ids, categoryId)
+    if (!error) refetch()
+    return error
+  }
+
+  const realProps = hasRealTransactions
+    ? {
+        categories: realCategories ?? [],
+        onSaveCategory: handleSaveCategory,
+        onSaveNotesAndTags: handleSaveNotesAndTags,
+        onCreateRule: handleCreateRule,
+      }
+    : undefined
 
   return (
     <>
-      <Header />
+      <Header isAuthenticated={isAuthenticated} realCount={realTransactions?.length ?? 0} realReviewCount={realReviewCount} />
       <main className="flex flex-1 flex-col gap-5 overflow-y-auto p-4 lg:p-8">
-        {view === 'tabla' ? (
-          transactions.length === 0 ? (
+        {isAuthenticated && !loadingReal && realTransactions?.length === 0 ? (
+          <EmptyState
+            headline="Todavía no hay movimientos sincronizados"
+            body="En cuanto conectes un banco en Cuentas y patrimonio, sus movimientos aparecerán aquí."
+            action={{ label: 'Ir a Cuentas y patrimonio', to: '/cuentas' }}
+          />
+        ) : view === 'tabla' ? (
+          !isAuthenticated && demoTransactions.length === 0 ? (
             // No hay backend real que reintentar: este estado documenta el punto de
             // integración para cuando exista (ver docs/DUDAS.md, corte 13).
             <ErrorState
@@ -86,12 +145,17 @@ export function TransactionsPage() {
             />
           ) : (
             <>
-              <FilterBar />
-              <BulkActionsBar />
-              <TransactionsTable />
-              <UndoBar message={undoMessage ?? defaultUndoMessage} onUndo={dismissUndo} />
+              <FilterBar
+                accounts={hasRealTransactions ? [...new Set(realTransactions!.map((t) => t.cuenta))] : undefined}
+                categories={hasRealTransactions ? realCategories!.map((c) => c.name) : undefined}
+              />
+              <BulkActionsBar categories={hasRealTransactions ? realCategories! : undefined} onBulkCategorize={hasRealTransactions ? handleBulkCategorize : undefined} />
+              <TransactionsTable transactions={hasRealTransactions ? realTransactions! : undefined} />
+              {!isAuthenticated && <UndoBar message={undoMessage ?? defaultUndoMessage} onUndo={dismissUndo} />}
             </>
           )
+        ) : hasRealTransactions ? (
+          <RealReviewCenter transactions={realTransactions!} />
         ) : (
           <>
             <ReviewCenter />
@@ -99,7 +163,7 @@ export function TransactionsPage() {
           </>
         )}
       </main>
-      <TransactionPanel />
+      <TransactionPanel transactions={hasRealTransactions ? realTransactions! : undefined} real={realProps} />
     </>
   )
 }

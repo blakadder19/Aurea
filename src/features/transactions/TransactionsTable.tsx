@@ -1,8 +1,8 @@
 import type { KeyboardEvent } from 'react'
 import { Money } from '../../components/Money'
 import { NoSearchResults } from '../../components/states/NoSearchResults'
-import { transactions, type Transaction } from '../../data/transactions'
-import { useTransactionsStore } from './store'
+import { transactions as demoTransactions, type Transaction } from '../../data/transactions'
+import { ALL_ACCOUNTS, ALL_CATEGORIES, useTransactionsStore } from './store'
 
 function toneFor(t: Transaction) {
   if (t.importe > 0) return 'green' as const
@@ -107,22 +107,38 @@ function MobileCard({ transaction }: { transaction: Transaction }) {
   )
 }
 
-/** Tabla de movimientos con selección múltiple; tarjetas de fila por debajo de 1024 px. Busca en vivo por comercio. */
-export function TransactionsTable() {
+/** Tabla de movimientos con selección múltiple; tarjetas de fila por debajo de 1024 px. Busca y filtra en vivo. */
+export function TransactionsTable({ transactions = demoTransactions }: { transactions?: Transaction[] }) {
   const searchQuery = useTransactionsStore((s) => s.searchQuery)
   const setSearchQuery = useTransactionsStore((s) => s.setSearchQuery)
+  const accountFilter = useTransactionsStore((s) => s.accountFilter)
+  const setAccountFilter = useTransactionsStore((s) => s.setAccountFilter)
+  const categoryFilter = useTransactionsStore((s) => s.categoryFilter)
+  const setCategoryFilter = useTransactionsStore((s) => s.setCategoryFilter)
   const selectedIds = useTransactionsStore((s) => s.selectedIds)
   const setSelectedIds = useTransactionsStore((s) => s.setSelectedIds)
   const clearSelection = useTransactionsStore((s) => s.clearSelection)
 
   const query = searchQuery.trim().toLowerCase()
-  const filtered = query ? transactions.filter((t) => t.comercio.toLowerCase().includes(query)) : transactions
+  const filtered = transactions.filter(
+    (t) =>
+      (!query || t.comercio.toLowerCase().includes(query)) &&
+      (accountFilter === ALL_ACCOUNTS || t.cuenta === accountFilter) &&
+      (categoryFilter === ALL_CATEGORIES || t.categoria === categoryFilter),
+  )
   const allFilteredSelected = filtered.length > 0 && filtered.every((t) => selectedIds.has(t.id))
 
   if (filtered.length === 0) {
     return (
       <div className="shrink-0">
-        <NoSearchResults query={searchQuery} onClearFilters={() => setSearchQuery('')} />
+        <NoSearchResults
+          query={searchQuery}
+          onClearFilters={() => {
+            setSearchQuery('')
+            setAccountFilter(ALL_ACCOUNTS)
+            setCategoryFilter(ALL_CATEGORIES)
+          }}
+        />
       </div>
     )
   }
