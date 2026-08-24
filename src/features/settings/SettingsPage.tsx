@@ -1,4 +1,3 @@
-import { AccountDetailsDiagnostic } from './AccountDetailsDiagnostic'
 import { ConnectionsList } from './ConnectionsList'
 import { ImportCsvPanel } from './ImportCsvPanel'
 import { SettingsBasics } from './SettingsBasics'
@@ -35,7 +34,6 @@ export function SettingsPage() {
         <ConnectionsList />
         {importOpen && <ImportCsvPanel />}
         <SettingsBasics />
-        <AccountDetailsDiagnostic />
       </main>
     </>
   )
