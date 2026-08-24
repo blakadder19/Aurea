@@ -3,7 +3,8 @@ import { AccountDetailPanel } from './AccountDetailPanel'
 import { AccountsTable } from './AccountsTable'
 import { DetailBreakdowns } from './DetailBreakdowns'
 import { NetWorthKpis } from './NetWorthKpis'
-import { useRealAccounts } from './useRealAccounts'
+import { updateAccountFunction, useRealAccounts } from './useRealAccounts'
+import type { AccountFunction } from '../../data/accounts'
 import { startBankConnection } from '../settings/bankConnection'
 import { useAccountsStore, type AccountsView } from './store'
 import { CONTEXT_DATE, syncedAt } from '../../data/demo'
@@ -102,13 +103,19 @@ export function AccountsPage() {
   const isDetalle = useAccountsStore((s) => s.mode === 'detalle')
   const revolutStatus = useSettingsStore((s) => s.connectionOverrides.revolut?.status ?? revolutBase.status)
   const session = useAuthStore((s) => s.session)
-  const { loading: loadingReal, accounts: realAccounts } = useRealAccounts()
+  const { loading: loadingReal, accounts: realAccounts, refetch } = useRealAccounts()
   const [connectError, setConnectError] = useState<string | null>(null)
 
   async function handleConnectBank() {
     setConnectError(null)
     const error = await startBankConnection()
     if (error) setConnectError(error)
+  }
+
+  async function handleChangeFunction(accountId: string, fn: AccountFunction) {
+    const error = await updateAccountFunction(accountId, fn)
+    if (!error) refetch()
+    return error
   }
 
   const isAuthenticated = session !== null
@@ -144,7 +151,10 @@ export function AccountsPage() {
           </>
         )}
       </main>
-      <AccountDetailPanel accounts={hasRealAccounts ? realAccounts! : undefined} />
+      <AccountDetailPanel
+        accounts={hasRealAccounts ? realAccounts! : undefined}
+        onChangeFunction={hasRealAccounts ? handleChangeFunction : undefined}
+      />
     </>
   )
 }

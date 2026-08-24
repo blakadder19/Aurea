@@ -14,10 +14,34 @@ const FUNCTION_MAP: Record<string, AccountFunction> = {
   por_confirmar: 'Por confirmar',
 }
 
+/** AccountFunction (UI) → account_function (esquema real). Inverso de FUNCTION_MAP, sin 'Por confirmar' (no es un destino válido). */
+const REVERSE_FUNCTION_MAP: Partial<Record<AccountFunction, string>> = {
+  'Para gastar': 'gastar',
+  Ahorro: 'ahorro',
+  Inversión: 'inversion',
+  Deuda: 'deuda',
+  'Activo manual': 'activo_manual',
+}
+
+/** Escribe la función elegida por el usuario para una cuenta real. RLS asegura que solo puede tocar las suyas. */
+export async function updateAccountFunction(accountId: string, fn: AccountFunction): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  const dbValue = REVERSE_FUNCTION_MAP[fn]
+  if (!dbValue) return 'Función no válida.'
+  const { error } = await supabase.from('accounts').update({ account_function: dbValue }).eq('id', accountId)
+  if (error) {
+    console.error('updateAccountFunction: fallo al guardar', error)
+    return 'No hemos podido guardar el cambio. Inténtalo de nuevo.'
+  }
+  return null
+}
+
 interface RealAccountsResult {
   loading: boolean
   /** null mientras carga o si no hay sesión — no confundir con "cero cuentas". */
   accounts: Account[] | null
+  /** Vuelve a leer accounts+balances+transactions — úsalo tras una escritura (p. ej. cambiar función). */
+  refetch: () => void
 }
 
 /**
@@ -30,6 +54,7 @@ export function useRealAccounts(): RealAccountsResult {
   const session = useAuthStore((s) => s.session)
   const [loading, setLoading] = useState(true)
   const [accounts, setAccounts] = useState<Account[] | null>(null)
+  const [version, setVersion] = useState(0)
 
   useEffect(() => {
     if (!supabase || !session) {
@@ -113,9 +138,9 @@ export function useRealAccounts(): RealAccountsResult {
     return () => {
       cancelled = true
     }
-  }, [session])
+  }, [session, version])
 
-  return { loading, accounts }
+  return { loading, accounts, refetch: () => setVersion((v) => v + 1) }
 }
 
 const MONTHS_ABBR = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']

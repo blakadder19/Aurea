@@ -1,13 +1,33 @@
 import * as Dialog from '@radix-ui/react-dialog'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { Money } from '../../components/Money'
 import { SectionLabel } from '../../components/SectionLabel'
 import { SidePanel } from '../../components/SidePanel'
-import { accounts as demoAccounts, type Account } from '../../data/accounts'
+import { accounts as demoAccounts, type Account, type AccountFunction } from '../../data/accounts'
 import { focusRowById } from '../../lib/dom'
 import { useAccountsStore } from './store'
 
-function PanelContent({ account }: { account: Account }) {
+const ASSIGNABLE_FUNCTIONS: AccountFunction[] = ['Para gastar', 'Ahorro', 'Inversión', 'Deuda', 'Activo manual']
+
+function PanelContent({
+  account,
+  onChangeFunction,
+}: {
+  account: Account
+  onChangeFunction?: (accountId: string, fn: AccountFunction) => Promise<string | null>
+}) {
+  const [savingFn, setSavingFn] = useState(false)
+  const [fnError, setFnError] = useState<string | null>(null)
+
+  async function handleFunctionChange(fn: AccountFunction) {
+    if (!onChangeFunction) return
+    setSavingFn(true)
+    setFnError(null)
+    const error = await onChangeFunction(account.id, fn)
+    if (error) setFnError(error)
+    setSavingFn(false)
+  }
+
   return (
     <>
       <div className="flex items-start justify-between">
@@ -38,10 +58,32 @@ function PanelContent({ account }: { account: Account }) {
       </div>
 
       <div className="flex flex-col gap-2 rounded-[14px] border border-line p-4">
-        <div className="flex justify-between text-[15px] text-ink-muted">
+        <div className="flex items-center justify-between text-[15px] text-ink-muted">
           <span>Función</span>
-          <span className="font-semibold text-ink">{account.fn}</span>
+          {onChangeFunction ? (
+            <select
+              aria-label="Función de la cuenta"
+              value={account.fn}
+              disabled={savingFn}
+              onChange={(e) => void handleFunctionChange(e.target.value as AccountFunction)}
+              className="min-h-11 rounded-md border border-line bg-surface px-2 text-[15px] font-semibold text-ink"
+            >
+              {account.fn === 'Por confirmar' && (
+                <option value="Por confirmar" disabled>
+                  Por confirmar
+                </option>
+              )}
+              {ASSIGNABLE_FUNCTIONS.map((fn) => (
+                <option key={fn} value={fn}>
+                  {fn}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <span className="font-semibold text-ink">{account.fn}</span>
+          )}
         </div>
+        {fnError && <p className="text-right text-sm text-danger-text">{fnError}</p>}
         <div className="flex justify-between text-[15px] text-ink-muted">
           <span>Institución</span>
           <span className="font-semibold text-ink">{account.institution}</span>
@@ -75,12 +117,14 @@ function PanelContent({ account }: { account: Account }) {
       )}
 
       <div className="flex flex-wrap gap-2.5">
-        <button
-          type="button"
-          className="min-h-11 rounded-md border border-line px-4 py-2.5 text-base font-semibold text-ink"
-        >
-          Cambiar función
-        </button>
+        {!onChangeFunction && (
+          <button
+            type="button"
+            className="min-h-11 rounded-md border border-line px-4 py-2.5 text-base font-semibold text-ink"
+          >
+            Cambiar función
+          </button>
+        )}
         <button
           type="button"
           className="min-h-11 rounded-md border border-line px-4 py-2.5 text-base font-semibold text-ink"
@@ -99,7 +143,13 @@ function PanelContent({ account }: { account: Account }) {
 }
 
 /** Panel lateral de detalle de cuenta: se abre al hacer click en una fila. */
-export function AccountDetailPanel({ accounts = demoAccounts }: { accounts?: Account[] }) {
+export function AccountDetailPanel({
+  accounts = demoAccounts,
+  onChangeFunction,
+}: {
+  accounts?: Account[]
+  onChangeFunction?: (accountId: string, fn: AccountFunction) => Promise<string | null>
+}) {
   const accountId = useAccountsStore((s) => s.panelAccountId)
   const closePanel = useAccountsStore((s) => s.closePanel)
   const account = accounts.find((a) => a.id === accountId) ?? null
@@ -119,7 +169,7 @@ export function AccountDetailPanel({ accounts = demoAccounts }: { accounts?: Acc
         setTimeout(() => focusRowById(id), 0)
       }}
     >
-      {account && <PanelContent key={account.id} account={account} />}
+      {account && <PanelContent key={account.id} account={account} onChangeFunction={onChangeFunction} />}
     </SidePanel>
   )
 }
