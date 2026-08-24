@@ -31,7 +31,7 @@ function Row({ account }: { account: Account }) {
       onKeyDown={handleKeyDown}
       className="cursor-pointer bg-surface"
     >
-      <td className="border-b border-[#f0f3f1] py-3.5 pr-4 text-[17px] font-semibold whitespace-nowrap text-ink">
+      <td className="max-w-[260px] truncate border-b border-[#f0f3f1] py-3.5 pr-4 text-[17px] font-semibold text-ink" title={account.name}>
         {account.name}
         {account.foreign && (
           <span className="ml-1.5 text-sm font-normal text-ink-muted">
@@ -86,7 +86,7 @@ function MobileCard({ account }: { account: Account }) {
       className="flex cursor-pointer flex-col gap-2 rounded-2xl border border-line bg-surface p-3.5 tabular"
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="text-[17px] font-semibold text-ink">
+        <div className="min-w-0 flex-1 truncate text-[17px] font-semibold text-ink" title={account.name}>
           {account.name}
           {account.foreign && (
             <span className="ml-1.5 text-sm font-normal text-ink-muted">

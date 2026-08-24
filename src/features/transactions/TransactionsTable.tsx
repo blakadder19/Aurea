@@ -46,10 +46,10 @@ function Row({ transaction }: { transaction: Transaction }) {
       <td className="border-b border-[#f0f3f1] py-3.5 pr-4 text-base whitespace-nowrap text-ink-muted">
         {transaction.fecha}
       </td>
-      <td className="border-b border-[#f0f3f1] py-3.5 pr-4 text-base font-semibold whitespace-nowrap text-ink">
+      <td className="max-w-[240px] truncate border-b border-[#f0f3f1] py-3.5 pr-4 text-base font-semibold text-ink" title={transaction.comercio}>
         {transaction.comercio}
       </td>
-      <td className="border-b border-[#f0f3f1] py-3.5 pr-4 text-base whitespace-nowrap text-ink-muted">
+      <td className="max-w-[190px] truncate border-b border-[#f0f3f1] py-3.5 pr-4 text-base text-ink-muted" title={transaction.cuenta}>
         {transaction.cuenta}
       </td>
       <td className="border-b border-[#f0f3f1] py-3.5 pr-4">

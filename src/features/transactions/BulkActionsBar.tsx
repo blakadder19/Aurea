@@ -30,7 +30,9 @@ export function BulkActionsBar({ categories, onBulkCategorize }: BulkActionsBarP
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-[14px] bg-ink px-5 py-3.5">
-        <div className="text-base font-semibold text-surface">{count} movimientos seleccionados</div>
+        <div className="text-base font-semibold text-surface">
+          {count} movimiento{count === 1 ? '' : 's'} seleccionado{count === 1 ? '' : 's'}
+        </div>
         <div className="flex flex-wrap items-center gap-2.5">
           {categories && onBulkCategorize ? (
             <select
