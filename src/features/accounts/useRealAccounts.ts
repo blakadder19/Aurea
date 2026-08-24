@@ -87,7 +87,7 @@ export function useRealAccounts(): RealAccountsResult {
       const [{ data: accountRows, error: accountsError }, { data: connectionRows }] = await Promise.all([
         supabase
           .from('accounts')
-          .select('id, name, product, connection_id, account_function, share_percent')
+          .select('id, name, product, connection_id, account_function, share_percent, currency')
           .neq('account_function', 'excluida')
           .order('created_at', { ascending: true }),
         supabase.from('bank_connections').select('id, aspsp_name'),
@@ -142,6 +142,7 @@ export function useRealAccounts(): RealAccountsResult {
           fn,
           balance: (balanceByAccount.get(row.id as string) ?? 0) / 100,
           sharePercent: (row.share_percent as number | null) ?? 100,
+          currency: row.currency as string,
           countsInAvailableToday: fn === 'Para gastar',
           recentMovements: movementsByAccount.get(row.id as string) ?? [],
         }

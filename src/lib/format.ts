@@ -19,16 +19,23 @@ function formatAmount(value: number, decimals: number): string {
   })
 }
 
-/** "5.383,24 €" · negativos con signo − explícito, nunca paréntesis */
-export function formatMoney(value: number, decimals = 2): string {
+const CURRENCY_SYMBOLS: Record<string, string> = { EUR: '€', GBP: '£', USD: '$' }
+
+/** Símbolo si lo conocemos (€, £, $); si no, el código ISO tal cual (p. ej. "SEK", "PLN"). */
+function currencySuffix(currency: string): string {
+  return CURRENCY_SYMBOLS[currency] ?? currency
+}
+
+/** "5.383,24 €" · negativos con signo − explícito, nunca paréntesis. `currency`: código ISO, EUR por defecto. */
+export function formatMoney(value: number, decimals = 2, currency = 'EUR'): string {
   const sign = value < 0 ? MINUS : ''
-  return `${sign}${formatAmount(value, decimals)} €`
+  return `${sign}${formatAmount(value, decimals)} ${currencySuffix(currency)}`
 }
 
 /** "+5.383,24 €" · fuerza el signo también en positivos (para deltas) */
-export function formatMoneySigned(value: number, decimals = 2): string {
+export function formatMoneySigned(value: number, decimals = 2, currency = 'EUR'): string {
   const sign = value < 0 ? MINUS : '+'
-  return `${sign}${formatAmount(value, decimals)} €`
+  return `${sign}${formatAmount(value, decimals)} ${currencySuffix(currency)}`
 }
 
 /** "+0,7 %" / "−0,7 %" */

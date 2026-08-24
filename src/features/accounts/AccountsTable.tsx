@@ -64,7 +64,7 @@ function Row({ account }: { account: Account }) {
           : account.institution}
       </td>
       <td className="border-b border-[#f0f3f1] py-3.5 text-right text-[17px] font-bold whitespace-nowrap">
-        <Money value={account.balance} tone={account.balance < 0 ? 'danger' : 'ink'} />
+        <Money value={account.balance} tone={account.balance < 0 ? 'danger' : 'ink'} currency={account.currency} />
       </td>
     </tr>
   )
@@ -94,7 +94,12 @@ function MobileCard({ account }: { account: Account }) {
             </span>
           )}
         </div>
-        <Money value={account.balance} tone={account.balance < 0 ? 'danger' : 'ink'} className="shrink-0 whitespace-nowrap text-[17px] font-bold" />
+        <Money
+          value={account.balance}
+          tone={account.balance < 0 ? 'danger' : 'ink'}
+          currency={account.currency}
+          className="shrink-0 whitespace-nowrap text-[17px] font-bold"
+        />
       </div>
       <div className="text-sm text-ink-muted">
         {account.foreign

@@ -36,6 +36,8 @@ export interface Account {
   recentMovements: AccountMovement[]
   /** % del saldo que cuenta como patrimonio propio (cuentas compartidas). undefined = 100, como siempre. */
   sharePercent?: number
+  /** Código ISO de la divisa real del saldo. undefined = EUR (todas las cuentas demo). */
+  currency?: string
 }
 
 export const accounts: Account[] = [

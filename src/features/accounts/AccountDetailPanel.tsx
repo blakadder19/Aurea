@@ -74,7 +74,13 @@ function PanelContent({
         Saldo, función, movimientos recientes y acciones de esta cuenta.
       </Dialog.Description>
 
-      <Money value={account.balance} tone={account.balance < 0 ? 'danger' : 'ink'} serif className="text-[40px] font-semibold" />
+      <Money
+        value={account.balance}
+        tone={account.balance < 0 ? 'danger' : 'ink'}
+        currency={account.currency}
+        serif
+        className="text-[40px] font-semibold"
+      />
       <div className="text-base text-ink-muted">
         {account.foreign
           ? `${account.foreign.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })} ${account.foreign.currency} al tipo ${account.foreign.rate.toLocaleString('es-ES', { minimumFractionDigits: 4 })} · actualizado ${account.foreign.rateDate}, 08:42`
@@ -114,7 +120,7 @@ function PanelContent({
         </div>
         <div className="flex justify-between text-[15px] text-ink-muted">
           <span>Divisa</span>
-          <span className="font-semibold text-ink">{account.foreign?.currency ?? 'EUR'}</span>
+          <span className="font-semibold text-ink">{account.foreign?.currency ?? account.currency ?? 'EUR'}</span>
         </div>
         <div className="flex justify-between text-[15px] text-ink-muted">
           <span>Cuenta en Disponible hoy</span>
@@ -164,7 +170,13 @@ function PanelContent({
               <span className="text-ink">
                 {m.date} · {m.label}
               </span>
-              <Money value={m.amount} tone={m.amount > 0 ? 'green' : 'ink'} signed={m.amount > 0} className="font-bold" />
+              <Money
+                value={m.amount}
+                tone={m.amount > 0 ? 'green' : 'ink'}
+                signed={m.amount > 0}
+                currency={account.currency}
+                className="font-bold"
+              />
             </div>
           ))}
         </div>

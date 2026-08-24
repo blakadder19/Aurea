@@ -127,14 +127,22 @@ export function AccountsPage() {
   const isAuthenticated = session !== null
   const hasRealAccounts = isAuthenticated && !loadingReal && realAccounts !== null && realAccounts.length > 0
 
+  // Sin tipo de cambio fiable no consolidamos divisas: las cuentas en otra
+  // moneda quedan fuera del total y se avisa de cuántas se han excluido.
+  const excludedForeignCount = hasRealAccounts
+    ? realAccounts!.filter((a) => a.currency !== undefined && a.currency !== 'EUR').length
+    : 0
+
   const realKpis = hasRealAccounts
-    ? realAccounts!.reduce(
-        (acc, a) => {
-          const share = a.balance * ((a.sharePercent ?? 100) / 100)
-          return share >= 0 ? { ...acc, assets: acc.assets + share } : { ...acc, liabilities: acc.liabilities - share }
-        },
-        { assets: 0, liabilities: 0 },
-      )
+    ? realAccounts!
+        .filter((a) => a.currency === undefined || a.currency === 'EUR')
+        .reduce(
+          (acc, a) => {
+            const share = a.balance * ((a.sharePercent ?? 100) / 100)
+            return share >= 0 ? { ...acc, assets: acc.assets + share } : { ...acc, liabilities: acc.liabilities - share }
+          },
+          { assets: 0, liabilities: 0 },
+        )
     : null
 
   return (
@@ -154,7 +162,10 @@ export function AccountsPage() {
           />
         ) : (
           <>
-            <NetWorthKpis kpis={hasRealAccounts ? { ...realKpis!, netWorth: realKpis!.assets - realKpis!.liabilities } : undefined} />
+            <NetWorthKpis
+              kpis={hasRealAccounts ? { ...realKpis!, netWorth: realKpis!.assets - realKpis!.liabilities } : undefined}
+              excludedForeignCount={excludedForeignCount}
+            />
             <AccountsTable accounts={hasRealAccounts ? realAccounts! : undefined} />
             {isDetalle && !isAuthenticated && <DetailBreakdowns />}
           </>

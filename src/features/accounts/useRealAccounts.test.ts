@@ -19,8 +19,8 @@ function chainable(data: unknown[]) {
 
 const fixtures: Record<string, unknown[]> = {
   accounts: [
-    { id: 'acc-1', name: 'Nómina', product: null, connection_id: 'conn-1', account_function: 'gastar' },
-    { id: 'acc-2', name: null, product: 'Cuenta ahorro', connection_id: 'conn-1', account_function: 'ahorro' },
+    { id: 'acc-1', name: 'Nómina', product: null, connection_id: 'conn-1', account_function: 'gastar', currency: 'EUR' },
+    { id: 'acc-2', name: null, product: 'Cuenta ahorro', connection_id: 'conn-1', account_function: 'ahorro', currency: 'GBP' },
   ],
   bank_connections: [{ id: 'conn-1', aspsp_name: 'Openbank' }],
   balances: [
@@ -72,6 +72,7 @@ describe('useRealAccounts', () => {
         fn: 'Para gastar',
         balance: 4238.64,
         sharePercent: 100,
+        currency: 'EUR',
         countsInAvailableToday: true,
         recentMovements: [{ date: '19 ago', label: 'Mercadona', amount: -62.18 }],
       },
@@ -82,6 +83,7 @@ describe('useRealAccounts', () => {
         fn: 'Ahorro',
         balance: 10000,
         sharePercent: 100,
+        currency: 'GBP',
         countsInAvailableToday: false,
         recentMovements: [],
       },
