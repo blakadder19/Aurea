@@ -103,6 +103,13 @@ export function AccountsPage() {
   const revolutStatus = useSettingsStore((s) => s.connectionOverrides.revolut?.status ?? revolutBase.status)
   const session = useAuthStore((s) => s.session)
   const { loading: loadingReal, accounts: realAccounts } = useRealAccounts()
+  const [connectError, setConnectError] = useState<string | null>(null)
+
+  async function handleConnectBank() {
+    setConnectError(null)
+    const error = await startBankConnection()
+    if (error) setConnectError(error)
+  }
 
   const isAuthenticated = session !== null
   const hasRealAccounts = isAuthenticated && !loadingReal && realAccounts !== null && realAccounts.length > 0
@@ -126,7 +133,8 @@ export function AccountsPage() {
           <EmptyState
             headline="Todavía no has conectado ningún banco"
             body="Conecta tu banco para ver aquí tus cuentas y tu patrimonio real."
-            action={{ label: 'Conectar mi banco', onClick: () => void startBankConnection() }}
+            action={{ label: 'Conectar mi banco', onClick: () => void handleConnectBank() }}
+            error={connectError}
           />
         ) : (
           <>
