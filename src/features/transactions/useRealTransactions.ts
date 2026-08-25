@@ -54,7 +54,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
         supabase
           .from('transactions')
           .select(
-            'id, account_id, booking_date, value_date, description, amount_cents, category_id, needs_review, user_note, tags',
+            'id, account_id, booking_date, value_date, description, amount_cents, category_id, needs_review, user_note, tags, display_name',
           )
           .order('booking_date', { ascending: false })
           .limit(TRANSACTIONS_LIMIT),
@@ -94,6 +94,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
           needsReview: Boolean(row.needs_review),
           userNote: (row.user_note as string | null) ?? '',
           tags: (row.tags as string[] | null) ?? [],
+          displayName: row.display_name as string | null,
           dateISO: isoDate,
         }
       })
@@ -143,6 +144,17 @@ export async function updateTransactionNotesAndTags(id: string, note: string, ta
   if (error) {
     console.error('updateTransactionNotesAndTags: fallo al guardar', error)
     return 'No hemos podido guardar el cambio. Inténtalo de nuevo.'
+  }
+  return null
+}
+
+/** Guarda un nombre personal para mostrar en vez de la descripción del banco — nunca cambia lo que el banco realmente dice. */
+export async function updateTransactionDisplayName(id: string, displayName: string): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  const { error } = await supabase.from('transactions').update({ display_name: displayName.trim() || null }).eq('id', id)
+  if (error) {
+    console.error('updateTransactionDisplayName: fallo al guardar', error)
+    return 'No hemos podido guardar el nombre. Inténtalo de nuevo.'
   }
   return null
 }

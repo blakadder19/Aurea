@@ -78,7 +78,7 @@ export function computeSavingsRate(monthIncome: number, monthExpense: number): n
 function toMovement(tx: RealTransaction): Movement {
   return {
     fecha: tx.fecha,
-    comercio: tx.comercio,
+    comercio: tx.displayName || tx.comercio,
     categoria: tx.categoria,
     cuenta: tx.cuenta,
     estado: tx.needsReview ? 'Requiere revisión' : 'Confirmado',

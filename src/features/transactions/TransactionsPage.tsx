@@ -10,6 +10,7 @@ import {
   bulkUpdateTransactionCategory,
   createRuleFromTransaction,
   updateTransactionCategory,
+  updateTransactionDisplayName,
   updateTransactionNotesAndTags,
   useRealTransactions,
 } from './useRealTransactions'
@@ -167,6 +168,12 @@ export function TransactionsPage() {
     return error
   }
 
+  async function handleSaveDisplayName(id: string, displayName: string) {
+    const error = await updateTransactionDisplayName(id, displayName)
+    if (!error) refetch()
+    return error
+  }
+
   const manualAccountIds = new Set((realAccounts ?? []).filter((a) => a.isManual).map((a) => a.id))
 
   const realProps = hasRealTransactions
@@ -178,6 +185,7 @@ export function TransactionsPage() {
         manualAccountIds,
         onUpdateManual: handleUpdateManual,
         onDeleteManual: handleDeleteManual,
+        onSaveDisplayName: handleSaveDisplayName,
       }
     : undefined
 

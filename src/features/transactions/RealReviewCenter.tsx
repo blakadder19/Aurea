@@ -3,6 +3,7 @@ import { Badge } from '../../components/Badge'
 import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
 import { useTransactionsStore } from './store'
+import { displayLabelFor } from './TransactionsTable'
 import { suggestCategories } from './useAiCategorization'
 import type { RealCategory } from './useRealCategories'
 import type { RealTransaction } from './useRealTransactions'
@@ -128,7 +129,7 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory }: R
             <Card key={t.id} className="flex flex-col gap-3.5" padding="lg">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="text-[17px] font-bold text-ink">{t.comercio}</div>
+                  <div className="text-[17px] font-bold text-ink">{displayLabelFor(t)}</div>
                   <div className="mt-1 text-[15px] text-ink-muted">
                     {t.fecha} · {t.cuenta}
                   </div>

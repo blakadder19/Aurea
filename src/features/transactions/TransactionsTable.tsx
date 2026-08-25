@@ -6,10 +6,16 @@ import { categoryColorClass } from '../../lib/categoryColor'
 import { formatMoney } from '../../lib/format'
 import { ALL_ACCOUNTS, ALL_CATEGORIES, useTransactionsStore } from './store'
 
+/** Lo que se muestra como comercio: el nombre personal si lo has puesto, si no lo que dice el banco. */
+export function displayLabelFor(t: Transaction): string {
+  return t.displayName || t.comercio
+}
+
 /** El buscador promete "comercio, importe o nota" (y etiquetas) — que de verdad las mire todas, no solo el comercio. */
 export function matchesSearch(t: Transaction, query: string): boolean {
   if (!query) return true
   if (t.comercio.toLowerCase().includes(query)) return true
+  if ((t.displayName ?? '').toLowerCase().includes(query)) return true
   if (formatMoney(Math.abs(t.importe)).toLowerCase().includes(query)) return true
   if ((t.userNote ?? '').toLowerCase().includes(query)) return true
   if ((t.tags ?? []).some((tag) => tag.toLowerCase().includes(query))) return true
@@ -28,7 +34,7 @@ function Avatar({ transaction }: { transaction: Transaction }) {
       aria-hidden="true"
       className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[13px] font-bold text-surface ${categoryColorClass(transaction.categoria)}`}
     >
-      {transaction.comercio.charAt(0).toUpperCase()}
+      {displayLabelFor(transaction).charAt(0).toUpperCase()}
     </div>
   )
 }
@@ -73,8 +79,9 @@ function Row({ transaction }: { transaction: Transaction }) {
         {transaction.fecha}
       </td>
       <td className="max-w-[240px] border-b border-[#f0f3f1] py-3.5 pr-4 text-base font-semibold text-ink">
+        {/* title siempre muestra lo que dice el banco, aunque el texto visible sea el nombre personal */}
         <div className="truncate" title={transaction.comercio}>
-          {transaction.comercio}
+          {displayLabelFor(transaction)}
         </div>
         {transaction.tags && transaction.tags.length > 0 && (
           <div className="mt-1 flex flex-wrap gap-1">
@@ -130,7 +137,7 @@ function MobileCard({ transaction }: { transaction: Transaction }) {
       </div>
       <Avatar transaction={transaction} />
       <div className="min-w-0 flex-1">
-        <div className="truncate text-base font-semibold text-ink">{transaction.comercio}</div>
+        <div className="truncate text-base font-semibold text-ink">{displayLabelFor(transaction)}</div>
         <div className="mt-0.5 truncate text-sm text-ink-muted">
           {transaction.fecha} · {transaction.categoria} · {transaction.cuenta}
         </div>

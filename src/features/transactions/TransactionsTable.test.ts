@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Transaction } from '../../data/transactions'
-import { matchesSearch } from './TransactionsTable'
+import { displayLabelFor, matchesSearch } from './TransactionsTable'
 
 function tx(overrides: Partial<Transaction>): Transaction {
   return { id: 't1', fecha: '25 ago', comercio: 'Mercadona', cuenta: 'Revolut', categoria: 'Supermercado', importe: -62.18, ...overrides }
@@ -34,5 +34,20 @@ describe('matchesSearch', () => {
 
   it('sin nota ni etiquetas (demo), no revienta y simplemente no coincide por ahí', () => {
     expect(matchesSearch(tx({}), 'algo')).toBe(false)
+  })
+
+  it('busca también por el nombre personal (displayName)', () => {
+    expect(matchesSearch(tx({ comercio: 'Deliveroo', displayName: 'Cena viernes' }), 'cena')).toBe(true)
+  })
+})
+
+describe('displayLabelFor', () => {
+  it('usa el nombre personal cuando existe', () => {
+    expect(displayLabelFor(tx({ comercio: 'Deliveroo', displayName: 'Cena viernes' }))).toBe('Cena viernes')
+  })
+
+  it('usa el comercio del banco cuando no hay nombre personal', () => {
+    expect(displayLabelFor(tx({ comercio: 'Deliveroo', displayName: null }))).toBe('Deliveroo')
+    expect(displayLabelFor(tx({ comercio: 'Deliveroo' }))).toBe('Deliveroo')
   })
 })

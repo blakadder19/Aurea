@@ -14,6 +14,8 @@ export interface Transaction {
   tags?: string[]
   /** Solo en real: nota libre que el usuario añade desde el panel de detalle. */
   userNote?: string
+  /** Solo en real: nombre personal que sustituye a `comercio` al mostrarlo, sin tocar el dato del banco. */
+  displayName?: string | null
 }
 
 export const transactions: Transaction[] = [

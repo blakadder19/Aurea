@@ -5,6 +5,7 @@ import { SectionLabel } from '../../components/SectionLabel'
 import { SidePanel } from '../../components/SidePanel'
 import { filterCategories, transactions as demoTransactions, type Transaction } from '../../data/transactions'
 import { focusRowById } from '../../lib/dom'
+import { displayLabelFor } from './TransactionsTable'
 import { useTransactionsStore } from './store'
 import type { RealCategory } from './useRealCategories'
 import type { RealTransaction } from './useRealTransactions'
@@ -64,6 +65,7 @@ interface RealFieldsProps {
   manualAccountIds?: Set<string>
   onUpdateManual?: (id: string, accountId: string, description: string, amountCents: number, dateIso: string) => Promise<string | null>
   onDeleteManual?: (id: string, accountId: string) => Promise<string | null>
+  onSaveDisplayName?: (id: string, displayName: string) => Promise<string | null>
 }
 
 /** Solo tiene sentido para movimientos manuales: los sincronizados con el banco siempre reflejan lo que dice el banco. */
@@ -107,10 +109,11 @@ function ManualFields({
 }
 
 /** Categoría/Etiquetas/Notas reales: cada cambio persiste de verdad en Supabase, bajo RLS. */
-function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTags, onCreateRule, onClose, manualAccountIds, onUpdateManual, onDeleteManual }: RealFieldsProps) {
+function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTags, onCreateRule, onClose, manualAccountIds, onUpdateManual, onDeleteManual, onSaveDisplayName }: RealFieldsProps) {
   const [categoryId, setCategoryId] = useState(transaction.categoryId ?? '')
   const [tagsInput, setTagsInput] = useState(transaction.tags.join(', '))
   const [noteInput, setNoteInput] = useState(transaction.userNote)
+  const [displayNameInput, setDisplayNameInput] = useState(transaction.displayName ?? '')
   const isManual = manualAccountIds?.has(transaction.accountId) ?? false
   const [manualDescription, setManualDescription] = useState(transaction.comercio)
   const [manualAmount, setManualAmount] = useState(String(transaction.importe))
@@ -132,6 +135,9 @@ function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTag
       onSaveNotesAndTags(transaction.id, noteInput, tags),
       isManual && onUpdateManual
         ? onUpdateManual(transaction.id, transaction.accountId, manualDescription, Math.round(Number(manualAmount || '0') * 100), manualDateIso)
+        : null,
+      !isManual && onSaveDisplayName && displayNameInput !== (transaction.displayName ?? '')
+        ? onSaveDisplayName(transaction.id, displayNameInput)
         : null,
     ])
     setSaving(false)
@@ -173,6 +179,18 @@ function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTag
           setDateIso={setManualDateIso}
           disabled={saving}
         />
+      )}
+      {!isManual && onSaveDisplayName && (
+        <label className={LABEL_CLASSES}>
+          Nombre para ti
+          <input
+            value={displayNameInput}
+            disabled={saving}
+            onChange={(e) => setDisplayNameInput(e.target.value)}
+            placeholder={transaction.comercio}
+            className={INPUT_CLASSES}
+          />
+        </label>
       )}
       {isManual && onDeleteManual && (
         <div className="flex items-center gap-2.5">
@@ -267,7 +285,7 @@ function PanelContent({ transaction, real, onSave, onClose }: PanelContentProps)
         <div>
           <SectionLabel>Editar movimiento</SectionLabel>
           <Dialog.Title className="mt-1 font-serif text-[26px] font-semibold text-ink">
-            {transaction.comercio}
+            {displayLabelFor(transaction)}
           </Dialog.Title>
         </div>
         <Dialog.Close asChild>
