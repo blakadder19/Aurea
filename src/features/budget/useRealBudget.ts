@@ -169,6 +169,23 @@ export function useRealBudget(categories: RealCategory[] | null, budgetMonthStar
   return { loading, budget, refetch: () => setVersion((v) => v + 1) }
 }
 
+/**
+ * Lee los importes presupuestados del ciclo justo anterior al que se está
+ * viendo (`monthOffset + 1`) — para el botón "Copiar del mes anterior".
+ * Solo lectura: no guarda nada, el usuario aún tiene que pulsar "Guardar
+ * cambios" en el formulario.
+ */
+export async function fetchPreviousCycleBudget(budgetMonthStart: number, monthOffset: number): Promise<Record<string, number>> {
+  if (!supabase) return {}
+  const previousStart = shiftedCycleStart(new Date(), budgetMonthStart, monthOffset + 1)
+  const { data, error } = await supabase.from('budgets').select('category_id, amount_cents').eq('month', monthKeyForCycle(previousStart))
+  if (error || !data) {
+    console.error('fetchPreviousCycleBudget: fallo al leer', error)
+    return {}
+  }
+  return Object.fromEntries(data.map((b) => [b.category_id as string, Math.round((b.amount_cents as number) / 100)]))
+}
+
 /** Guarda el presupuesto de una categoría para el ciclo mostrado (upsert) — `monthOffset` igual que en useRealBudget. RLS asegura que solo toca lo suyo. */
 export async function saveCategoryBudget(
   categoryId: string,

@@ -49,7 +49,7 @@ vi.mock('../../lib/supabase/client', () => ({
 const activeSession = { user: { id: 'user-1' } } as unknown as Session
 
 const { useAuthStore } = await import('../../lib/supabase/useAuth')
-const { useRealBudget } = await import('./useRealBudget')
+const { useRealBudget, fetchPreviousCycleBudget } = await import('./useRealBudget')
 
 describe('useRealBudget', () => {
   it('sin sesión, devuelve budget=null sin consultar Supabase', () => {
@@ -103,5 +103,18 @@ describe('useRealBudget', () => {
 
     const supermercado = result.current.budget!.categories.find((c) => c.categoryId === 'cat-1')!
     expect(supermercado.expectedPaceCents).toBe(supermercado.budgetedCents)
+  })
+})
+
+describe('fetchPreviousCycleBudget', () => {
+  it('devuelve los importes en euros por categoría del ciclo anterior al indicado', async () => {
+    const result = await fetchPreviousCycleBudget(1, 0)
+    expect(result).toEqual({ 'cat-1': 400 })
+  })
+
+  it('sin presupuesto guardado ese ciclo, devuelve un objeto vacío', async () => {
+    mockFrom.mockImplementationOnce(() => chainable([]))
+    const result = await fetchPreviousCycleBudget(1, 0)
+    expect(result).toEqual({})
   })
 })

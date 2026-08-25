@@ -68,14 +68,30 @@ interface RealFormProps {
   categories: RealAdjustCategory[]
   onSave: (categoryId: string, amountCents: number) => Promise<string | null>
   onSaved: () => void
+  onFetchPrevious: () => Promise<Record<string, number>>
 }
 
 /** Versión real: cada importe se guarda de verdad en Supabase (céntimos), bajo RLS. */
-function RealAdjustForm({ categories, onSave, onSaved }: RealFormProps) {
+function RealAdjustForm({ categories, onSave, onSaved, onFetchPrevious }: RealFormProps) {
   const initial = Object.fromEntries(categories.map((c) => [c.categoryId, Math.round(c.budgetedCents / 100)]))
   const [draft, setDraft] = useState<Record<string, number>>(initial)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [copying, setCopying] = useState(false)
+  const [copyMessage, setCopyMessage] = useState<string | null>(null)
+
+  async function handleCopyPrevious() {
+    setCopying(true)
+    setCopyMessage(null)
+    const previous = await onFetchPrevious()
+    setCopying(false)
+    if (Object.keys(previous).length === 0) {
+      setCopyMessage('El mes anterior no tenía presupuesto guardado.')
+      return
+    }
+    setDraft((d) => ({ ...d, ...previous }))
+    setCopyMessage('Importes del mes anterior cargados abajo — revisa y guarda.')
+  }
 
   async function handleSave() {
     setSaving(true)
@@ -99,6 +115,16 @@ function RealAdjustForm({ categories, onSave, onSaved }: RealFormProps) {
       <Dialog.Description className="text-base text-ink-muted">
         Cambia el importe presupuestado de cada categoría para este mes.
       </Dialog.Description>
+
+      <button
+        type="button"
+        disabled={copying}
+        onClick={() => void handleCopyPrevious()}
+        className="min-h-11 self-start rounded-md border border-line px-3.5 text-[15px] font-semibold text-ink hover:bg-canvas disabled:opacity-60"
+      >
+        {copying ? 'Copiando…' : 'Copiar del mes anterior'}
+      </button>
+      {copyMessage && <p className="text-sm text-ink-muted">{copyMessage}</p>}
 
       <div className="flex flex-col gap-4">
         {categories.map((c) => (
@@ -161,6 +187,7 @@ export function AdjustBudgetPanel({ real }: { real?: RealFormProps }) {
           <RealAdjustForm
             categories={real.categories}
             onSave={real.onSave}
+            onFetchPrevious={real.onFetchPrevious}
             onSaved={() => {
               real.onSaved()
               closePanel()
