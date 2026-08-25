@@ -3,7 +3,7 @@ import { AccountDetailPanel } from './AccountDetailPanel'
 import { AccountsTable } from './AccountsTable'
 import { DetailBreakdowns } from './DetailBreakdowns'
 import { ManualEntryPanel, type ManualEntryPanelMode } from './ManualEntryPanel'
-import { NetWorthKpis } from './NetWorthKpis'
+import { NetWorthKpis, type ForeignBalance } from './NetWorthKpis'
 import { NetWorthTrendChart } from './NetWorthTrendChart'
 import { periodStartIso, type NetWorthPeriod } from './netWorthHistory'
 import { useNetWorthHistory } from './useNetWorthHistory'
@@ -169,11 +169,16 @@ export function AccountsPage() {
   const isAuthenticated = session !== null
   const hasRealAccounts = isAuthenticated && !loadingReal && realAccounts !== null && realAccounts.length > 0
 
-  // Sin tipo de cambio fiable no consolidamos divisas: las cuentas en otra
-  // moneda quedan fuera del total y se avisa de cuántas se han excluido.
-  const excludedForeignCount = hasRealAccounts
-    ? realAccounts!.filter((a) => a.currency !== undefined && a.currency !== 'EUR').length
-    : 0
+  // Sin tipo de cambio fiable no consolidamos divisas en el total en euros —
+  // pero eso no significa esconderlas: se muestra el subtotal real de cada
+  // una, tal cual, nunca convertido a un EUR inventado.
+  const foreignBalances: ForeignBalance[] = hasRealAccounts
+    ? [...realAccounts!.filter((a) => a.currency !== undefined && a.currency !== 'EUR').reduce((acc, a) => {
+        const share = a.balance * ((a.sharePercent ?? 100) / 100)
+        acc.set(a.currency!, (acc.get(a.currency!) ?? 0) + share)
+        return acc
+      }, new Map<string, number>())].map(([currency, amount]) => ({ currency, amount }))
+    : []
 
   const realKpis = hasRealAccounts
     ? realAccounts!
@@ -224,7 +229,7 @@ export function AccountsPage() {
           <>
             <NetWorthKpis
               kpis={hasRealAccounts ? { ...realKpis!, netWorth: realKpis!.assets - realKpis!.liabilities } : undefined}
-              excludedForeignCount={excludedForeignCount}
+              foreignBalances={foreignBalances}
             />
             {hasRealAccounts && <NetWorthTrendChart points={netWorthHistory} loading={loadingHistory} />}
             <AccountsTable accounts={hasRealAccounts ? realAccounts! : undefined} />

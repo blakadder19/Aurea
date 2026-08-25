@@ -8,6 +8,7 @@ import { useRealCategories } from '../transactions/useRealCategories'
 import { useRealTransactions, type RealTransaction } from '../transactions/useRealTransactions'
 import { useRealRecurring } from '../recurring/useRealRecurring'
 import { buildRealTimeline } from './timelineCalc'
+import { findPossibleDuplicates, findUnusualAmounts } from '../../lib/anomalyCalc'
 
 const FN_LABEL: Record<string, string> = {
   Ahorro: 'Ahorro',
@@ -175,6 +176,31 @@ export function useRealHome(budgetMonthStart: number | null): RealHomeData | nul
           actions: [{ label: 'Ver pagos y suscripciones', to: '/pagos' }],
         })
       }
+    }
+
+    const duplicateFlags = findPossibleDuplicates(transactions ?? [])
+      .sort((a, b) => b.importeAbs - a.importeAbs)
+      .slice(0, 3)
+    for (const dup of duplicateFlags) {
+      attentionItems.push({
+        status: 'Posible duplicado',
+        variant: 'warning',
+        headline: `Dos cargos de ${dup.importeAbs.toLocaleString('es-ES', { minimumFractionDigits: 2 })} € en ${dup.comercio}`,
+        detail: `Con ${dup.daysApart} día${dup.daysApart === 1 ? '' : 's'} de diferencia. Podría ser un cobro duplicado por error.`,
+        actions: [{ label: 'Ver en Movimientos', to: '/movimientos' }],
+      })
+    }
+    const unusualFlags = findUnusualAmounts(transactions ?? [])
+      .sort((a, b) => b.importeAbs / b.typicalAbs - a.importeAbs / a.typicalAbs)
+      .slice(0, 3)
+    for (const flag of unusualFlags) {
+      attentionItems.push({
+        status: 'Importe inusual',
+        variant: 'warning',
+        headline: `${flag.comercio} te cobró ${flag.importeAbs.toLocaleString('es-ES', { minimumFractionDigits: 2 })} €`,
+        detail: `Normalmente ronda los ${flag.typicalAbs.toLocaleString('es-ES', { minimumFractionDigits: 2 })} €. Puede que quieras revisarlo.`,
+        actions: [{ label: 'Ver en Movimientos', to: '/movimientos' }],
+      })
     }
 
     const increases = (recurringItems ?? []).filter((i) => i.highlight?.badge === 'Sube de precio')

@@ -3,7 +3,18 @@ import { Money } from '../../components/Money'
 import { NoSearchResults } from '../../components/states/NoSearchResults'
 import { transactions as demoTransactions, type Transaction } from '../../data/transactions'
 import { categoryColorClass } from '../../lib/categoryColor'
+import { formatMoney } from '../../lib/format'
 import { ALL_ACCOUNTS, ALL_CATEGORIES, useTransactionsStore } from './store'
+
+/** El buscador promete "comercio, importe o nota" (y etiquetas) — que de verdad las mire todas, no solo el comercio. */
+export function matchesSearch(t: Transaction, query: string): boolean {
+  if (!query) return true
+  if (t.comercio.toLowerCase().includes(query)) return true
+  if (formatMoney(Math.abs(t.importe)).toLowerCase().includes(query)) return true
+  if ((t.userNote ?? '').toLowerCase().includes(query)) return true
+  if ((t.tags ?? []).some((tag) => tag.toLowerCase().includes(query))) return true
+  return false
+}
 
 function toneFor(t: Transaction) {
   if (t.importe > 0) return 'green' as const
@@ -158,7 +169,7 @@ export function TransactionsTable({ transactions = demoTransactions }: { transac
   const query = searchQuery.trim().toLowerCase()
   const filtered = transactions.filter(
     (t) =>
-      (!query || t.comercio.toLowerCase().includes(query)) &&
+      matchesSearch(t, query) &&
       (accountFilter === ALL_ACCOUNTS || t.cuenta === accountFilter) &&
       (categoryFilter === ALL_CATEGORIES || t.categoria === categoryFilter),
   )

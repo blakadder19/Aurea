@@ -12,6 +12,8 @@ export interface Transaction {
   importe: number
   /** Solo en real: etiquetas libres que el usuario añade desde el panel de detalle. */
   tags?: string[]
+  /** Solo en real: nota libre que el usuario añade desde el panel de detalle. */
+  userNote?: string
 }
 
 export const transactions: Transaction[] = [

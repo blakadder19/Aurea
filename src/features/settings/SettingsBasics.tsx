@@ -5,6 +5,7 @@ import { Skeleton } from '../../components/states/Skeleton'
 import { BUDGET_MONTH_START_OPTIONS, CURRENCY_OPTIONS, DATE_FORMAT_OPTIONS } from '../../data/settings'
 import { useAuthStore } from '../../lib/supabase/useAuth'
 import { useSettingsStore } from './store'
+import { exportAllDataJson, exportTransactionsCsv } from './exportData'
 import { useRealSettings } from './useRealSettings'
 
 /** Ajustes básicos: moneda, formato de fecha, inicio del mes presupuestario y borrado de datos de demostración. */
@@ -22,6 +23,24 @@ export function SettingsBasics() {
 
   const { loading: loadingReal, settings: realSettings, save } = useRealSettings()
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [exporting, setExporting] = useState<'csv' | 'json' | null>(null)
+  const [exportError, setExportError] = useState<string | null>(null)
+
+  async function handleExportCsv() {
+    setExporting('csv')
+    setExportError(null)
+    const error = await exportTransactionsCsv()
+    setExporting(null)
+    if (error) setExportError(error)
+  }
+
+  async function handleExportJson() {
+    setExporting('json')
+    setExportError(null)
+    const error = await exportAllDataJson()
+    setExporting(null)
+    if (error) setExportError(error)
+  }
 
   // Nunca mostrar la moneda/formato por defecto de la demo mientras tus
   // ajustes reales, ya guardados, todavía se están leyendo.
@@ -109,6 +128,34 @@ export function SettingsBasics() {
       </div>
 
       {isAuthenticated && saveError && <div className="text-[15px] text-danger-text">{saveError}</div>}
+
+      {isAuthenticated && (
+        <div className="flex flex-col gap-3 border-t border-line pt-4">
+          <div>
+            <div className="text-base font-semibold text-ink">Exportar tus datos</div>
+            <div className="text-[15px] text-ink-muted">Una copia de tus datos reales, tal cual están guardados — para Hacienda, otra herramienta, o solo por tenerla.</div>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => void handleExportCsv()}
+              disabled={exporting !== null}
+              className="min-h-11 rounded-md border border-line bg-surface px-[18px] text-base font-semibold text-ink hover:bg-canvas disabled:opacity-60"
+            >
+              {exporting === 'csv' ? 'Exportando…' : 'Exportar movimientos (CSV)'}
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleExportJson()}
+              disabled={exporting !== null}
+              className="min-h-11 rounded-md border border-line bg-surface px-[18px] text-base font-semibold text-ink hover:bg-canvas disabled:opacity-60"
+            >
+              {exporting === 'json' ? 'Exportando…' : 'Exportar todos tus datos (JSON)'}
+            </button>
+          </div>
+          {exportError && <div className="text-[15px] text-danger-text">{exportError}</div>}
+        </div>
+      )}
 
       {!isAuthenticated && (
         <div className="flex flex-wrap items-center gap-4 border-t border-line pt-4">

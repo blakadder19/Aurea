@@ -12,14 +12,19 @@ interface Kpis {
   netWorthDelta?: number
 }
 
+export interface ForeignBalance {
+  currency: string
+  amount: number
+}
+
 /** Bloque de cabecera: Activos, Pasivos y Patrimonio neto. */
 export function NetWorthKpis({
   kpis = demoNetWorthKpis,
-  excludedForeignCount = 0,
+  foreignBalances = [],
 }: {
   kpis?: Kpis
-  /** Cuentas en otra divisa que no cuentan en el total por falta de un tipo de cambio fiable. */
-  excludedForeignCount?: number
+  /** Subtotal real por divisa de las cuentas que no cuentan en el total en euros — nunca convertido, solo mostrado tal cual. */
+  foreignBalances?: ForeignBalance[]
 }) {
   return (
     <div className="flex flex-col gap-2">
@@ -40,11 +45,15 @@ export function NetWorthKpis({
           )}
         </Card>
       </div>
-      {excludedForeignCount > 0 && (
+      {foreignBalances.length > 0 && (
         <p className="text-sm text-ink-muted">
-          {excludedForeignCount === 1
-            ? '1 cuenta en otra divisa no está incluida en el total: sin un tipo de cambio fiable no la consolidamos.'
-            : `${excludedForeignCount} cuentas en otra divisa no están incluidas en el total: sin un tipo de cambio fiable no las consolidamos.`}
+          No incluido en el patrimonio en euros (sin un tipo de cambio fiable):{' '}
+          {foreignBalances.map((f, i) => (
+            <span key={f.currency} className="tabular">
+              {i > 0 && ' · '}
+              <Money value={f.amount} currency={f.currency} className="font-semibold text-ink" />
+            </span>
+          ))}
         </p>
       )}
     </div>
