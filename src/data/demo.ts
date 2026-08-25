@@ -165,7 +165,8 @@ export interface AttentionItem {
   variant: 'danger' | 'warning' | 'pending'
   headline: string
   detail: string
-  actions: { label: string; primary?: boolean }[]
+  /** `to`: solo en real, navega a la pantalla relevante en vez de ser decorativo. */
+  actions: { label: string; primary?: boolean; to?: string }[]
 }
 
 export const attentionItems: AttentionItem[] = [

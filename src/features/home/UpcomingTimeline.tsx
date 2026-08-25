@@ -1,7 +1,8 @@
+import { Link } from 'react-router-dom'
 import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
 import { SectionLabel } from '../../components/SectionLabel'
-import { hitos, next14Days, timelineDays, timelineEvents } from '../../data/demo'
+import { hitos, next14Days, timelineDays, timelineEvents, type TimelineEvent } from '../../data/demo'
 import { formatMoney } from '../../lib/format'
 import { useHomeUIStore } from '../../store/useHomeUIStore'
 
@@ -11,30 +12,43 @@ const TIER_BOTTOM: Record<string, string> = {
   upper: 'bottom-[66px]',
 }
 
+export interface RealTimelineData {
+  events: TimelineEvent[]
+  days: string[]
+  totalOut: number
+  rangeLabel: string
+}
+
 /**
  * Bloque 4 — Próximos 14 días. Eje de 15 días con marcadores en posición absoluta
  * y alturas alternas para que ningún importe se solape. Los importes nunca se
  * envuelven: cada marcador es de una sola línea (white-space: nowrap).
+ * En real, sin ingreso: no hay detección real de nóminas recurrentes.
  */
-export function UpcomingTimeline() {
+export function UpcomingTimeline({ real }: { real?: RealTimelineData } = {}) {
   const mode = useHomeUIStore((s) => s.mode)
+  const events = real?.events ?? timelineEvents
+  const totalOut = real?.totalOut ?? next14Days.totalOut
+  const rangeLabel = real?.rangeLabel ?? next14Days.rangeLabel
 
   return (
     <Card className="flex flex-col gap-5" padding="lg">
       <div className="flex items-end justify-between gap-6">
         <div>
           <h2 className="font-serif text-[26px] font-semibold text-ink">
-            Salen {formatMoney(next14Days.totalOut)} y entran {formatMoney(next14Days.totalIn)} en los próximos 14 días
+            {real
+              ? `Salen ${formatMoney(totalOut)} en los próximos 14 días`
+              : `Salen ${formatMoney(next14Days.totalOut)} y entran ${formatMoney(next14Days.totalIn)} en los próximos 14 días`}
           </h2>
-          <div className="mt-1.5 text-base text-ink-muted">{next14Days.rangeLabel}</div>
+          <div className="mt-1.5 text-base text-ink-muted">{rangeLabel}</div>
         </div>
-        <a href="#pagos-y-suscripciones" className="border-b border-green text-base font-semibold text-green">
+        <Link to="/pagos" className="border-b border-green text-base font-semibold text-green">
           Ver pagos y suscripciones
-        </a>
+        </Link>
       </div>
 
       <div className="flex flex-col gap-2.5 lg:hidden">
-        {timelineEvents
+        {events
           .filter((event) => event.tier !== 'today')
           .map((event) => (
             <div key={`${event.column}-${event.label}`} className="flex items-center justify-between gap-3 text-base tabular">
@@ -54,7 +68,7 @@ export function UpcomingTimeline() {
       <div className="hidden overflow-x-auto lg:block">
         <div className="min-w-[820px]">
           <div className="grid min-h-[150px] grid-cols-[repeat(15,1fr)] items-end gap-x-1">
-            {timelineEvents.map((event) => {
+            {events.map((event) => {
               const isToday = event.tier === 'today'
               const isInflow = event.amount > 0
               const amountTone = isToday ? 'green' : isInflow ? 'green' : 'danger'
@@ -98,14 +112,14 @@ export function UpcomingTimeline() {
 
           <div className="my-5 h-0.5 bg-line" />
           <div className="grid grid-cols-[repeat(15,1fr)] gap-x-1 text-center text-[13px] text-ink-muted tabular">
-            {timelineDays.map((day) => (
+            {(real?.days ?? timelineDays).map((day) => (
               <span key={day}>{day}</span>
             ))}
           </div>
         </div>
       </div>
 
-      {mode === 'detalle' && (
+      {mode === 'detalle' && !real && (
         <div className="border-t border-line pt-4">
           <SectionLabel className="mb-3">Tabla de los mismos hitos</SectionLabel>
           <div className="hidden overflow-x-auto lg:block">

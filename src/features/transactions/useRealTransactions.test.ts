@@ -103,6 +103,7 @@ describe('useRealTransactions', () => {
         needsReview: false,
         userNote: '',
         tags: [],
+        dateISO: '2026-08-19',
       },
       {
         id: 'tx-2',
@@ -116,6 +117,7 @@ describe('useRealTransactions', () => {
         needsReview: false,
         userNote: 'revisar',
         tags: ['amazon'],
+        dateISO: '2026-08-18',
       },
     ])
   })

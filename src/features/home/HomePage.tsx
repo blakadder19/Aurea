@@ -7,9 +7,11 @@ import { ExplainableInsight } from './ExplainableInsight'
 import { NetWorthCard } from './NetWorthCard'
 import { RecentTransactions } from './RecentTransactions'
 import { UpcomingTimeline } from './UpcomingTimeline'
+import { useRealHome } from './useRealHome'
 import { UndoBar } from '../../components/UndoBar'
 import { CONTEXT_DATE, alertsCount, syncedAt, undoBanner } from '../../data/demo'
 import { formatMonthYearLong, formatWeekdayDate } from '../../lib/format'
+import { useAuthStore } from '../../lib/supabase/useAuth'
 import { useHomeUIStore, type ViewMode } from '../../store/useHomeUIStore'
 
 const PERIODS = ['Mes actual', '3 meses', 'Año', 'Personalizado']
@@ -18,15 +20,12 @@ const VIEW_MODES: { value: ViewMode; label: string }[] = [
   { value: 'detalle', label: 'Detalle' },
 ]
 
-function Header() {
+function Header({ isAuthenticated, today, alertCount }: { isAuthenticated: boolean; today: Date; alertCount: number }) {
   const mode = useHomeUIStore((s) => s.mode)
   const setMode = useHomeUIStore((s) => s.setMode)
   const [period, setPeriod] = useState(PERIODS[0])
 
-  const dateLabel = `${formatWeekdayDate(CONTEXT_DATE)} · ${formatMonthYearLong(
-    CONTEXT_DATE.getMonth(),
-    CONTEXT_DATE.getFullYear(),
-  )}`
+  const dateLabel = `${formatWeekdayDate(today)} · ${formatMonthYearLong(today.getMonth(), today.getFullYear())}`
 
   return (
     <header className="flex flex-col gap-4 border-b border-line bg-surface px-4 py-5 lg:px-8">
@@ -38,17 +37,17 @@ function Header() {
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex min-h-11 items-center gap-2 rounded-md border border-green-soft-line bg-green-soft px-3 py-2 text-sm font-semibold text-green-text">
-            <span aria-hidden="true">✓</span> Sincronizado · {syncedAt}
+            <span aria-hidden="true">✓</span> {isAuthenticated ? 'Sincronizado' : `Sincronizado · ${syncedAt}`}
           </div>
-          <button
-            type="button"
-            className="flex min-h-11 items-center gap-2 rounded-md border border-line bg-surface px-3.5 py-2.5 text-base font-semibold text-ink hover:border-ink"
-          >
-            Avisos
-            <span className="rounded-full bg-danger px-2 py-0.5 text-[13px] font-bold text-surface">
-              {alertsCount}
-            </span>
-          </button>
+          {alertCount > 0 && (
+            <button
+              type="button"
+              className="flex min-h-11 items-center gap-2 rounded-md border border-line bg-surface px-3.5 py-2.5 text-base font-semibold text-ink hover:border-ink"
+            >
+              Avisos
+              <span className="rounded-full bg-danger px-2 py-0.5 text-[13px] font-bold text-surface">{alertCount}</span>
+            </button>
+          )}
           <button
             type="button"
             className="min-h-11 rounded-md border border-green bg-green px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-green-hover"
@@ -106,36 +105,70 @@ function Header() {
 /** Pantalla Inicio completa, modos Resumen y Detalle. */
 export function HomePage() {
   const isDetalle = useHomeUIStore((s) => s.mode === 'detalle')
+  const session = useAuthStore((s) => s.session)
+  const isAuthenticated = session !== null
+  const home = useRealHome()
+
+  const hasReal = isAuthenticated && home !== null
+  const today = hasReal ? home!.today : CONTEXT_DATE
+  const alertCount = hasReal ? home!.attentionItems.length : alertsCount
 
   return (
     <>
-      <Header />
+      <Header isAuthenticated={isAuthenticated} today={today} alertCount={alertCount} />
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
         <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-[1.25fr_1fr]">
           <div className="min-w-0">
-            <AvailableTodayCard />
+            <AvailableTodayCard
+              real={
+                hasReal
+                  ? {
+                      availableToday: home!.availableToday,
+                      eligibleAccounts: home!.eligibleAccounts,
+                      eligibleAccountsSum: home!.eligibleAccountsSum,
+                      commitments14d: home!.commitments14d,
+                      commitmentsLabel: home!.commitmentsLabel,
+                      outsideAvailable: home!.outsideAvailable,
+                    }
+                  : undefined
+              }
+            />
           </div>
           <div className="flex min-w-0 flex-col gap-6">
-            <NetWorthCard />
-            <BudgetPaceCard />
+            <NetWorthCard
+              real={
+                hasReal
+                  ? { netWorth: home!.netWorth, assets: home!.assets, liabilities: home!.liabilities, savingsRatePct: home!.savingsRatePct }
+                  : undefined
+              }
+            />
+            <BudgetPaceCard real={hasReal ? (home!.budgetVerdict ?? undefined) : undefined} />
           </div>
         </div>
 
-        <UpcomingTimeline />
+        <UpcomingTimeline
+          real={
+            hasReal
+              ? { events: home!.timelineEvents, days: home!.timelineDays, totalOut: home!.timelineTotalOut, rangeLabel: home!.timelineRangeLabel }
+              : undefined
+          }
+        />
 
         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
           <div className="min-w-0">
-            <AttentionTray />
+            <AttentionTray real={hasReal ? home!.attentionItems : undefined} />
           </div>
           <div className="flex min-w-0 flex-col gap-6">
-            <ExplainableInsight />
-            <RecentTransactions />
+            {(!hasReal || home!.insight) && <ExplainableInsight real={hasReal ? (home!.insight ?? undefined) : undefined} />}
+            <RecentTransactions
+              real={hasReal ? { movements: home!.recentTransactions, totalThisMonth: home!.totalTransactionsThisMonth } : undefined}
+            />
           </div>
         </div>
 
-        {isDetalle && <BudgetBreakdownTable />}
+        {isDetalle && <BudgetBreakdownTable real={hasReal ? home!.budgetCategories : undefined} />}
 
-        <UndoBar message={undoBanner.message} />
+        {!isAuthenticated && <UndoBar message={undoBanner.message} />}
       </main>
     </>
   )

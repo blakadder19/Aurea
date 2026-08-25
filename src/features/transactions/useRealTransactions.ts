@@ -12,6 +12,8 @@ export interface RealTransaction extends Transaction {
   needsReview: boolean
   userNote: string
   tags: string[]
+  /** Fecha ISO sin formatear (booking_date o value_date) — para cálculos, `fecha` es solo para mostrar. */
+  dateISO: string | null
 }
 
 interface RealTransactionsResult {
@@ -92,6 +94,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
           needsReview: Boolean(row.needs_review),
           userNote: (row.user_note as string | null) ?? '',
           tags: (row.tags as string[] | null) ?? [],
+          dateISO: isoDate,
         }
       })
 

@@ -11,21 +11,33 @@ import {
   eligibleAccountsSum,
   outsideAvailable,
   syncedAt,
+  type EligibleAccount,
+  type OutsideAvailableItem,
 } from '../../data/demo'
 import { useHomeUIStore } from '../../store/useHomeUIStore'
 
 const LOADING_MS = 600
 
+export interface RealAvailableToday {
+  availableToday: number
+  eligibleAccounts: EligibleAccount[]
+  eligibleAccountsSum: number
+  commitments14d: number
+  commitmentsLabel: string
+  outsideAvailable: OutsideAvailableItem[]
+}
+
 /** Bloque 1 — Disponible hoy. Cifra hero + desglose expandible in-place (no modal). */
-export function AvailableTodayCard() {
+export function AvailableTodayCard({ real }: { real?: RealAvailableToday } = {}) {
   const showCalc = useHomeUIStore((s) => s.showCalc)
   const toggleCalc = useHomeUIStore((s) => s.toggleCalc)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!real)
 
   useEffect(() => {
+    if (real) return
     const id = setTimeout(() => setLoading(false), LOADING_MS)
     return () => clearTimeout(id)
-  }, [])
+  }, [real])
 
   if (loading) {
     return (
@@ -41,13 +53,15 @@ export function AvailableTodayCard() {
     )
   }
 
+  const data = real ?? { availableToday, eligibleAccounts, eligibleAccountsSum, commitments14d, commitmentsLabel, outsideAvailable }
+
   return (
     <Card className="flex flex-col gap-5" padding="lg">
       <SectionLabel>Disponible hoy</SectionLabel>
 
       <div>
         <div className="font-serif text-[48px] leading-none font-semibold tracking-[-0.02em] text-ink tabular lg:text-[72px]">
-          <Money value={availableToday} />
+          <Money value={data.availableToday} />
         </div>
         <p className="mt-3.5 max-w-[46ch] text-lg text-ink text-pretty">
           Puedes gastar esto sin tocar tu ahorro ni dejar sin cubrir los pagos de los próximos 14 días.
@@ -64,7 +78,7 @@ export function AvailableTodayCard() {
         >
           Ver cómo se calcula
         </button>
-        <span className="text-sm text-ink-muted">Actualizado hoy a las {syncedAt}</span>
+        {!real && <span className="text-sm text-ink-muted">Actualizado hoy a las {syncedAt}</span>}
       </div>
 
       {showCalc && (
@@ -77,7 +91,8 @@ export function AvailableTodayCard() {
           </div>
 
           <div className="flex flex-col gap-2 tabular">
-            {eligibleAccounts.map((account) => (
+            {data.eligibleAccounts.length === 0 && <div className="text-base text-ink-muted">Ninguna cuenta marcada como «Para gastar».</div>}
+            {data.eligibleAccounts.map((account) => (
               <div key={account.label} className="flex justify-between text-base text-ink">
                 <span>{account.label}</span>
                 <Money value={account.amount} className="font-semibold" />
@@ -86,24 +101,24 @@ export function AvailableTodayCard() {
 
             <div className="flex justify-between border-t border-line pt-2 text-base text-ink">
               <span className="font-semibold">Suma en cuentas para gastar</span>
-              <Money value={eligibleAccountsSum} className="font-bold" />
+              <Money value={data.eligibleAccountsSum} className="font-bold" />
             </div>
 
             <div className="flex justify-between text-base">
-              <span className="font-normal text-danger-text">− {commitmentsLabel}</span>
-              <Money value={-commitments14d} tone="danger" className="font-bold" />
+              <span className="font-normal text-danger-text">− {data.commitmentsLabel}</span>
+              <Money value={-data.commitments14d} tone="danger" className="font-bold" />
             </div>
 
             <div className="flex justify-between border-t-2 border-ink pt-2.5 text-xl text-ink">
               <span className="font-bold">Disponible hoy</span>
-              <Money value={availableToday} serif className="text-[26px] font-bold" />
+              <Money value={data.availableToday} serif className="text-[26px] font-bold" />
             </div>
           </div>
 
           <div className="border-t border-line pt-3.5">
             <div className="mb-2 text-sm font-bold text-ink">Qué no entra en esta cifra</div>
             <div className="flex flex-wrap gap-2">
-              {outsideAvailable.map((item) => (
+              {data.outsideAvailable.map((item) => (
                 <span
                   key={item.label}
                   className={`rounded-full border bg-surface px-3 py-1.5 text-sm text-ink-muted tabular ${

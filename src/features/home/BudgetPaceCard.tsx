@@ -3,9 +3,51 @@ import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
 import { ProgressBar } from '../../components/ProgressBar'
 import { budget } from '../../data/demo'
+import type { RealVerdict } from '../budget/MonthVerdictCard'
 
-/** Bloque 3 — Presupuesto. Titular-conclusión + barra de ritmo real vs esperado. */
-export function BudgetPaceCard() {
+/** Bloque 3 — Presupuesto. Titular-conclusión + barra de ritmo real vs esperado. En real, sin "Comprometido": no hay dato de gasto comprometido. */
+export function BudgetPaceCard({ real }: { real?: RealVerdict } = {}) {
+  if (real) {
+    const spentPct = real.paceRealPct ?? 0
+    return (
+      <Card className="flex flex-col gap-3.5" padding="md">
+        <div className="flex items-start justify-between gap-4">
+          <h2 className="font-serif text-[26px] leading-[1.2] font-semibold text-ink">{real.headline}</h2>
+          <Badge variant={real.badgeVariant}>{real.badgeLabel}</Badge>
+        </div>
+
+        {real.paceRealPct !== null && (
+          <>
+            <div className="text-base text-ink tabular">
+              <Money value={real.gastado} decimals={0} /> gastados de <Money value={real.presupuestado} decimals={0} /> presupuestados ·{' '}
+              {Math.round(real.paceRealPct)} %
+            </div>
+            <ProgressBar
+              percent={spentPct}
+              markerPercent={real.paceExpectedPct ?? undefined}
+              label={`${Math.round(real.paceRealPct)}% del presupuesto consumido`}
+            />
+          </>
+        )}
+
+        <div className="flex items-baseline justify-between border-t border-line pt-3 tabular">
+          <div>
+            <div className="text-sm text-ink-muted">Previsión de cierre</div>
+            <div className="text-[22px] font-bold">
+              <Money value={real.previsionCierre} decimals={0} />
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-sm text-ink-muted">Restante</div>
+            <div className="text-[22px] font-bold text-ink">
+              <Money value={real.restante} decimals={0} />
+            </div>
+          </div>
+        </div>
+      </Card>
+    )
+  }
+
   const spentPct = (budget.spent / budget.budgeted) * 100
 
   return (
