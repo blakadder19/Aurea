@@ -61,6 +61,10 @@ function Header({
           {alertCount > 0 && (
             <button
               type="button"
+              onClick={() => {
+                const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                document.getElementById('necesita-tu-atencion')?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
+              }}
               className="flex min-h-11 items-center gap-2 rounded-md border border-line bg-surface px-3.5 py-2.5 text-base font-semibold text-ink hover:border-ink"
             >
               Avisos
@@ -212,7 +216,7 @@ export function HomePage() {
         />
 
         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
-          <div className="min-w-0">
+          <div id="necesita-tu-atencion" className="min-w-0 scroll-mt-6">
             <AttentionTray real={hasReal ? home!.attentionItems : undefined} />
           </div>
           <div className="flex min-w-0 flex-col gap-6">

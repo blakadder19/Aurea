@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { HomePage } from './HomePage'
 
 function renderHomePage() {
@@ -22,5 +22,14 @@ describe('HomePage', () => {
     renderHomePage()
     fireEvent.click(screen.getByRole('button', { name: 'Detalle' }))
     expect(screen.getByText('Dónde se va el presupuesto de agosto')).toBeInTheDocument()
+  })
+
+  it('el botón Avisos lleva a la sección "Necesita tu atención" en vez de no hacer nada', () => {
+    const scrollIntoView = vi.fn()
+    Element.prototype.scrollIntoView = scrollIntoView
+    window.matchMedia = vi.fn().mockReturnValue({ matches: false })
+    renderHomePage()
+    fireEvent.click(screen.getByRole('button', { name: /Avisos/ }))
+    expect(scrollIntoView).toHaveBeenCalledWith(expect.objectContaining({ block: 'start' }))
   })
 })
