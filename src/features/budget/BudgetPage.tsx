@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { AdjustBudgetPanel } from './AdjustBudgetPanel'
 import { CategoryList } from './CategoryList'
 import { MonthVerdictCard } from './MonthVerdictCard'
@@ -21,12 +22,16 @@ function Header({
   monthLabel,
   dayOfMonth,
   daysInMonthCount,
+  monthOffset,
+  onMonthOffsetChange,
   loading = false,
 }: {
   isAuthenticated: boolean
   monthLabel: string
   dayOfMonth: number
   daysInMonthCount: number
+  monthOffset: number
+  onMonthOffsetChange: (n: number) => void
   loading?: boolean
 }) {
   const mode = useBudgetStore((s) => s.mode)
@@ -39,8 +44,31 @@ function Header({
         <div>
           <h1 className="font-serif text-[32px] lg:text-[26px] font-semibold tracking-[-0.01em] text-ink">Presupuesto</h1>
           {!loading && (
-            <div className="mt-1 text-base text-ink-muted">
-              {monthLabel} · día {dayOfMonth} de {daysInMonthCount}
+            <div className="mt-1 flex items-center gap-2 text-base text-ink-muted">
+              {isAuthenticated && (
+                <button
+                  type="button"
+                  aria-label="Mes anterior"
+                  onClick={() => onMonthOffsetChange(monthOffset + 1)}
+                  className="flex h-8 w-8 items-center justify-center rounded-md border border-line text-ink hover:bg-canvas"
+                >
+                  ‹
+                </button>
+              )}
+              <span>
+                {monthLabel}
+                {monthOffset === 0 ? ` · día ${dayOfMonth} de ${daysInMonthCount}` : monthOffset > 0 ? ' · mes cerrado' : ' · aún no empieza'}
+              </span>
+              {isAuthenticated && (
+                <button
+                  type="button"
+                  aria-label="Mes siguiente"
+                  onClick={() => onMonthOffsetChange(monthOffset - 1)}
+                  className="flex h-8 w-8 items-center justify-center rounded-md border border-line text-ink hover:bg-canvas"
+                >
+                  ›
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -92,14 +120,15 @@ export function BudgetPage() {
   const { settings: realSettings } = useRealSettings()
   const budgetMonthStart = realSettings?.budgetMonthStart ?? null
   const { categories: realCategories } = useRealCategories()
-  const { loading: loadingReal, budget: realBudget, refetch } = useRealBudget(realCategories, budgetMonthStart)
+  const [monthOffset, setMonthOffset] = useState(0)
+  const { loading: loadingReal, budget: realBudget, refetch } = useRealBudget(realCategories, budgetMonthStart, monthOffset)
 
   const isAuthenticated = session !== null
   const hasRealBudget = isAuthenticated && !loadingReal && realBudget !== null
   const viewModel = hasRealBudget ? toBudgetViewModel(realBudget!) : null
 
   async function handleSaveCategoryBudget(categoryId: string, amountCents: number) {
-    return saveCategoryBudget(categoryId, amountCents, realSettings?.budgetMonthStart ?? 1)
+    return saveCategoryBudget(categoryId, amountCents, realSettings?.budgetMonthStart ?? 1, monthOffset)
   }
 
   // Nunca mostrar la demo de relleno mientras el presupuesto real todavía
@@ -107,7 +136,7 @@ export function BudgetPage() {
   if (isAuthenticated && loadingReal) {
     return (
       <>
-        <Header isAuthenticated monthLabel="" dayOfMonth={0} daysInMonthCount={0} loading />
+        <Header isAuthenticated monthLabel="" dayOfMonth={0} daysInMonthCount={0} monthOffset={monthOffset} onMonthOffsetChange={setMonthOffset} loading />
         <main className="flex flex-1 flex-col gap-6 lg:gap-5 overflow-y-auto p-4 lg:p-6">
           <LoadingRealData />
         </main>
@@ -122,6 +151,8 @@ export function BudgetPage() {
         monthLabel={hasRealBudget ? realBudget!.monthLabel : budgetSummary.monthLabel}
         dayOfMonth={hasRealBudget ? realBudget!.dayOfMonth : budgetSummary.dayOfMonth}
         daysInMonthCount={hasRealBudget ? realBudget!.daysInMonthCount : budgetSummary.daysInMonth}
+        monthOffset={monthOffset}
+        onMonthOffsetChange={setMonthOffset}
       />
       <main className="flex flex-1 flex-col gap-6 lg:gap-5 overflow-y-auto p-4 lg:p-6">
         <MonthVerdictCard real={viewModel?.verdict} />

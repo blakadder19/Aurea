@@ -43,6 +43,17 @@ function monthKeyForCycle(start: Date): string {
   return `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-01`
 }
 
+/**
+ * El ciclo que empieza `monthOffset` ciclos antes (positivo) o después
+ * (negativo) del que contiene `today` — desplazando por meses de
+ * calendario sobre el propio `startDay` del ciclo actual, nunca sobre el
+ * día de `today`, así nunca hay problema de desbordamiento de mes (28-31).
+ */
+function shiftedCycleStart(today: Date, startDay: number, monthOffset: number): Date {
+  const current = cycleStart(today, startDay)
+  return new Date(current.getFullYear(), current.getMonth() - monthOffset, current.getDate())
+}
+
 /** "agosto de 2026" si el ciclo empieza el día 1 (de siempre); si no, el rango real del ciclo ("25 ago – 24 sep"). */
 function cycleLabel(start: Date, end: Date, startDay: number): string {
   if (startDay === 1) return formatMonthYearLong(start.getMonth(), start.getFullYear())
@@ -61,7 +72,7 @@ function cycleLabel(start: Date, end: Date, startDay: number): string {
  * calcular el ritmo del mes con el día 1 por defecto y luego "saltar" al
  * ciclo real un instante después.
  */
-export function useRealBudget(categories: RealCategory[] | null, budgetMonthStart: number | null): RealBudgetResult {
+export function useRealBudget(categories: RealCategory[] | null, budgetMonthStart: number | null, monthOffset = 0): RealBudgetResult {
   const session = useAuthStore((s) => s.session)
   const [loading, setLoading] = useState(true)
   const [budget, setBudget] = useState<RealBudgetSummary | null>(null)
@@ -83,12 +94,16 @@ export function useRealBudget(categories: RealCategory[] | null, budgetMonthStar
     async function load() {
       if (!supabase) return
       const now = new Date()
-      const start = cycleStart(now, monthStart)
+      const start = shiftedCycleStart(now, monthStart, monthOffset)
       const end = cycleEnd(start)
       const from = isoDate(start)
       const to = isoDate(end)
       const totalDays = daysInCycle(start)
-      const daysElapsed = daysElapsedInCycle(now, start)
+      // Fuera del ciclo en curso no hay "días transcurridos" que valga: un mes
+      // pasado se trata como cerrado (100 %) y uno futuro, como si ya hubiera
+      // pasado entero — así "ritmo" se convierte en la comparación real
+      // presupuestado-vs-gastado, sin fabricar un porcentaje de tiempo.
+      const daysElapsed = monthOffset === 0 ? daysElapsedInCycle(now, start) : totalDays
 
       const dateFilter =
         `and(booking_date.gte.${from},booking_date.lt.${to}),` +
@@ -149,13 +164,18 @@ export function useRealBudget(categories: RealCategory[] | null, budgetMonthStar
     return () => {
       cancelled = true
     }
-  }, [session, categories, budgetMonthStart, version])
+  }, [session, categories, budgetMonthStart, monthOffset, version])
 
   return { loading, budget, refetch: () => setVersion((v) => v + 1) }
 }
 
-/** Guarda el presupuesto de una categoría para el mes en curso (upsert). RLS asegura que solo toca lo suyo. */
-export async function saveCategoryBudget(categoryId: string, amountCents: number, budgetMonthStart: number): Promise<string | null> {
+/** Guarda el presupuesto de una categoría para el ciclo mostrado (upsert) — `monthOffset` igual que en useRealBudget. RLS asegura que solo toca lo suyo. */
+export async function saveCategoryBudget(
+  categoryId: string,
+  amountCents: number,
+  budgetMonthStart: number,
+  monthOffset = 0,
+): Promise<string | null> {
   if (!supabase) return 'Supabase no está configurado.'
   if (!Number.isInteger(amountCents) || amountCents < 0) return 'El importe debe ser un número entero mayor o igual que 0.'
 
@@ -164,7 +184,7 @@ export async function saveCategoryBudget(categoryId: string, amountCents: number
   } = await supabase.auth.getUser()
   if (!user) return 'Inicia sesión de nuevo para guardar el presupuesto.'
 
-  const month = monthKeyForCycle(cycleStart(new Date(), budgetMonthStart))
+  const month = monthKeyForCycle(shiftedCycleStart(new Date(), budgetMonthStart, monthOffset))
   const { error } = await supabase
     .from('budgets')
     .upsert({ user_id: user.id, category_id: categoryId, month, amount_cents: amountCents }, { onConflict: 'user_id,category_id,month' })

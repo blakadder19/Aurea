@@ -94,4 +94,14 @@ describe('useRealBudget', () => {
     expect(budget.totalBudgetedCents).toBe(40000)
     expect(budget.totalSpentCents).toBe(46200)
   })
+
+  it('con monthOffset != 0 (mes pasado o futuro), trata el ciclo como cerrado: ritmo esperado = presupuesto completo', async () => {
+    useAuthStore.setState({ session: activeSession })
+    const { result } = renderHook(() => useRealBudget(categories, 1, 1))
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    const supermercado = result.current.budget!.categories.find((c) => c.categoryId === 'cat-1')!
+    expect(supermercado.expectedPaceCents).toBe(supermercado.budgetedCents)
+  })
 })
