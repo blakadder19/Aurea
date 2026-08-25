@@ -1,6 +1,7 @@
 import { useAuthStore } from '../../lib/supabase/useAuth'
 import { ConnectionsList } from './ConnectionsList'
 import { ImportCsvPanel } from './ImportCsvPanel'
+import { RealConnectionsCard } from './RealConnectionsCard'
 import { SettingsBasics } from './SettingsBasics'
 import { useSettingsStore } from './store'
 
@@ -13,7 +14,7 @@ function Header({ isAuthenticated }: { isAuthenticated: boolean }) {
         <h1 className="font-serif text-[32px] font-semibold tracking-[-0.01em] text-ink">Conexiones y ajustes</h1>
         <div className="mt-1 text-base text-ink-muted">
           {isAuthenticated
-            ? 'La lista de conexiones de aquí abajo es de demostración; tu conexión bancaria real se gestiona desde Cuentas y patrimonio'
+            ? 'Arriba, tu conexión bancaria real. La lista de "Conexiones bancarias" de aquí abajo es de demostración.'
             : 'Todo esto es una demostración: ninguna conexión es real'}
         </div>
       </div>
@@ -38,6 +39,7 @@ export function SettingsPage() {
     <>
       <Header isAuthenticated={isAuthenticated} />
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
+        {isAuthenticated && <RealConnectionsCard />}
         <ConnectionsList />
         {importOpen && <ImportCsvPanel />}
         <SettingsBasics />

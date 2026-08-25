@@ -13,8 +13,10 @@ import { EmptyState } from '../../components/states/EmptyState'
 import { LoadingRealData } from '../../components/states/LoadingRealData'
 import { SyncingNotice } from '../../components/states/SyncingNotice'
 import { connections } from '../../data/settings'
+import { formatIsoDateTime } from '../../lib/format'
 import { useAuthStore } from '../../lib/supabase/useAuth'
 import { useSettingsStore } from '../settings/store'
+import { useRealConnections, latestSync } from '../settings/useRealConnections'
 
 const revolutBase = connections.find((c) => c.id === 'revolut')!
 
@@ -24,7 +26,7 @@ const VIEWS: { value: AccountsView; label: string }[] = [
   { value: 'detalle', label: 'Detalle' },
 ]
 
-function Header() {
+function Header({ isAuthenticated, realLastSynced }: { isAuthenticated: boolean; realLastSynced: string | null }) {
   const mode = useAccountsStore((s) => s.mode)
   const setMode = useAccountsStore((s) => s.setMode)
   const [period, setPeriod] = useState(PERIODS[0])
@@ -42,9 +44,12 @@ function Header() {
           <div className="mt-1 text-base text-ink-muted">{dateLabel}</div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex min-h-11 items-center gap-2 rounded-md border border-green-soft-line bg-green-soft px-3 py-2 text-sm font-semibold text-green-text">
-            <span aria-hidden="true">✓</span> Sincronizado · {syncedAt}
-          </div>
+          {(!isAuthenticated || realLastSynced) && (
+            <div className="flex min-h-11 items-center gap-2 rounded-md border border-green-soft-line bg-green-soft px-3 py-2 text-sm font-semibold text-green-text">
+              <span aria-hidden="true">✓</span> Sincronizado ·{' '}
+              {isAuthenticated ? formatIsoDateTime(realLastSynced!) : syncedAt}
+            </div>
+          )}
           <button
             type="button"
             className="min-h-11 rounded-md border border-brand bg-brand px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-brand-hover"
@@ -105,6 +110,7 @@ export function AccountsPage() {
   const revolutStatus = useSettingsStore((s) => s.connectionOverrides.revolut?.status ?? revolutBase.status)
   const session = useAuthStore((s) => s.session)
   const { loading: loadingReal, accounts: realAccounts, refetch } = useRealAccounts()
+  const { connections: realConnections } = useRealConnections()
   const [connectError, setConnectError] = useState<string | null>(null)
 
   async function handleConnectBank() {
@@ -148,7 +154,7 @@ export function AccountsPage() {
 
   return (
     <>
-      <Header />
+      <Header isAuthenticated={isAuthenticated} realLastSynced={latestSync(realConnections ?? [])} />
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
         {!isAuthenticated && revolutStatus === 'syncing' && (
           <SyncingNotice accountLabel="Revolut" body="Puede tardar hasta un minuto. Las demás cuentas ya están actualizadas." />

@@ -21,3 +21,16 @@ export async function startBankConnection(): Promise<string | null> {
   window.location.href = data.authUrl
   return null
 }
+
+/** Llama a `enable-banking-disconnect`. No borra cuentas ni movimientos ya guardados, solo deja de sincronizar. */
+export async function disconnectBank(): Promise<string | null> {
+  const token = await useAuthStore.getState().getAccessToken()
+  if (!token) return 'Inicia sesión primero.'
+
+  const res = await fetch(`${FUNCTIONS_BASE}/enable-banking-disconnect`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) return 'No hemos podido desconectar el banco. Inténtalo de nuevo en unos minutos.'
+  return null
+}

@@ -64,6 +64,13 @@ export function formatDayMonthYear(day: number, monthIndex0: number, year: numbe
   return `${formatDayMonth(day, monthIndex0)} ${year}`
 }
 
+/** "19 ago, 08:42" a partir de un timestamp ISO completo (con hora) — a diferencia de formatIsoDayMonth, que espera solo fecha. */
+export function formatIsoDateTime(iso: string): string {
+  const d = new Date(iso)
+  const time = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+  return `${formatDayMonth(d.getDate(), d.getMonth())}, ${time}`
+}
+
 /** "Miércoles 19 ago 2026" */
 export function formatWeekdayDate(date: Date): string {
   const weekday = WEEKDAYS[date.getDay()]
