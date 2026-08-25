@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { Account } from '../../data/accounts'
+import { accountLabel, type Account } from '../../data/accounts'
 import type { AttentionItem, EligibleAccount, Movement, OutsideAvailableItem, TimelineEvent } from '../../data/demo'
 import { useRealAccounts } from '../accounts/useRealAccounts'
 import { useRealBudget, toBudgetViewModel, type RealBudgetCategory } from '../budget/useRealBudget'
@@ -61,8 +61,8 @@ const STATUS_VARIANT: Record<RealBudgetCategory['status'], HomeBudgetCategoryRow
   'Sin presupuesto': 'neutral',
 }
 
-function accountLabel(a: Account): string {
-  return `${a.name} · ${a.institution}`
+function eligibleAccountLabel(a: Account): string {
+  return `${accountLabel(a)} · ${a.institution}`
 }
 
 function eurValue(a: Account): number {
@@ -107,7 +107,7 @@ export function useRealHome(budgetMonthStart: number | null): RealHomeData | nul
 
     const eurAccounts = accounts.filter((a) => a.currency === undefined || a.currency === 'EUR')
     const spendAccounts = eurAccounts.filter((a) => a.fn === 'Para gastar')
-    const eligibleAccounts: EligibleAccount[] = spendAccounts.map((a) => ({ label: accountLabel(a), amount: eurValue(a) }))
+    const eligibleAccounts: EligibleAccount[] = spendAccounts.map((a) => ({ label: eligibleAccountLabel(a), amount: eurValue(a) }))
     const eligibleAccountsSum = eligibleAccounts.reduce((sum, a) => sum + a.amount, 0)
 
     const assets = eurAccounts.reduce((sum, a) => sum + Math.max(0, eurValue(a)), 0)

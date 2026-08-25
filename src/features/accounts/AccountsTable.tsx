@@ -2,7 +2,7 @@ import type { KeyboardEvent } from 'react'
 import { Badge, type BadgeVariant } from '../../components/Badge'
 import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
-import { accounts as demoAccounts, type Account, type AccountFunction } from '../../data/accounts'
+import { accountLabel, accounts as demoAccounts, type Account, type AccountFunction } from '../../data/accounts'
 import { categoryColorClass } from '../../lib/categoryColor'
 import { useAccountsStore } from './store'
 
@@ -21,7 +21,7 @@ function Avatar({ account }: { account: Account }) {
       aria-hidden="true"
       className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[13px] font-bold text-surface ${categoryColorClass(account.institution)}`}
     >
-      {account.name.charAt(0).toUpperCase()}
+      {accountLabel(account).charAt(0).toUpperCase()}
     </div>
   )
 }
@@ -38,7 +38,7 @@ function Row({ account }: { account: Account }) {
       tabIndex={0}
       role="button"
       data-row-id={account.id}
-      aria-label={`Ver detalle de ${account.name}`}
+      aria-label={`Ver detalle de ${accountLabel(account)}`}
       onClick={() => openPanel(account.id)}
       onKeyDown={handleKeyDown}
       className="cursor-pointer bg-surface"
@@ -47,7 +47,7 @@ function Row({ account }: { account: Account }) {
         <Avatar account={account} />
       </td>
       <td className="max-w-[260px] truncate border-b border-[#f0f3f1] py-3.5 pr-4 text-[17px] font-semibold text-ink" title={account.name}>
-        {account.name}
+        {accountLabel(account)}
         {account.foreign && (
           <span className="ml-1.5 text-sm font-normal text-ink-muted">
             · {account.foreign.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })} {account.foreign.currency}
@@ -95,7 +95,7 @@ function MobileCard({ account }: { account: Account }) {
       tabIndex={0}
       role="button"
       data-row-id={account.id}
-      aria-label={`Ver detalle de ${account.name}`}
+      aria-label={`Ver detalle de ${accountLabel(account)}`}
       onClick={() => openPanel(account.id)}
       onKeyDown={(e) => e.key === 'Enter' && openPanel(account.id)}
       className="flex cursor-pointer flex-col gap-2 rounded-2xl border border-line bg-surface p-3.5 tabular"
@@ -104,7 +104,7 @@ function MobileCard({ account }: { account: Account }) {
         <div className="flex min-w-0 flex-1 items-center gap-2.5">
           <Avatar account={account} />
           <div className="min-w-0 flex-1 truncate text-[17px] font-semibold text-ink" title={account.name}>
-            {account.name}
+            {accountLabel(account)}
             {account.foreign && (
               <span className="ml-1.5 text-sm font-normal text-ink-muted">
                 · {account.foreign.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })} {account.foreign.currency}

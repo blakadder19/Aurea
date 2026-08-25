@@ -153,7 +153,8 @@ export function useRealAccounts(): RealAccountsResult {
         const fn = FUNCTION_MAP[row.account_function as string] ?? 'Por confirmar'
         return {
           id: row.id as string,
-          name: (row.display_name as string | null) || (row.name as string | null) || (row.product as string | null) || 'Cuenta',
+          name: (row.name as string | null) || (row.product as string | null) || 'Cuenta',
+          displayName: row.display_name as string | null,
           institution: institutionByConnection.get(row.connection_id as string) ?? 'Banco conectado',
           fn,
           balance: (balanceByAccount.get(row.id as string) ?? 0) / 100,

@@ -32,7 +32,7 @@ export async function exportTransactionsCsv(): Promise<string | null> {
       .from('transactions')
       .select('booking_date, value_date, description, amount_cents, account_id, category_id, user_note, tags')
       .order('booking_date', { ascending: false }),
-    supabase.from('accounts').select('id, name, product'),
+    supabase.from('accounts').select('id, name, display_name, product'),
     supabase.from('categories').select('id, name'),
   ])
   if (txError || !transactions) {
@@ -41,7 +41,12 @@ export async function exportTransactionsCsv(): Promise<string | null> {
   }
   if (transactions.length === 0) return 'Todavía no tienes movimientos que exportar.'
 
-  const accountNameById = new Map((accounts ?? []).map((a) => [a.id as string, (a.name as string | null) || (a.product as string | null) || 'Cuenta']))
+  const accountNameById = new Map(
+    (accounts ?? []).map((a) => [
+      a.id as string,
+      (a.display_name as string | null) || (a.name as string | null) || (a.product as string | null) || 'Cuenta',
+    ]),
+  )
   const categoryNameById = new Map((categories ?? []).map((c) => [c.id as string, c.name as string]))
 
   const rows = transactions.map((t) => [

@@ -40,6 +40,13 @@ export interface Account {
   currency?: string
   /** Cuenta creada a mano (sin banco conectado detrás), real solo. undefined = false. */
   isManual?: boolean
+  /** Nombre personal que sustituye a `name` al mostrarlo, sin tocar el nombre que da el banco (real solo). */
+  displayName?: string | null
+}
+
+/** Lo que se muestra como nombre de cuenta: el nombre personal si lo has puesto, si no el que da el banco. */
+export function accountLabel(a: Account): string {
+  return a.displayName || a.name
 }
 
 export const accounts: Account[] = [

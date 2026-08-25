@@ -3,7 +3,7 @@ import { useRef, useState } from 'react'
 import { Money } from '../../components/Money'
 import { SectionLabel } from '../../components/SectionLabel'
 import { SidePanel } from '../../components/SidePanel'
-import { accounts as demoAccounts, type Account, type AccountFunction } from '../../data/accounts'
+import { accountLabel, accounts as demoAccounts, type Account, type AccountFunction } from '../../data/accounts'
 import { focusRowById } from '../../lib/dom'
 import { useAccountsStore } from './store'
 
@@ -36,7 +36,7 @@ function PanelContent({
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [renaming, setRenaming] = useState(false)
-  const [nameInput, setNameInput] = useState(account.name)
+  const [nameInput, setNameInput] = useState(accountLabel(account))
   const [savingName, setSavingName] = useState(false)
   const [nameError, setNameError] = useState<string | null>(null)
 
@@ -109,7 +109,7 @@ function PanelContent({
                 disabled={savingName}
                 onClick={() => {
                   setRenaming(false)
-                  setNameInput(account.name)
+                  setNameInput(accountLabel(account))
                   setNameError(null)
                 }}
                 className="min-h-11 rounded-md border border-line px-3.5 text-sm font-semibold text-ink"
@@ -118,7 +118,7 @@ function PanelContent({
               </button>
             </div>
           ) : (
-            <Dialog.Title className="mt-1 font-serif text-[28px] font-semibold text-ink">{account.name}</Dialog.Title>
+            <Dialog.Title className="mt-1 font-serif text-[28px] font-semibold text-ink">{accountLabel(account)}</Dialog.Title>
           )}
           {nameError && <p className="mt-1 text-sm text-danger-text">{nameError}</p>}
         </div>

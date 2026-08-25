@@ -60,7 +60,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
           )
           .order('booking_date', { ascending: false })
           .limit(TRANSACTIONS_LIMIT),
-        supabase.from('accounts').select('id, name, product, connection_id'),
+        supabase.from('accounts').select('id, name, display_name, product, connection_id'),
         supabase.from('bank_connections').select('id, aspsp_name'),
       ])
       if (cancelled) return
@@ -74,7 +74,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
       const institutionByConnection = new Map((connectionRows ?? []).map((c) => [c.id, c.aspsp_name as string]))
       const accountLabelById = new Map(
         (accountRows ?? []).map((a) => {
-          const name = (a.name as string | null) || (a.product as string | null) || 'Cuenta'
+          const name = (a.display_name as string | null) || (a.name as string | null) || (a.product as string | null) || 'Cuenta'
           const institution = institutionByConnection.get(a.connection_id as string) ?? 'Banco conectado'
           return [a.id as string, `${name} · ${institution}`]
         }),

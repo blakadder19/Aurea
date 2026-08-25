@@ -71,7 +71,7 @@ export function useRealRecurring(): RealRecurringResult {
             .eq('credit_debit', 'DBIT')
             .order('booking_date', { ascending: true })
             .limit(2000),
-          supabase.from('accounts').select('id, name, connection_id'),
+          supabase.from('accounts').select('id, name, display_name, connection_id'),
           supabase.from('categories').select('id, category_group'),
           supabase.from('recurring_dismissals').select('id, dedupe_key, scope').eq('active', true),
         ])
@@ -94,8 +94,9 @@ export function useRealRecurring(): RealRecurringResult {
       const institutionByConnection = new Map((connectionRows ?? []).map((c) => [c.id, c.aspsp_name as string]))
       const accountNameById = new Map(
         (accountRows ?? []).map((a) => {
+          const name = (a.display_name as string | null) || (a.name as string)
           const institution = a.connection_id ? institutionByConnection.get(a.connection_id) : undefined
-          return [a.id as string, institution ? `${a.name} · ${institution}` : (a.name as string)]
+          return [a.id as string, institution ? `${name} · ${institution}` : name]
         }),
       )
       const groupByCategory = new Map((categoryRows ?? []).map((c) => [c.id as string, c.category_group as string]))
