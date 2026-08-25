@@ -1,4 +1,5 @@
 import type { AccountFunction } from '../../data/accounts'
+import { dedupeKey } from '../../lib/csvImport'
 import { supabase } from '../../lib/supabase/client'
 import { REVERSE_FUNCTION_MAP } from './useRealAccounts'
 
@@ -300,4 +301,58 @@ export async function deleteManualAccount(accountId: string): Promise<string | n
   }
 
   return null
+}
+
+/** Claves de deduplicación (fecha|importe|descripción) de los movimientos ya existentes en una cuenta, para no reimportar lo que ya está. */
+export async function fetchExistingDedupeKeys(accountId: string): Promise<Set<string>> {
+  if (!supabase) return new Set()
+  const { data, error } = await supabase.from('transactions').select('booking_date, amount_cents, description').eq('account_id', accountId)
+  if (error || !data) {
+    console.error('fetchExistingDedupeKeys: fallo al leer', error)
+    return new Set()
+  }
+  return new Set(
+    data
+      .filter((t) => t.booking_date)
+      .map((t) => dedupeKey(t.booking_date as string, t.amount_cents as number, (t.description as string | null) ?? '')),
+  )
+}
+
+export interface ImportableRow {
+  dateIso: string
+  description: string
+  amountCents: number
+  note: string
+}
+
+/** Da de alta en bloque las filas aceptadas de una importación CSV y ajusta el saldo una sola vez por la suma de todas. */
+export async function importManualTransactions(accountId: string, rows: ImportableRow[]): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  if (rows.length === 0) return null
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return 'Inicia sesión de nuevo.'
+
+  const { error: txError } = await supabase.from('transactions').insert(
+    rows.map((row) => ({
+      user_id: user.id,
+      account_id: accountId,
+      dedup_key: `manual-import-${crypto.randomUUID()}`,
+      amount_cents: row.amountCents,
+      currency: 'EUR',
+      credit_debit: row.amountCents >= 0 ? 'CRDT' : 'DBIT',
+      booking_date: row.dateIso,
+      description: row.description,
+      user_note: row.note || null,
+    })),
+  )
+  if (txError) {
+    console.error('importManualTransactions: fallo al guardar los movimientos', txError)
+    return 'No hemos podido guardar los movimientos importados. Inténtalo de nuevo.'
+  }
+
+  const total = rows.reduce((sum, row) => sum + row.amountCents, 0)
+  return adjustManualBalance(accountId, user.id, total)
 }
