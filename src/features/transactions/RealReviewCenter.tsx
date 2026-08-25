@@ -1,50 +1,136 @@
+import { useState } from 'react'
+import { Badge } from '../../components/Badge'
 import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
 import { useTransactionsStore } from './store'
+import { suggestCategories } from './useAiCategorization'
+import type { RealCategory } from './useRealCategories'
 import type { RealTransaction } from './useRealTransactions'
+
+interface RealReviewCenterProps {
+  transactions: RealTransaction[]
+  categories: RealCategory[]
+  onSaveCategory: (id: string, categoryId: string) => Promise<string | null>
+}
 
 /**
  * Centro de revisión real: a diferencia de la demo, no inventamos
- * confianza ni explicaciones de un modelo — solo "sin clasificar" y un
- * botón que abre el panel para categorizarlo.
+ * confianza ni explicaciones de un modelo — "Sugerencia IA" es una
+ * sugerencia real de la API de Anthropic sobre tus propias categorías,
+ * que tú aceptas o descartas; nunca se aplica sola.
  */
-export function RealReviewCenter({ transactions }: { transactions: RealTransaction[] }) {
+export function RealReviewCenter({ transactions, categories, onSaveCategory }: RealReviewCenterProps) {
   const openPanel = useTransactionsStore((s) => s.openPanel)
   const pending = transactions.filter((t) => !t.categoryId || t.needsReview)
+  const categoryById = new Map(categories.map((c) => [c.id, c.name]))
+
+  const [suggestions, setSuggestions] = useState<Record<string, string>>({})
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false)
+  const [suggestError, setSuggestError] = useState<string | null>(null)
+  const [savingId, setSavingId] = useState<string | null>(null)
+
+  async function handleSuggest() {
+    setLoadingSuggestions(true)
+    setSuggestError(null)
+    const { suggestions: result, error } = await suggestCategories()
+    setLoadingSuggestions(false)
+    if (error) {
+      setSuggestError(error)
+      return
+    }
+    setSuggestions(Object.fromEntries(result.map((s) => [s.transactionId, s.categoryId])))
+  }
+
+  async function handleAccept(transactionId: string, categoryId: string) {
+    setSavingId(transactionId)
+    const error = await onSaveCategory(transactionId, categoryId)
+    setSavingId(null)
+    if (!error) handleDismiss(transactionId)
+  }
+
+  function handleDismiss(transactionId: string) {
+    setSuggestions((prev) => {
+      const next = { ...prev }
+      delete next[transactionId]
+      return next
+    })
+  }
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-base text-ink-muted">
-        {pending.length === 0
-          ? 'No queda nada por revisar.'
-          : `${pending.length} movimiento${pending.length === 1 ? '' : 's'} sin categorizar.`}
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-base text-ink-muted">
+          {pending.length === 0
+            ? 'No queda nada por revisar.'
+            : `${pending.length} movimiento${pending.length === 1 ? '' : 's'} sin categorizar.`}
+        </p>
+        {pending.length > 0 && categories.length > 0 && (
+          <button
+            type="button"
+            onClick={() => void handleSuggest()}
+            disabled={loadingSuggestions}
+            className="min-h-11 rounded-md border border-brand bg-surface px-4 py-2.5 text-base font-semibold text-brand hover:bg-brand-soft disabled:opacity-60"
+          >
+            {loadingSuggestions ? 'Pensando…' : 'Sugerir categorías con IA'}
+          </button>
+        )}
+      </div>
+      {suggestError && <p className="text-sm text-danger-text">{suggestError}</p>}
 
       {pending.length === 0 ? (
         <Card padding="lg" className="py-12 text-center">
           <p className="text-base text-ink-muted">No queda nada por revisar.</p>
         </Card>
       ) : (
-        pending.map((t) => (
-          <Card key={t.id} className="flex flex-col gap-3.5" padding="lg">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="text-[17px] font-bold text-ink">{t.comercio}</div>
-                <div className="mt-1 text-[15px] text-ink-muted">
-                  {t.fecha} · {t.cuenta}
+        pending.map((t) => {
+          const suggestedCategoryId = suggestions[t.id]
+          const suggestedName = suggestedCategoryId ? categoryById.get(suggestedCategoryId) : undefined
+          return (
+            <Card key={t.id} className="flex flex-col gap-3.5" padding="lg">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="text-[17px] font-bold text-ink">{t.comercio}</div>
+                  <div className="mt-1 text-[15px] text-ink-muted">
+                    {t.fecha} · {t.cuenta}
+                  </div>
                 </div>
+                <Money value={t.importe} signed={t.importe > 0} tone={t.importe > 0 ? 'green' : 'ink'} className="text-[17px] font-bold" />
               </div>
-              <Money value={t.importe} signed={t.importe > 0} tone={t.importe > 0 ? 'green' : 'ink'} className="text-[17px] font-bold" />
-            </div>
-            <button
-              type="button"
-              onClick={() => openPanel(t.id)}
-              className="min-h-11 w-fit rounded-md border border-brand bg-brand px-4 py-2.5 text-base font-semibold text-surface hover:bg-brand-hover"
-            >
-              Categorizar
-            </button>
-          </Card>
-        ))
+              {suggestedName && (
+                <div className="flex flex-wrap items-center gap-2.5 rounded-lg border border-plum-line bg-plum-bg p-3">
+                  <Badge variant="plum" icon="">
+                    Sugerencia IA
+                  </Badge>
+                  <span className="text-[15px] font-semibold text-ink">{suggestedName}</span>
+                  <div className="ml-auto flex gap-2">
+                    <button
+                      type="button"
+                      disabled={savingId === t.id}
+                      onClick={() => void handleAccept(t.id, suggestedCategoryId)}
+                      className="min-h-9 rounded-md border border-brand bg-brand px-3 text-[15px] font-semibold text-surface hover:bg-brand-hover disabled:opacity-60"
+                    >
+                      Aceptar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDismiss(t.id)}
+                      className="min-h-9 rounded-md border border-line bg-surface px-3 text-[15px] font-semibold text-ink hover:bg-canvas"
+                    >
+                      Descartar
+                    </button>
+                  </div>
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => openPanel(t.id)}
+                className="min-h-11 w-fit rounded-md border border-brand bg-brand px-4 py-2.5 text-base font-semibold text-surface hover:bg-brand-hover"
+              >
+                Categorizar
+              </button>
+            </Card>
+          )
+        })
       )}
     </div>
   )

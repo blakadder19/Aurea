@@ -197,7 +197,7 @@ export function TransactionsPage() {
             </>
           )
         ) : hasRealTransactions ? (
-          <RealReviewCenter transactions={realTransactions!} />
+          <RealReviewCenter transactions={realTransactions!} categories={realCategories ?? []} onSaveCategory={handleSaveCategory} />
         ) : (
           <>
             <ReviewCenter />

@@ -21,3 +21,6 @@ yarn-error.log*
 .env
 .env.local
 .vercel
+
+# Supabase CLI cache
+supabase/.temp
