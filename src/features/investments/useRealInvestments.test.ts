@@ -4,7 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 
 function chainable(data: unknown[]) {
   const builder: Record<string, unknown> = {}
-  for (const method of ['select', 'eq', 'order']) {
+  for (const method of ['select', 'eq', 'order', 'update']) {
     builder[method] = () => builder
   }
   // oxlint-disable-next-line unicorn/no-thenable -- imita a propósito el query builder real de supabase-js.
@@ -51,7 +51,7 @@ vi.mock('../../lib/supabase/client', () => ({
 const activeSession = { user: { id: 'user-1' } } as unknown as Session
 
 const { useAuthStore } = await import('../../lib/supabase/useAuth')
-const { useRealInvestments, toPositionRow } = await import('./useRealInvestments')
+const { useRealInvestments, toPositionRow, archiveInvestment, unarchiveInvestment } = await import('./useRealInvestments')
 
 describe('useRealInvestments', () => {
   it('sin sesión, devuelve investments=null sin consultar Supabase', () => {
@@ -94,5 +94,20 @@ describe('toPositionRow', () => {
   it('con contributed=0, gainPct es 0 en vez de dividir por cero', () => {
     const row = toPositionRow({ id: 'x', name: 'x', productType: 'Otros', units: null, avgCostCents: null, valueCents: 1000, contributedCents: 0 })
     expect(row.gainPct).toBe(0)
+  })
+})
+
+describe('archiveInvestment / unarchiveInvestment', () => {
+  it('archiva escribiendo archived=true y no da error', async () => {
+    mockFrom.mockClear()
+    const error = await archiveInvestment('inv-1')
+    expect(error).toBeNull()
+    expect(mockFrom).toHaveBeenCalledWith('investments')
+  })
+
+  it('deshacer escribe archived=false', async () => {
+    mockFrom.mockClear()
+    await unarchiveInvestment('inv-1')
+    expect(mockFrom).toHaveBeenCalledWith('investments')
   })
 })

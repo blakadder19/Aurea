@@ -117,6 +117,24 @@ export async function saveInvestment(input: SaveInvestmentInput): Promise<string
   return null
 }
 
+/** Archiva una posición (deja de contar en el seguimiento). Reversible: ver unarchiveInvestment. */
+export async function archiveInvestment(id: string): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  const { error } = await supabase.from('investments').update({ archived: true }).eq('id', id)
+  if (error) {
+    console.error('archiveInvestment: fallo al archivar', error)
+    return 'No hemos podido archivar la posición. Inténtalo de nuevo.'
+  }
+  return null
+}
+
+/** Deshace un archivado. */
+export async function unarchiveInvestment(id: string): Promise<void> {
+  if (!supabase) return
+  const { error } = await supabase.from('investments').update({ archived: false }).eq('id', id)
+  if (error) console.error('unarchiveInvestment: fallo al deshacer', error)
+}
+
 const euros = (cents: number) => cents / 100
 
 /** Convierte una posición real a la misma forma (euros) que ya consume PositionsTable. */

@@ -10,10 +10,13 @@ const TD = 'border-b border-[#f0f3f1] py-3.5 text-right text-base whitespace-now
 export function PositionsTable({
   positions = demoPositions,
   onEditPosition,
+  onArchivePosition,
 }: {
   positions?: Position[]
   /** Solo en real: abre el panel para editar esta posición. */
   onEditPosition?: (id: string) => void
+  /** Solo en real: archiva la posición (la quita del seguimiento; se puede deshacer). */
+  onArchivePosition?: (id: string) => void
 }) {
   const isDetalle = useInvestmentsStore((s) => s.mode === 'detalle')
   const totalValue = positions.reduce((sum, p) => sum + p.value, 0)
@@ -46,6 +49,11 @@ export function PositionsTable({
                       Editar
                     </button>
                   )}
+                  {onArchivePosition && (
+                    <button type="button" onClick={() => onArchivePosition(p.id)} className="ml-2 border-b border-ink-muted text-sm font-semibold text-ink-muted">
+                      Archivar
+                    </button>
+                  )}
                 </td>
                 <td className={`${TD} text-ink-muted`}>
                   {p.units !== null ? p.units.toLocaleString('es-ES', { minimumFractionDigits: 2 }) : '—'}
@@ -64,11 +72,12 @@ export function PositionsTable({
                     {((p.value / totalValue) * 100).toLocaleString('es-ES', { maximumFractionDigits: 0 })} %
                   </td>
                 )}
-                <td className={`${TD} font-bold text-green`}>
+                <td className={`${TD} font-bold ${p.gain >= 0 ? 'text-green' : 'text-danger-text'}`}>
                   <div className="flex flex-col items-end leading-tight">
-                    <Money value={p.gain} signed tone="green" />
+                    <Money value={p.gain} signed tone={p.gain >= 0 ? 'green' : 'danger'} />
                     <span className="text-[13px] font-semibold">
-                      +{p.gainPct.toLocaleString('es-ES', { minimumFractionDigits: 1 })} %
+                      {p.gainPct >= 0 ? '+' : ''}
+                      {p.gainPct.toLocaleString('es-ES', { minimumFractionDigits: 1 })} %
                     </span>
                   </div>
                 </td>
@@ -89,11 +98,16 @@ export function PositionsTable({
                     Editar
                   </button>
                 )}
+                {onArchivePosition && (
+                  <button type="button" onClick={() => onArchivePosition(p.id)} className="ml-2 border-b border-ink-muted text-sm font-semibold text-ink-muted">
+                    Archivar
+                  </button>
+                )}
               </div>
               <div className="flex shrink-0 flex-col items-end leading-tight">
                 <Money value={p.value} className="font-bold text-ink" />
-                <span className="text-[13px] font-semibold text-green">
-                  <Money value={p.gain} signed tone="green" /> · +
+                <span className={`text-[13px] font-semibold ${p.gain >= 0 ? 'text-green' : 'text-danger-text'}`}>
+                  <Money value={p.gain} signed tone={p.gain >= 0 ? 'green' : 'danger'} /> · {p.gainPct >= 0 ? '+' : ''}
                   {p.gainPct.toLocaleString('es-ES', { minimumFractionDigits: 1 })} %
                 </span>
               </div>

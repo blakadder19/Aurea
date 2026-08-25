@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { StaleDataNotice } from '../../components/states/StaleDataNotice'
 import { EmptyState } from '../../components/states/EmptyState'
+import { UndoBar } from '../../components/UndoBar'
 import { connections } from '../../data/settings'
 import { useSettingsStore } from '../settings/store'
 import { useAuthStore } from '../../lib/supabase/useAuth'
@@ -10,7 +11,14 @@ import { PortfolioSummaryCard } from './PortfolioSummaryCard'
 import { PositionsTable } from './PositionsTable'
 import { ProductTypeBreakdown } from './ProductTypeBreakdown'
 import { useInvestmentsStore, type InvestmentsView } from './store'
-import { saveInvestment, toPositionRow, useRealInvestments, type RealInvestment } from './useRealInvestments'
+import {
+  archiveInvestment,
+  saveInvestment,
+  toPositionRow,
+  unarchiveInvestment,
+  useRealInvestments,
+  type RealInvestment,
+} from './useRealInvestments'
 
 const myInvestorBase = connections.find((c) => c.id === 'myinvestor')!
 
@@ -76,6 +84,7 @@ export function InvestmentsPage() {
 
   const [panelOpen, setPanelOpen] = useState(false)
   const [editing, setEditing] = useState<RealInvestment | null>(null)
+  const [pendingUndo, setPendingUndo] = useState<{ id: string; message: string } | null>(null)
 
   const { loading: loadingReal, investments: realInvestments, refetch } = useRealInvestments()
 
@@ -107,6 +116,21 @@ export function InvestmentsPage() {
     return saveInvestment({ id, ...values })
   }
 
+  async function handleArchive(id: string) {
+    const position = realInvestments?.find((i) => i.id === id)
+    const error = await archiveInvestment(id)
+    if (error) return
+    setPendingUndo({ id, message: `${position?.name ?? 'Posición'} archivada.` })
+    refetch()
+  }
+
+  async function handleUndoArchive() {
+    if (!pendingUndo) return
+    await unarchiveInvestment(pendingUndo.id)
+    setPendingUndo(null)
+    refetch()
+  }
+
   return (
     <>
       <Header isAuthenticated={isAuthenticated} onAdd={openCreate} />
@@ -127,11 +151,16 @@ export function InvestmentsPage() {
         ) : (
           <>
             <PortfolioSummaryCard real={hasRealInvestments ? { ...realSummary!, gain: realGain, gainPct: realGainPct } : undefined} />
-            <PositionsTable positions={hasRealInvestments ? realPositions : undefined} onEditPosition={hasRealInvestments ? openEdit : undefined} />
+            <PositionsTable
+              positions={hasRealInvestments ? realPositions : undefined}
+              onEditPosition={hasRealInvestments ? openEdit : undefined}
+              onArchivePosition={hasRealInvestments ? handleArchive : undefined}
+            />
             {isDetalle && <ProductTypeBreakdown positions={hasRealInvestments ? realPositions : undefined} />}
             {!isAuthenticated && <AllocationCard />}
           </>
         )}
+        {pendingUndo && <UndoBar message={pendingUndo.message} onUndo={handleUndoArchive} />}
       </main>
       <InvestmentPanel
         open={panelOpen}
