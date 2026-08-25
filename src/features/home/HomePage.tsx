@@ -61,10 +61,7 @@ function Header({
           {alertCount > 0 && (
             <button
               type="button"
-              onClick={() => {
-                const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-                document.getElementById('necesita-tu-atencion')?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
-              }}
+              onClick={() => document.getElementById('necesita-tu-atencion')?.scrollIntoView({ behavior: 'auto', block: 'start' })}
               className="flex min-h-11 items-center gap-2 rounded-md border border-line bg-surface px-3.5 py-2.5 text-base font-semibold text-ink hover:border-ink"
             >
               Avisos

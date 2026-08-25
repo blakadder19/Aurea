@@ -27,7 +27,6 @@ describe('HomePage', () => {
   it('el botón Avisos lleva a la sección "Necesita tu atención" en vez de no hacer nada', () => {
     const scrollIntoView = vi.fn()
     Element.prototype.scrollIntoView = scrollIntoView
-    window.matchMedia = vi.fn().mockReturnValue({ matches: false })
     renderHomePage()
     fireEvent.click(screen.getByRole('button', { name: /Avisos/ }))
     expect(scrollIntoView).toHaveBeenCalledWith(expect.objectContaining({ block: 'start' }))
