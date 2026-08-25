@@ -11,7 +11,7 @@ export function UndoBar({ message, onUndo }: UndoBarProps) {
       <button
         type="button"
         onClick={onUndo}
-        className="min-h-11 rounded-md border border-green px-[18px] py-2.5 text-base font-bold text-green hover:bg-green-soft"
+        className="min-h-11 rounded-md border border-brand px-[18px] py-2.5 text-base font-bold text-brand hover:bg-brand-soft"
       >
         Deshacer
       </button>

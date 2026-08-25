@@ -38,7 +38,7 @@ export function AttentionTray({ real }: { real?: AttentionItem[] } = {}) {
                       to={action.to}
                       className={
                         action.primary
-                          ? 'min-h-11 self-start rounded-md border border-green bg-green px-4 py-2.5 text-base font-semibold text-surface hover:bg-green-hover'
+                          ? 'min-h-11 self-start rounded-md border border-brand bg-brand px-4 py-2.5 text-base font-semibold text-surface hover:bg-brand-hover'
                           : 'min-h-11 self-start rounded-md border border-line bg-surface px-4 py-2.5 text-base font-semibold text-ink hover:border-ink'
                       }
                     >
@@ -50,7 +50,7 @@ export function AttentionTray({ real }: { real?: AttentionItem[] } = {}) {
                       type="button"
                       className={
                         action.primary
-                          ? 'min-h-11 self-start rounded-md border border-green bg-green px-4 py-2.5 text-base font-semibold text-surface hover:bg-green-hover'
+                          ? 'min-h-11 self-start rounded-md border border-brand bg-brand px-4 py-2.5 text-base font-semibold text-surface hover:bg-brand-hover'
                           : 'min-h-11 self-start rounded-md border border-line bg-surface px-4 py-2.5 text-base font-semibold text-ink hover:border-ink'
                       }
                     >

@@ -98,12 +98,12 @@ export function StatesPage() {
         </DemoCard>
 
         <div className="text-[15px] text-ink-muted">
-          Cada estado también está conectado a datos reales: el <Link to="/" className="text-green">Disponible hoy de Inicio</Link> se carga con este skeleton,
+          Cada estado también está conectado a datos reales: el <Link to="/" className="text-brand">Disponible hoy de Inicio</Link> se carga con este skeleton,
           {' '}
-          <Link to="/inversiones" className="text-green">Inversiones</Link> muestra el aviso de datos desactualizados de MyInvestor, y{' '}
-          <Link to="/cuentas" className="text-green">Cuentas y patrimonio</Link> muestra la sincronización de Revolut — ambos a partir de las mismas conexiones
-          de <Link to="/ajustes" className="text-green">Conexiones y ajustes</Link>. La búsqueda sin resultados se ve en{' '}
-          <Link to="/movimientos" className="text-green">Movimientos</Link>.
+          <Link to="/inversiones" className="text-brand">Inversiones</Link> muestra el aviso de datos desactualizados de MyInvestor, y{' '}
+          <Link to="/cuentas" className="text-brand">Cuentas y patrimonio</Link> muestra la sincronización de Revolut — ambos a partir de las mismas conexiones
+          de <Link to="/ajustes" className="text-brand">Conexiones y ajustes</Link>. La búsqueda sin resultados se ve en{' '}
+          <Link to="/movimientos" className="text-brand">Movimientos</Link>.
         </div>
       </main>
     </>

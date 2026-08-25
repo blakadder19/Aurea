@@ -2,12 +2,24 @@ import type { KeyboardEvent } from 'react'
 import { Money } from '../../components/Money'
 import { NoSearchResults } from '../../components/states/NoSearchResults'
 import { transactions as demoTransactions, type Transaction } from '../../data/transactions'
+import { categoryColorClass } from '../../lib/categoryColor'
 import { ALL_ACCOUNTS, ALL_CATEGORIES, useTransactionsStore } from './store'
 
 function toneFor(t: Transaction) {
   if (t.importe > 0) return 'green' as const
   if (t.categoria === 'Sin clasificar') return 'danger' as const
   return 'ink' as const
+}
+
+function Avatar({ transaction }: { transaction: Transaction }) {
+  return (
+    <div
+      aria-hidden="true"
+      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[13px] font-bold text-surface ${categoryColorClass(transaction.categoria)}`}
+    >
+      {transaction.comercio.charAt(0).toUpperCase()}
+    </div>
+  )
 }
 
 const TH = 'border-b border-line px-0 py-3.5 text-left text-[13px] font-semibold tracking-[0.06em] text-ink-muted uppercase'
@@ -42,6 +54,9 @@ function Row({ transaction }: { transaction: Transaction }) {
             className="h-5 w-5"
           />
         </div>
+      </td>
+      <td className="border-b border-[#f0f3f1] py-3.5 pr-3">
+        <Avatar transaction={transaction} />
       </td>
       <td className="border-b border-[#f0f3f1] py-3.5 pr-4 text-base whitespace-nowrap text-ink-muted">
         {transaction.fecha}
@@ -102,6 +117,7 @@ function MobileCard({ transaction }: { transaction: Transaction }) {
           className="h-5 w-5"
         />
       </div>
+      <Avatar transaction={transaction} />
       <div className="min-w-0 flex-1">
         <div className="truncate text-base font-semibold text-ink">{transaction.comercio}</div>
         <div className="mt-0.5 truncate text-sm text-ink-muted">
@@ -179,6 +195,7 @@ export function TransactionsTable({ transactions = demoTransactions }: { transac
                     className="h-5 w-5"
                   />
                 </th>
+                <th className="border-b border-line py-3.5 pr-3" aria-hidden="true"></th>
                 <th className={`${TH} pr-4`}>Fecha</th>
                 <th className={`${TH} pr-4`}>Comercio</th>
                 <th className={`${TH} pr-4`}>Cuenta</th>

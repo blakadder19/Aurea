@@ -1,7 +1,7 @@
 interface ProgressBarProps {
   /** Porcentaje relleno, 0–100. Se recorta al rango visible (nunca desborda la pista). */
   percent: number
-  /** Color del relleno: token de fondo, p.ej. "bg-green" o "bg-danger". */
+  /** Color del relleno: token de fondo, p.ej. "bg-brand" o "bg-danger". */
   fillClassName?: string
   /** Marca vertical opcional (p.ej. ritmo esperado del presupuesto). */
   markerPercent?: number
@@ -11,12 +11,13 @@ interface ProgressBarProps {
 }
 
 /**
- * Barra de progreso con fondo verde suave y marca vertical opcional de ritmo
- * esperado. Compartida entre Inicio y Presupuesto — no la dupliques.
+ * Barra de progreso con pista neutra (funciona con cualquier color de
+ * relleno) y marca vertical opcional de ritmo esperado. Compartida entre
+ * Inicio y Presupuesto — no la dupliques.
  */
 export function ProgressBar({
   percent,
-  fillClassName = 'bg-green',
+  fillClassName = 'bg-brand',
   markerPercent,
   heightPx = 16,
   label,
@@ -24,7 +25,7 @@ export function ProgressBar({
   const clamped = Math.min(100, Math.max(0, percent))
   return (
     <div
-      className="relative rounded-full bg-green-soft"
+      className="relative rounded-full bg-canvas"
       style={{ height: heightPx }}
       role="progressbar"
       aria-valuenow={Math.round(percent)}

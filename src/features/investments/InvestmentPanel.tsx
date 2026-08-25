@@ -97,7 +97,7 @@ function InvestmentForm({ initial, onSave, onDone }: FormProps) {
         type="button"
         disabled={saving}
         onClick={() => void handleSubmit()}
-        className="mt-2 min-h-11 rounded-md border border-green bg-green px-4 py-3 text-base font-bold text-surface hover:bg-green-hover"
+        className="mt-2 min-h-11 rounded-md border border-brand bg-brand px-4 py-3 text-base font-bold text-surface hover:bg-brand-hover"
       >
         Guardar
       </button>

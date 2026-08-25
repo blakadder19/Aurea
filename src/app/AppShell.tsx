@@ -182,7 +182,7 @@ function AuthLink() {
   return (
     <Link
       to="/entrar"
-      className="min-h-11 rounded-md border border-line px-3 py-2.5 text-[15px] font-semibold text-green hover:bg-canvas"
+      className="min-h-11 rounded-md border border-line px-3 py-2.5 text-[15px] font-semibold text-brand hover:bg-canvas"
     >
       Entrar con tu banco real
     </Link>

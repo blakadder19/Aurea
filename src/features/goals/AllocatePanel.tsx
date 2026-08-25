@@ -121,7 +121,7 @@ function AllocateForm({ targets, onConfirm }: { targets: Target[]; onConfirm: (a
         type="button"
         disabled={total <= 0}
         onClick={() => onConfirm(allocations)}
-        className="min-h-11 rounded-md border border-green bg-green px-4 py-3 text-base font-bold text-surface hover:bg-green-hover disabled:cursor-not-allowed disabled:opacity-50"
+        className="min-h-11 rounded-md border border-brand bg-brand px-4 py-3 text-base font-bold text-surface hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
       >
         Confirmar aportación
       </button>

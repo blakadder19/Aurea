@@ -9,7 +9,7 @@ const VARIANT_CHIP = {
 } as const
 
 const ACTION_STYLE = {
-  primary: 'border-green bg-green text-surface hover:bg-green-hover',
+  primary: 'border-brand bg-brand text-surface hover:bg-brand-hover',
   default: 'border-line bg-surface text-ink',
   muted: 'border-line bg-surface text-ink-muted',
 } as const

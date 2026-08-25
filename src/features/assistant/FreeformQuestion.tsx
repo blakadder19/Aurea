@@ -26,7 +26,7 @@ export function FreeformQuestion() {
         />
         <button
           type="submit"
-          className="min-h-12 rounded-md border border-green bg-green px-5 py-3 text-base font-semibold text-surface hover:bg-green-hover"
+          className="min-h-12 rounded-md border border-brand bg-brand px-5 py-3 text-base font-semibold text-surface hover:bg-brand-hover"
         >
           Preguntar
         </button>

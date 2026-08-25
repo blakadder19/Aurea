@@ -29,7 +29,7 @@ export function AnswerCard({ answer }: { answer: Answer }) {
       )}
 
       <div className="flex flex-wrap items-center gap-4 border-t border-line pt-4">
-        <Link to={answer.linkTo} className="border-b border-green text-base font-semibold text-green">
+        <Link to={answer.linkTo} className="border-b border-brand text-base font-semibold text-brand">
           {answer.linkLabel}
         </Link>
         <Link

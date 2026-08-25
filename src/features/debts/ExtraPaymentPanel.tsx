@@ -93,7 +93,7 @@ function SimulatorForm({ debts, asOf }: { debts: Debt[]; asOf: Date }) {
 
       <button
         type="button"
-        className="min-h-11 rounded-md border border-green bg-green px-4 py-3 text-base font-bold text-surface hover:bg-green-hover"
+        className="min-h-11 rounded-md border border-brand bg-brand px-4 py-3 text-base font-bold text-surface hover:bg-brand-hover"
       >
         Programar el pago extra
       </button>

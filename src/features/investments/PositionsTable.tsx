@@ -1,10 +1,22 @@
 import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
 import { positions as demoPositions, type Position } from '../../data/investments'
+import { categoryColorClass } from '../../lib/categoryColor'
 import { useInvestmentsStore } from './store'
 
 const TH = 'border-b border-line pb-2.5 text-right text-[13px] font-semibold tracking-[0.06em] text-ink-muted uppercase'
 const TD = 'border-b border-[#f0f3f1] py-3.5 text-right text-base whitespace-nowrap'
+
+function Avatar({ position }: { position: Position }) {
+  return (
+    <div
+      aria-hidden="true"
+      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[13px] font-bold text-surface ${categoryColorClass(position.productType)}`}
+    >
+      {position.name.charAt(0).toUpperCase()}
+    </div>
+  )
+}
 
 /** Bloque 2 — Posiciones. En Detalle añade aportado y peso en cartera. */
 export function PositionsTable({
@@ -28,6 +40,7 @@ export function PositionsTable({
         <table className="w-full min-w-[640px] border-collapse tabular">
           <thead>
             <tr>
+              <th className="border-b border-line pb-2.5" aria-hidden="true"></th>
               <th className="border-b border-line pb-2.5 text-left text-[13px] font-semibold tracking-[0.06em] text-ink-muted uppercase">
                 Posición
               </th>
@@ -42,10 +55,13 @@ export function PositionsTable({
           <tbody>
             {positions.map((p) => (
               <tr key={p.id}>
+                <td className="border-b border-[#f0f3f1] py-3.5 pr-3">
+                  <Avatar position={p} />
+                </td>
                 <td className="border-b border-[#f0f3f1] py-3.5 text-[17px] font-semibold whitespace-nowrap text-ink">
                   {p.name}
                   {onEditPosition && (
-                    <button type="button" onClick={() => onEditPosition(p.id)} className="ml-2 border-b border-green text-sm font-semibold text-green">
+                    <button type="button" onClick={() => onEditPosition(p.id)} className="ml-2 border-b border-brand text-sm font-semibold text-brand">
                       Editar
                     </button>
                   )}
@@ -91,18 +107,21 @@ export function PositionsTable({
         {positions.map((p) => (
           <div key={p.id} className="flex flex-col gap-2 rounded-2xl border border-line p-3.5 tabular">
             <div className="flex items-start justify-between gap-3">
-              <div className="text-[17px] font-semibold text-ink">
-                {p.name}
-                {onEditPosition && (
-                  <button type="button" onClick={() => onEditPosition(p.id)} className="ml-2 border-b border-green text-sm font-semibold text-green">
-                    Editar
-                  </button>
-                )}
-                {onArchivePosition && (
-                  <button type="button" onClick={() => onArchivePosition(p.id)} className="ml-2 border-b border-ink-muted text-sm font-semibold text-ink-muted">
-                    Archivar
-                  </button>
-                )}
+              <div className="flex items-start gap-2.5">
+                <Avatar position={p} />
+                <div className="text-[17px] font-semibold text-ink">
+                  {p.name}
+                  {onEditPosition && (
+                    <button type="button" onClick={() => onEditPosition(p.id)} className="ml-2 border-b border-brand text-sm font-semibold text-brand">
+                      Editar
+                    </button>
+                  )}
+                  {onArchivePosition && (
+                    <button type="button" onClick={() => onArchivePosition(p.id)} className="ml-2 border-b border-ink-muted text-sm font-semibold text-ink-muted">
+                      Archivar
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="flex shrink-0 flex-col items-end leading-tight">
                 <Money value={p.value} className="font-bold text-ink" />

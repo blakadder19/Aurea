@@ -42,7 +42,7 @@ export function UpcomingTimeline({ real }: { real?: RealTimelineData } = {}) {
           </h2>
           <div className="mt-1.5 text-base text-ink-muted">{rangeLabel}</div>
         </div>
-        <Link to="/pagos" className="border-b border-green text-base font-semibold text-green">
+        <Link to="/pagos" className="border-b border-brand text-base font-semibold text-brand">
           Ver pagos y suscripciones
         </Link>
       </div>
@@ -74,7 +74,7 @@ export function UpcomingTimeline({ real }: { real?: RealTimelineData } = {}) {
               const amountTone = isToday ? 'green' : isInflow ? 'green' : 'danger'
               const stickWidth = isToday || isInflow ? 'w-[3px]' : 'w-[2px]'
               const stickHeight = isToday ? 'h-[26px]' : event.tier === 'lower' ? 'h-3.5' : 'h-[60px]'
-              const stickColor = isToday || isInflow ? 'bg-green' : 'bg-[#c4ccc8]'
+              const stickColor = isToday || isInflow ? 'bg-brand' : 'bg-[#c4ccc8]'
               const alignRight = event.align === 'right'
 
               return (

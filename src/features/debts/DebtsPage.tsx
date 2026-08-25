@@ -43,7 +43,7 @@ function Header({
           type="button"
           id="simular-pago-btn"
           onClick={openSimulator}
-          className="min-h-11 rounded-md border border-green bg-green px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-green-hover"
+          className="min-h-11 rounded-md border border-brand bg-brand px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-brand-hover"
         >
           Simular pago extraordinario
         </button>

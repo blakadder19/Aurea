@@ -6,7 +6,7 @@ import { usePlanningStore } from './store'
 
 const LABEL_COLOR: Record<string, string> = {
   optimista: 'text-warning-text',
-  base: 'text-green-text',
+  base: 'text-brand-text',
   pesimista: 'text-danger-text',
 }
 
@@ -46,7 +46,7 @@ export function SavedScenarios() {
             <div
               key={scenario.id}
               className={`flex flex-col gap-2 rounded-[14px] border p-[18px] ${
-                isBase ? 'border-2 border-green' : 'border-line'
+                isBase ? 'border-2 border-brand' : 'border-line'
               }`}
             >
               <div className={`text-[15px] font-bold ${LABEL_COLOR[scenario.id] ?? 'text-ink'}`}>{scenario.label}</div>

@@ -39,7 +39,7 @@ export function RealReviewCenter({ transactions }: { transactions: RealTransacti
             <button
               type="button"
               onClick={() => openPanel(t.id)}
-              className="min-h-11 w-fit rounded-md border border-green bg-green px-4 py-2.5 text-base font-semibold text-surface hover:bg-green-hover"
+              className="min-h-11 w-fit rounded-md border border-brand bg-brand px-4 py-2.5 text-base font-semibold text-surface hover:bg-brand-hover"
             >
               Categorizar
             </button>

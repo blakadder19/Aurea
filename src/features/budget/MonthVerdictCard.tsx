@@ -2,8 +2,15 @@ import { Badge, type BadgeVariant } from '../../components/Badge'
 import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
 import { ProgressBar } from '../../components/ProgressBar'
+import { RingChart } from '../../components/RingChart'
 import { budgetCategories, budgetSummary } from '../../data/budget'
 import { useBudgetStore } from './store'
+
+const VARIANT_STROKE: Partial<Record<BadgeVariant, string>> = {
+  success: 'stroke-green',
+  warning: 'stroke-warning',
+  danger: 'stroke-danger',
+}
 
 interface Kpi {
   label: string
@@ -50,11 +57,22 @@ export function MonthVerdictCard({ real }: { real?: RealVerdict }) {
         { label: 'Previsión de cierre', value: budgetSummary.forecast, warn: true },
       ]
 
+  const badgeVariant = real ? real.badgeVariant : 'warning'
+
   return (
     <Card className="flex flex-col gap-[18px]" padding="lg">
       <div className="flex items-start justify-between gap-4">
-        <h2 className="font-serif text-[26px] font-semibold text-ink">{real ? real.headline : budgetSummary.headline}</h2>
-        <Badge variant={real ? real.badgeVariant : 'warning'}>{real ? real.badgeLabel : 'Por encima'}</Badge>
+        <div className="flex items-center gap-4">
+          <RingChart
+            segments={[{ value: totalBudgeted > 0 ? spentPct : 0, strokeClassName: VARIANT_STROKE[badgeVariant] ?? 'stroke-ink-faint' }]}
+            max={100}
+            size={72}
+            strokeWidth={9}
+            ariaLabel={`${Math.round(spentPct)}% del presupuesto consumido`}
+          />
+          <h2 className="font-serif text-[26px] font-semibold text-ink">{real ? real.headline : budgetSummary.headline}</h2>
+        </div>
+        <Badge variant={badgeVariant}>{real ? real.badgeLabel : 'Por encima'}</Badge>
       </div>
 
       <ProgressBar

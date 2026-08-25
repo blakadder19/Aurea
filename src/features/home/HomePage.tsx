@@ -50,7 +50,7 @@ function Header({ isAuthenticated, today, alertCount }: { isAuthenticated: boole
           )}
           <button
             type="button"
-            className="min-h-11 rounded-md border border-green bg-green px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-green-hover"
+            className="min-h-11 rounded-md border border-brand bg-brand px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-brand-hover"
           >
             Añadir movimiento
           </button>
@@ -88,7 +88,7 @@ function Header({ isAuthenticated, today, alertCount }: { isAuthenticated: boole
                 aria-pressed={mode === v.value}
                 className={`min-h-11 rounded-sm px-[18px] py-2 text-[15px] ${
                   mode === v.value
-                    ? 'border border-green bg-surface font-bold text-green-text'
+                    ? 'border border-brand bg-surface font-bold text-brand-text'
                     : 'border border-transparent text-ink-muted hover:text-ink'
                 }`}
               >

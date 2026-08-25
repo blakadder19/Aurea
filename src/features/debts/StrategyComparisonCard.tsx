@@ -38,7 +38,7 @@ export function StrategyComparisonCard() {
             <span>Tiempo hasta liquidar todo</span>
             <span className="font-bold">{strategies.avalanche.totalDuration}</span>
           </div>
-          <div className="flex justify-between text-base text-green tabular">
+          <div className="flex justify-between text-base text-brand tabular">
             <span>Intereses totales pagados</span>
             <span className="font-bold">
               <Money value={strategies.avalanche.totalInterest} decimals={0} tone="green" /> (

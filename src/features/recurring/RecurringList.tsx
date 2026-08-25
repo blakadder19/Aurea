@@ -3,6 +3,7 @@ import { Badge } from '../../components/Badge'
 import { Money } from '../../components/Money'
 import { SectionLabel } from '../../components/SectionLabel'
 import { recurringItems, type RecurringItem } from '../../data/recurring'
+import { categoryColorClass } from '../../lib/categoryColor'
 import { useRecurringStore } from './store'
 
 const CATEGORY_LABEL: Record<RecurringItem['category'], string> = {
@@ -15,6 +16,17 @@ const HIGHLIGHT_BG: Record<'warning' | 'danger' | 'info', string> = {
   warning: 'bg-warning-bg',
   danger: 'bg-danger-bg',
   info: 'bg-info-bg',
+}
+
+function Avatar({ item }: { item: RecurringItem }) {
+  return (
+    <div
+      aria-hidden="true"
+      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[14px] font-bold text-surface ${categoryColorClass(item.name)}`}
+    >
+      {item.name.charAt(0).toUpperCase()}
+    </div>
+  )
 }
 
 function Row({ item, onResolveHighlight }: { item: RecurringItem; onResolveHighlight?: (item: RecurringItem) => void }) {
@@ -38,17 +50,20 @@ function Row({ item, onResolveHighlight }: { item: RecurringItem; onResolveHighl
       }`}
     >
       <div className="flex items-center justify-between gap-4">
-        <div>
-          <div className="flex flex-wrap items-center gap-2.5">
-            <span className="text-[17px] font-semibold text-ink">{item.name}</span>
-            {item.highlight && (
-              <Badge variant={item.highlight.variant} icon={item.highlight.icon} size="sm">
-                {item.highlight.badge}
-              </Badge>
-            )}
-          </div>
-          <div className="mt-0.5 text-[15px] text-ink-muted">
-            Próximo cargo {item.nextChargeLabel} · {item.frequency.toLowerCase()}
+        <div className="flex items-center gap-3">
+          <Avatar item={item} />
+          <div>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="text-[17px] font-semibold text-ink">{item.name}</span>
+              {item.highlight && (
+                <Badge variant={item.highlight.variant} icon={item.highlight.icon} size="sm">
+                  {item.highlight.badge}
+                </Badge>
+              )}
+            </div>
+            <div className="mt-0.5 text-[15px] text-ink-muted">
+              Próximo cargo {item.nextChargeLabel} · {item.frequency.toLowerCase()}
+            </div>
           </div>
         </div>
         <Money value={item.amount} className="text-[18px] font-bold whitespace-nowrap" />

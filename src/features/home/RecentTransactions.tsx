@@ -40,7 +40,7 @@ export function RecentTransactions({ real }: { real?: RealRecentTransactions } =
     <Card className="flex flex-col gap-4" padding="lg">
       <div className="flex items-center justify-between">
         <h2 className="font-serif text-2xl font-semibold text-ink">Últimos movimientos</h2>
-        <Link to="/movimientos" className="border-b border-green text-base font-semibold text-green">
+        <Link to="/movimientos" className="border-b border-brand text-base font-semibold text-brand">
           {real ? 'Ver todos los movimientos' : `Ver los ${totalThisMonth} del mes`}
         </Link>
       </div>

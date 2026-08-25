@@ -24,7 +24,7 @@ export function ErrorState({ headline, body, onRetry, connectionsTo = '/ajustes'
         <button
           type="button"
           onClick={onRetry}
-          className="min-h-11 rounded-md border border-green bg-green px-[18px] text-base font-semibold text-surface hover:bg-green-hover"
+          className="min-h-11 rounded-md border border-brand bg-brand px-[18px] text-base font-semibold text-surface hover:bg-brand-hover"
         >
           Reintentar
         </button>

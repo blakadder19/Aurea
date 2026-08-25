@@ -49,7 +49,7 @@ function AdjustForm({ initialBudgets, onSave }: FormProps) {
         <button
           type="button"
           onClick={() => onSave(draft)}
-          className="mt-2 min-h-11 rounded-md border border-green bg-green px-4 py-3 text-base font-bold text-surface hover:bg-green-hover"
+          className="mt-2 min-h-11 rounded-md border border-brand bg-brand px-4 py-3 text-base font-bold text-surface hover:bg-brand-hover"
         >
           Guardar cambios
         </button>
@@ -126,7 +126,7 @@ function RealAdjustForm({ categories, onSave, onSaved }: RealFormProps) {
         type="button"
         disabled={saving}
         onClick={() => void handleSave()}
-        className="mt-2 min-h-11 rounded-md border border-green bg-green px-4 py-3 text-base font-bold text-surface hover:bg-green-hover"
+        className="mt-2 min-h-11 rounded-md border border-brand bg-brand px-4 py-3 text-base font-bold text-surface hover:bg-brand-hover"
       >
         Guardar cambios
       </button>

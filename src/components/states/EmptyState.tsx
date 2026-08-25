@@ -14,7 +14,7 @@ interface EmptyStateProps {
 }
 
 const ACTION_CLASSES =
-  'inline-flex min-h-11 items-center justify-center rounded-md border border-green bg-green px-[18px] text-base font-semibold text-surface hover:bg-green-hover'
+  'inline-flex min-h-11 items-center justify-center rounded-md border border-brand bg-brand px-[18px] text-base font-semibold text-surface hover:bg-brand-hover'
 
 /** Estado vacío: icono + frase que explica qué falta + una única acción clara. */
 export function EmptyState({ headline, body, action, error }: EmptyStateProps) {

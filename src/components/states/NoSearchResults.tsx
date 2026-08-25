@@ -15,7 +15,7 @@ export function NoSearchResults({ query, onClearFilters }: NoSearchResultsProps)
       <button
         type="button"
         onClick={onClearFilters}
-        className="min-h-11 rounded-md border border-green bg-surface px-[18px] text-base font-semibold text-green hover:bg-green-soft"
+        className="min-h-11 rounded-md border border-brand bg-surface px-[18px] text-base font-semibold text-brand hover:bg-brand-soft"
       >
         Quitar filtros
       </button>

@@ -28,7 +28,7 @@ function StepIndicator() {
             <span
               className={`flex h-[30px] w-[30px] items-center justify-center rounded-full text-[15px] font-bold ${
                 isCurrent
-                  ? 'bg-green text-surface'
+                  ? 'bg-brand text-surface'
                   : isDone
                     ? 'bg-green-soft text-green-text'
                     : 'bg-canvas text-ink-muted'
@@ -109,7 +109,7 @@ function StepOneMapping() {
       <button
         type="button"
         onClick={goNext}
-        className="min-h-11 self-start rounded-md border border-green bg-green px-[18px] text-base font-semibold text-surface hover:bg-green-hover"
+        className="min-h-11 self-start rounded-md border border-brand bg-brand px-[18px] text-base font-semibold text-surface hover:bg-brand-hover"
       >
         Continuar
       </button>
@@ -149,7 +149,7 @@ function StepTwoPreview() {
         <button
           type="button"
           onClick={goNext}
-          className="min-h-11 rounded-md border border-green bg-green px-[18px] text-base font-semibold text-surface hover:bg-green-hover"
+          className="min-h-11 rounded-md border border-brand bg-brand px-[18px] text-base font-semibold text-surface hover:bg-brand-hover"
         >
           Continuar
         </button>
@@ -184,7 +184,7 @@ function StepThreeConfirm() {
           <button
             type="button"
             onClick={confirmImport}
-            className="min-h-11 rounded-md border border-green bg-green px-[18px] text-base font-bold text-surface hover:bg-green-hover"
+            className="min-h-11 rounded-md border border-brand bg-brand px-[18px] text-base font-bold text-surface hover:bg-brand-hover"
           >
             Confirmar importación
           </button>

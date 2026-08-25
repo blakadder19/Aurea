@@ -149,7 +149,7 @@ function PanelContent({
                   type="button"
                   disabled={savingShare}
                   onClick={() => void handleSaveSharePercent()}
-                  className="min-h-11 rounded-md border border-green px-3 text-sm font-semibold text-green"
+                  className="min-h-11 rounded-md border border-brand px-3 text-sm font-semibold text-brand"
                 >
                   Guardar
                 </button>

@@ -50,7 +50,7 @@ export function LoginPage() {
             {requestError && <p className="text-[15px] text-danger-text">{requestError}</p>}
             <button
               type="submit"
-              className="min-h-11 rounded-md border border-green bg-green px-[18px] text-base font-semibold text-surface hover:bg-green-hover"
+              className="min-h-11 rounded-md border border-brand bg-brand px-[18px] text-base font-semibold text-surface hover:bg-brand-hover"
             >
               Enviarme el enlace
             </button>

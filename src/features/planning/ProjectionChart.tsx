@@ -40,7 +40,7 @@ export function ProjectionChart() {
 
       <div className="flex flex-wrap gap-6 text-[15px] text-ink-muted">
         <div className="flex items-center gap-2">
-          <span className="inline-block h-[3px] w-4 rounded-full bg-green" />
+          <span className="inline-block h-[3px] w-4 rounded-full bg-brand" />
           Este escenario
         </div>
         <div className="flex items-center gap-2">

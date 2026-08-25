@@ -42,14 +42,14 @@ export function ExplainableInsight({ real }: { real?: RealInsight } = {}) {
 
       <div className="flex gap-2.5">
         {real ? (
-          <Link to="/pagos" className="min-h-11 flex items-center rounded-md border border-green bg-green px-4 py-[11px] text-base font-semibold text-surface hover:bg-green-hover">
+          <Link to="/pagos" className="min-h-11 flex items-center rounded-md border border-brand bg-brand px-4 py-[11px] text-base font-semibold text-surface hover:bg-brand-hover">
             Ver en Pagos y suscripciones
           </Link>
         ) : (
           <>
             <button
               type="button"
-              className="min-h-11 rounded-md border border-green bg-green px-4 py-[11px] text-base font-semibold text-surface hover:bg-green-hover"
+              className="min-h-11 rounded-md border border-brand bg-brand px-4 py-[11px] text-base font-semibold text-surface hover:bg-brand-hover"
             >
               Ajustar el presupuesto
             </button>

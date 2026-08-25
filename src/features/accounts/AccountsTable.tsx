@@ -3,6 +3,7 @@ import { Badge, type BadgeVariant } from '../../components/Badge'
 import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
 import { accounts as demoAccounts, type Account, type AccountFunction } from '../../data/accounts'
+import { categoryColorClass } from '../../lib/categoryColor'
 import { useAccountsStore } from './store'
 
 const FUNCTION_BADGE: Record<AccountFunction, BadgeVariant> = {
@@ -12,6 +13,17 @@ const FUNCTION_BADGE: Record<AccountFunction, BadgeVariant> = {
   Deuda: 'danger',
   'Activo manual': 'neutral',
   'Por confirmar': 'pending',
+}
+
+function Avatar({ account }: { account: Account }) {
+  return (
+    <div
+      aria-hidden="true"
+      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[13px] font-bold text-surface ${categoryColorClass(account.institution)}`}
+    >
+      {account.name.charAt(0).toUpperCase()}
+    </div>
+  )
 }
 
 function Row({ account }: { account: Account }) {
@@ -31,6 +43,9 @@ function Row({ account }: { account: Account }) {
       onKeyDown={handleKeyDown}
       className="cursor-pointer bg-surface"
     >
+      <td className="border-b border-[#f0f3f1] py-3.5 pr-3">
+        <Avatar account={account} />
+      </td>
       <td className="max-w-[260px] truncate border-b border-[#f0f3f1] py-3.5 pr-4 text-[17px] font-semibold text-ink" title={account.name}>
         {account.name}
         {account.foreign && (
@@ -51,7 +66,7 @@ function Row({ account }: { account: Account }) {
                 e.stopPropagation()
                 openPanel(account.id)
               }}
-              className="inline-flex min-h-11 items-center rounded-md border border-green px-3 text-sm font-semibold whitespace-nowrap text-green"
+              className="inline-flex min-h-11 items-center rounded-md border border-brand px-3 text-sm font-semibold whitespace-nowrap text-brand"
             >
               Asignar función
             </button>
@@ -86,13 +101,16 @@ function MobileCard({ account }: { account: Account }) {
       className="flex cursor-pointer flex-col gap-2 rounded-2xl border border-line bg-surface p-3.5 tabular"
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1 truncate text-[17px] font-semibold text-ink" title={account.name}>
-          {account.name}
-          {account.foreign && (
-            <span className="ml-1.5 text-sm font-normal text-ink-muted">
-              · {account.foreign.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })} {account.foreign.currency}
-            </span>
-          )}
+        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+          <Avatar account={account} />
+          <div className="min-w-0 flex-1 truncate text-[17px] font-semibold text-ink" title={account.name}>
+            {account.name}
+            {account.foreign && (
+              <span className="ml-1.5 text-sm font-normal text-ink-muted">
+                · {account.foreign.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })} {account.foreign.currency}
+              </span>
+            )}
+          </div>
         </div>
         <Money
           value={account.balance}
@@ -117,7 +135,7 @@ function MobileCard({ account }: { account: Account }) {
               e.stopPropagation()
               openPanel(account.id)
             }}
-            className="inline-flex min-h-11 items-center rounded-md border border-green px-3 text-sm font-semibold whitespace-nowrap text-green"
+            className="inline-flex min-h-11 items-center rounded-md border border-brand px-3 text-sm font-semibold whitespace-nowrap text-brand"
           >
             Asignar función
           </button>
@@ -137,6 +155,7 @@ export function AccountsTable({ accounts = demoAccounts }: { accounts?: Account[
         <table className="w-full min-w-[680px] border-collapse tabular">
           <thead>
             <tr>
+              <th className="border-b border-line pb-2.5 pr-3" aria-hidden="true"></th>
               <th className={TH}>Cuenta</th>
               <th className={TH}>Función</th>
               <th className={TH}>Institución</th>

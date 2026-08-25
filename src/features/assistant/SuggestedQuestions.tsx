@@ -15,7 +15,7 @@ export function SuggestedQuestions() {
           onClick={() => askQuestion(q.id)}
           className={`min-h-11 rounded-[14px] border px-[18px] py-3.5 text-base font-semibold ${
             selectedId === q.id
-              ? 'border-green bg-green-soft text-green-text'
+              ? 'border-brand bg-brand-soft text-brand-text'
               : 'border-line bg-surface text-ink hover:bg-canvas'
           }`}
         >

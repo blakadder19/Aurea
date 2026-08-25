@@ -72,7 +72,7 @@ export function RecurringCalendar({ real }: RecurringCalendarProps = {}) {
             <div
               key={cell.day}
               className={`flex flex-col gap-1 overflow-hidden rounded-md border p-2 text-[15px] ${
-                isToday ? 'border-2 border-green text-green-text font-bold' : 'border-line text-ink'
+                isToday ? 'border-2 border-brand text-brand-text font-bold' : 'border-line text-ink'
               }`}
             >
               <span>{cell.day}</span>
