@@ -27,9 +27,9 @@ function Header({
   const canSimulate = !isAuthenticated || hasRealDebts
 
   return (
-    <header className="flex flex-wrap items-start justify-between gap-4 border-b border-line bg-surface px-4 py-5 lg:px-8">
+    <header className="flex flex-wrap items-start justify-between gap-4 border-b border-line bg-surface px-4 py-5 lg:px-6 lg:py-4">
       <div>
-        <h1 className="font-serif text-[32px] font-semibold tracking-[-0.01em] text-ink">Deudas</h1>
+        <h1 className="font-serif text-[32px] lg:text-[26px] font-semibold tracking-[-0.01em] text-ink">Deudas</h1>
         <div className="mt-1 text-base text-ink-muted tabular">
           {isAuthenticated ? (
             <Money value={totalCents / 100} />
@@ -81,7 +81,7 @@ export function DebtsPage() {
         totalCents={totalCents}
         count={isAuthenticated ? (realDebts?.length ?? 0) : 4}
       />
-      <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
+      <main className="flex flex-1 flex-col gap-6 lg:gap-5 overflow-y-auto p-4 lg:p-6">
         {isAuthenticated && loadingReal ? (
           <LoadingRealData />
         ) : isAuthenticated && !loadingReal && realDebts?.length === 0 ? (

@@ -9,9 +9,9 @@ import { useAuthStore } from '../../lib/supabase/useAuth'
 
 function Header() {
   return (
-    <header className="flex flex-wrap items-start justify-between gap-4 border-b border-line bg-surface px-4 py-5 lg:px-8">
+    <header className="flex flex-wrap items-start justify-between gap-4 border-b border-line bg-surface px-4 py-5 lg:px-6 lg:py-4">
       <div>
-        <h1 className="font-serif text-[32px] font-semibold tracking-[-0.01em] text-ink">Asistente e insights</h1>
+        <h1 className="font-serif text-[32px] lg:text-[26px] font-semibold tracking-[-0.01em] text-ink">Asistente e insights</h1>
         <div className="mt-1 text-base text-ink-muted">Todo lo que responde muestra el cálculo o la fuente</div>
       </div>
     </header>

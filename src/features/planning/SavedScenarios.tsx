@@ -37,7 +37,7 @@ export function SavedScenarios() {
 
   return (
     <Card padding="lg" className="flex flex-col gap-4">
-      <h2 className="font-serif text-[22px] font-semibold text-ink">Escenarios guardados</h2>
+      <h2 className="font-serif text-[22px] lg:text-[19px] font-semibold text-ink">Escenarios guardados</h2>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {VARIANTS.map((scenario) => {
           const value = projectedNetWorth(startingNetWorth, scenario.apply(baseParams), horizonYears * 12, avgDebtRate)

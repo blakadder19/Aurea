@@ -74,7 +74,7 @@ export function ScenarioBuilder() {
 
   return (
     <Card padding="lg" className="flex w-full flex-col gap-5 lg:w-[380px] lg:shrink-0">
-      <h2 className="font-serif text-[22px] font-semibold text-ink">Constructor de escenarios</h2>
+      <h2 className="font-serif text-[22px] lg:text-[19px] font-semibold text-ink">Constructor de escenarios</h2>
 
       <SliderRow
         label="Ingresos mensuales"

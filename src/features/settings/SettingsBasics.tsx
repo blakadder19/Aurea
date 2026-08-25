@@ -47,7 +47,7 @@ export function SettingsBasics() {
   if (isAuthenticated && (loadingReal || realSettings === null)) {
     return (
       <Card padding="lg" className="flex flex-col gap-5">
-        <h2 className="font-serif text-[22px] font-semibold text-ink">Ajustes básicos</h2>
+        <h2 className="font-serif text-[22px] lg:text-[19px] font-semibold text-ink">Ajustes básicos</h2>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           <Skeleton className="h-[68px] w-full" label="Cargando tus ajustes reales…" />
           <Skeleton className="h-[68px] w-full" />
@@ -78,7 +78,7 @@ export function SettingsBasics() {
 
   return (
     <Card padding="lg" className="flex flex-col gap-5">
-      <h2 className="font-serif text-[22px] font-semibold text-ink">Ajustes básicos</h2>
+      <h2 className="font-serif text-[22px] lg:text-[19px] font-semibold text-ink">Ajustes básicos</h2>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
         <label className="flex flex-col gap-1.5">

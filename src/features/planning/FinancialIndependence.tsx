@@ -27,7 +27,7 @@ export function FinancialIndependence() {
   return (
     <Card tone="green-soft" padding="lg" className="flex flex-col gap-4">
       <div className="flex items-center gap-2.5">
-        <h2 className="font-serif text-[22px] font-semibold text-ink">Independencia financiera</h2>
+        <h2 className="font-serif text-[22px] lg:text-[19px] font-semibold text-ink">Independencia financiera</h2>
         <Badge variant="info">Simulación</Badge>
       </div>
 

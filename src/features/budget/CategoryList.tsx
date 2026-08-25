@@ -6,7 +6,7 @@ import { CategoryRow } from './CategoryRow'
 export function CategoryList({ categories = budgetCategories }: { categories?: BudgetCategory[] }) {
   return (
     <Card className="flex flex-col gap-[18px]" padding="lg">
-      <h2 className="font-serif text-[22px] font-semibold text-ink">Gasto de consumo por categoría</h2>
+      <h2 className="font-serif text-[22px] lg:text-[19px] font-semibold text-ink">Gasto de consumo por categoría</h2>
       <div className="flex flex-col gap-3.5">
         {categories.map((c) => (
           <CategoryRow key={c.id} category={c} />

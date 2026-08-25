@@ -29,7 +29,7 @@ export function GoalCard({ goal, asOf = CONTEXT_DATE }: { goal: Goal; asOf?: Dat
             strokeWidth={7}
             ariaLabel={`${Math.round(progressPct)}% del objetivo`}
           />
-          <h2 className="font-serif text-[22px] font-semibold text-ink">{goal.name}</h2>
+          <h2 className="font-serif text-[22px] lg:text-[19px] font-semibold text-ink">{goal.name}</h2>
         </div>
         <Badge variant={goal.status}>{goal.statusLabel}</Badge>
       </div>

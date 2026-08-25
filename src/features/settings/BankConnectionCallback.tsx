@@ -65,7 +65,7 @@ export function BankConnectionCallback() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-canvas p-4">
       <Card padding="lg" className="flex w-full max-w-[420px] flex-col gap-3.5 text-center">
-        <div className="font-serif text-[22px] font-semibold text-ink">{message}</div>
+        <div className="font-serif text-[22px] lg:text-[19px] font-semibold text-ink">{message}</div>
         {status === 'error' && (
           <a href="/ajustes" className="text-base font-semibold text-brand">
             Volver a Ajustes

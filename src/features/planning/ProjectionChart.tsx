@@ -27,7 +27,7 @@ export function ProjectionChart() {
 
   return (
     <Card padding="lg" className="flex flex-col gap-[18px]">
-      <h2 className="font-serif text-[22px] font-semibold text-ink">Patrimonio proyectado a {horizonYears} años</h2>
+      <h2 className="font-serif text-[22px] lg:text-[19px] font-semibold text-ink">Patrimonio proyectado a {horizonYears} años</h2>
 
       <div className="h-[180px] w-full" role="img" aria-label="Proyección del patrimonio de este escenario comparada con el escenario base">
         <ResponsiveContainer width="100%" height="100%">

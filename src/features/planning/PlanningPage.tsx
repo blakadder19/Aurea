@@ -13,10 +13,10 @@ import { useRealPlanning } from './useRealPlanning'
 
 function Header({ isAuthenticated, loading = false }: { isAuthenticated: boolean; loading?: boolean }) {
   return (
-    <header className="flex flex-wrap items-start justify-between gap-4 border-b border-line bg-surface px-4 py-5 lg:px-8">
+    <header className="flex flex-wrap items-start justify-between gap-4 border-b border-line bg-surface px-4 py-5 lg:px-6 lg:py-4">
       <div>
         <div className="flex flex-wrap items-center gap-2.5">
-          <h1 className="font-serif text-[32px] font-semibold tracking-[-0.01em] text-ink">Planificación</h1>
+          <h1 className="font-serif text-[32px] lg:text-[26px] font-semibold tracking-[-0.01em] text-ink">Planificación</h1>
           <Badge variant="info">Simulación</Badge>
         </div>
         <div className="mt-1 text-base text-ink-muted">
@@ -63,7 +63,7 @@ export function PlanningPage() {
     return (
       <>
         <Header isAuthenticated loading />
-        <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
+        <main className="flex flex-1 flex-col gap-6 lg:gap-5 overflow-y-auto p-4 lg:p-6">
           <LoadingRealData />
         </main>
       </>
@@ -73,7 +73,7 @@ export function PlanningPage() {
   return (
     <>
       <Header isAuthenticated={isAuthenticated} />
-      <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
+      <main className="flex flex-1 flex-col gap-6 lg:gap-5 overflow-y-auto p-4 lg:p-6">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
           <ScenarioBuilder />
           <div className="flex min-w-0 flex-1 flex-col gap-6">

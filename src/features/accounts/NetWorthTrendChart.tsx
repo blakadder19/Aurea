@@ -24,7 +24,7 @@ export function NetWorthTrendChart({ points, loading }: { points: NetWorthPoint[
   return (
     <Card padding="lg" className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-serif text-[22px] font-semibold text-ink">Evolución del patrimonio</h2>
+        <h2 className="font-serif text-[22px] lg:text-[19px] font-semibold text-ink">Evolución del patrimonio</h2>
         <span className={`text-sm font-semibold tabular ${delta >= 0 ? 'text-green-text' : 'text-danger-text'}`}>
           {delta >= 0 ? '▲' : '▼'} {formatMoneySigned(delta, 0)} en este periodo
         </span>

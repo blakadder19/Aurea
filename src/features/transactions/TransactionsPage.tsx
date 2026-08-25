@@ -51,10 +51,10 @@ function Header({
   const reviewCount = isAuthenticated ? realReviewCount : demoReviewCount
 
   return (
-    <header className="flex flex-col gap-4 border-b border-line bg-surface px-4 py-5 lg:px-8">
+    <header className="flex flex-col gap-4 border-b border-line bg-surface px-4 py-5 lg:px-6 lg:py-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-serif text-[32px] font-semibold tracking-[-0.01em] text-ink">Movimientos</h1>
+          <h1 className="font-serif text-[32px] lg:text-[26px] font-semibold tracking-[-0.01em] text-ink">Movimientos</h1>
           <div className="mt-1 text-base text-ink-muted">
             {isAuthenticated ? `${realCount} movimientos sincronizados` : `${totalMovementsThisMonth} movimientos en ${monthContextLabel}`}
           </div>

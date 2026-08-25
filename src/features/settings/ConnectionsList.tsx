@@ -17,7 +17,7 @@ export function ConnectionsList() {
   return (
     <Card padding="lg" className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2.5">
-        <h2 className="font-serif text-[22px] font-semibold text-ink">Conexiones bancarias</h2>
+        <h2 className="font-serif text-[22px] lg:text-[19px] font-semibold text-ink">Conexiones bancarias</h2>
         <Badge variant="neutral" icon="">
           Demostración
         </Badge>

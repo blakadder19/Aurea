@@ -5,7 +5,7 @@ import { assetClassBreakdown, institutionBreakdown } from '../../data/accounts'
 function BreakdownCard({ title, rows }: { title: string; rows: { label: string; amount: number; negative?: boolean }[] }) {
   return (
     <Card padding="lg" className="flex flex-col gap-4">
-      <h2 className="font-serif text-[22px] font-semibold text-ink">{title}</h2>
+      <h2 className="font-serif text-[22px] lg:text-[19px] font-semibold text-ink">{title}</h2>
       <div className="flex flex-col gap-2.5 tabular">
         {rows.map((row) => (
           <div

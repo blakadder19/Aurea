@@ -38,7 +38,7 @@ export function RealConnectionsCard() {
   return (
     <Card padding="lg" className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h2 className="font-serif text-[22px] font-semibold text-ink">Tu conexión bancaria real</h2>
+        <h2 className="font-serif text-[22px] lg:text-[19px] font-semibold text-ink">Tu conexión bancaria real</h2>
         <button
           type="button"
           onClick={() => void handleConnect()}

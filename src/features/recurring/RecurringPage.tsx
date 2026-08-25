@@ -24,10 +24,10 @@ function Header({ isAuthenticated, items }: { isAuthenticated: boolean; items: R
   const annualTotal = monthlyTotal * 12
 
   return (
-    <header className="flex flex-col gap-4 border-b border-line bg-surface px-4 py-5 lg:px-8">
+    <header className="flex flex-col gap-4 border-b border-line bg-surface px-4 py-5 lg:px-6 lg:py-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-serif text-[32px] font-semibold tracking-[-0.01em] text-ink">Pagos y suscripciones</h1>
+          <h1 className="font-serif text-[32px] lg:text-[26px] font-semibold tracking-[-0.01em] text-ink">Pagos y suscripciones</h1>
           <div className="mt-1 text-base text-ink-muted">
             {isAuthenticated
               ? items.length === 0
@@ -111,7 +111,7 @@ export function RecurringPage() {
   return (
     <>
       <Header isAuthenticated={isAuthenticated} items={items} />
-      <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
+      <main className="flex flex-1 flex-col gap-6 lg:gap-5 overflow-y-auto p-4 lg:p-6">
         {isLoadingAuth ? (
           <LoadingRealData />
         ) : isAuthenticated && hasLoadedReal && items.length === 0 ? (

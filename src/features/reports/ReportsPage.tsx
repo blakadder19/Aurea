@@ -32,9 +32,9 @@ function Header({
 }) {
   const today = new Date()
   return (
-    <header className="flex flex-col gap-4 border-b border-line bg-surface px-4 py-5 lg:px-8">
+    <header className="flex flex-col gap-4 border-b border-line bg-surface px-4 py-5 lg:px-6 lg:py-4">
       <div>
-        <h1 className="font-serif text-[32px] font-semibold tracking-[-0.01em] text-ink">Informes</h1>
+        <h1 className="font-serif text-[32px] lg:text-[26px] font-semibold tracking-[-0.01em] text-ink">Informes</h1>
         <div className="mt-1 text-base text-ink-muted">
           {isAuthenticated ? 'El cierre de cada mes: ingresos, gastos y en qué se fue tu dinero' : 'Ejemplo del informe de cierre de mes'}
         </div>
@@ -87,7 +87,7 @@ function ReportBody({ report }: { report: MonthlyReport }) {
       </div>
 
       <Card padding="lg" className="flex flex-col gap-4">
-        <h2 className="font-serif text-[22px] font-semibold text-ink">Gasto por categoría</h2>
+        <h2 className="font-serif text-[22px] lg:text-[19px] font-semibold text-ink">Gasto por categoría</h2>
         {report.categories.length === 0 ? (
           <p className="text-base text-ink-muted">No hubo gasto categorizado este mes.</p>
         ) : (
@@ -126,7 +126,7 @@ export function ReportsPage() {
   return (
     <>
       <Header isAuthenticated={isAuthenticated} monthsAgo={monthsAgo} onMonthsAgoChange={setMonthsAgo} />
-      <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
+      <main className="flex flex-1 flex-col gap-6 lg:gap-5 overflow-y-auto p-4 lg:p-6">
         {isAuthenticated && loading ? (
           <LoadingRealData />
         ) : report === null ? (

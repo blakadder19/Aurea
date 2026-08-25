@@ -27,14 +27,14 @@ export function StatesPage() {
 
   return (
     <>
-      <header className="border-b border-line bg-surface px-4 py-5 lg:px-8">
-        <h1 className="font-serif text-[32px] font-semibold tracking-[-0.01em] text-ink">Áurea — estados</h1>
+      <header className="border-b border-line bg-surface px-4 py-5 lg:px-6 lg:py-4">
+        <h1 className="font-serif text-[32px] lg:text-[26px] font-semibold tracking-[-0.01em] text-ink">Áurea — estados</h1>
         <div className="mt-1 text-base text-ink-muted">
           Carga, vacío, error, desactualizado, sincronizando, sin resultados y confirmación con Deshacer.
         </div>
       </header>
 
-      <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
+      <main className="flex flex-1 flex-col gap-6 lg:gap-5 overflow-y-auto p-4 lg:p-6">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <DemoCard title="Carga">
             <div className="flex flex-col gap-3">

@@ -12,7 +12,7 @@ export function ProductTypeBreakdown({ positions = demoPositions }: { positions?
 
   return (
     <Card padding="lg" className="flex flex-col gap-4">
-      <h2 className="font-serif text-[22px] font-semibold text-ink">Por tipo de producto</h2>
+      <h2 className="font-serif text-[22px] lg:text-[19px] font-semibold text-ink">Por tipo de producto</h2>
       <div className="flex flex-col gap-2.5 tabular">
         {[...byType.entries()].map(([type, value]) => (
           <div key={type} className="flex justify-between text-base text-ink">
