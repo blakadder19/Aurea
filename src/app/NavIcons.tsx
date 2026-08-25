@@ -78,6 +78,13 @@ export const NAV_ICONS: Record<string, React.ReactNode> = {
       <circle cx="19" cy="12" r="1.5" />
     </svg>
   ),
+  Informes: (
+    <svg {...ICON_PROPS}>
+      <rect x="4" y="11" width="4" height="9" rx="1" />
+      <rect x="10" y="6" width="4" height="14" rx="1" />
+      <rect x="16" y="14" width="4" height="6" rx="1" />
+    </svg>
+  ),
   'Conexiones y ajustes': (
     <svg {...ICON_PROPS}>
       <circle cx="12" cy="12" r="3" />

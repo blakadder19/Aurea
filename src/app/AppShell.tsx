@@ -64,6 +64,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     title: 'Herramientas',
     items: [
+      { label: 'Informes', to: '/informes' },
       { label: 'Asistente e insights', to: '/asistente' },
       { label: 'Conexiones y ajustes', to: '/ajustes' },
     ],
