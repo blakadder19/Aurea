@@ -45,10 +45,10 @@ function Header({
           <select
             value={monthsAgo}
             onChange={(e) => onMonthsAgoChange(Number(e.target.value))}
-            className="min-h-11 rounded-md border border-line bg-surface px-3.5 text-base text-ink capitalize"
+            className="min-h-11 rounded-md border border-line bg-surface px-3.5 text-base text-ink"
           >
             {MONTH_CHOICES.map((n) => (
-              <option key={n} value={n} className="capitalize">
+              <option key={n} value={n}>
                 {monthChoiceLabel(n, today)}
               </option>
             ))}
