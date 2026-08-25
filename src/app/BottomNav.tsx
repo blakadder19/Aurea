@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
+import { NAV_ICONS } from './NavIcons'
 
 const TABS = [
   { label: 'Inicio', to: '/' },
@@ -24,10 +25,12 @@ export function BottomNav() {
           <Link
             key={tab.to}
             to={tab.to}
-            className="flex min-h-11 flex-col items-center justify-center gap-1 py-1.5"
+            className="flex min-h-11 flex-col items-center justify-center gap-0.5 py-1.5"
           >
-            <span className={`h-2 w-2 rounded-full ${isActive ? 'bg-green' : 'bg-transparent'}`} />
-            <span className={`text-[13px] ${isActive ? 'font-bold text-ink' : 'text-ink-muted'}`}>{tab.label}</span>
+            <span aria-hidden="true" className={`h-[19px] w-[19px] ${isActive ? 'text-brand' : 'text-ink-faint'}`}>
+              {NAV_ICONS[tab.label]}
+            </span>
+            <span className={`text-[11.5px] ${isActive ? 'font-bold text-ink' : 'text-ink-muted'}`}>{tab.label}</span>
           </Link>
         )
       })}

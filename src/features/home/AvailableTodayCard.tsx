@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
+import { RingChart } from '../../components/RingChart'
 import { SectionLabel } from '../../components/SectionLabel'
 import { Skeleton } from '../../components/states/Skeleton'
 import {
@@ -59,13 +60,24 @@ export function AvailableTodayCard({ real }: { real?: RealAvailableToday } = {})
     <Card className="flex flex-col gap-5" padding="lg">
       <SectionLabel>Disponible hoy</SectionLabel>
 
-      <div>
-        <div className="font-serif text-[48px] leading-none font-semibold tracking-[-0.02em] text-ink tabular lg:text-[72px]">
-          <Money value={data.availableToday} />
+      <div className="flex flex-wrap items-center gap-5">
+        <RingChart
+          segments={[{ value: Math.max(0, data.availableToday), strokeClassName: 'stroke-brand' }]}
+          max={Math.max(data.eligibleAccountsSum, data.availableToday, 1)}
+          size={92}
+          strokeWidth={10}
+          ariaLabel="Disponible hoy como proporción de tus cuentas para gastar"
+        >
+          <span className="text-[10px] font-bold tracking-[0.04em] text-ink-faint uppercase">Hoy</span>
+        </RingChart>
+        <div>
+          <div className="font-serif text-[42px] leading-none font-extrabold tracking-[-0.02em] text-ink tabular lg:text-[58px]">
+            <Money value={data.availableToday} />
+          </div>
+          <p className="mt-2.5 max-w-[46ch] text-base text-ink-muted text-pretty">
+            Puedes gastar esto sin tocar tu ahorro ni dejar sin cubrir los pagos de los próximos 14 días.
+          </p>
         </div>
-        <p className="mt-3.5 max-w-[46ch] text-lg text-ink text-pretty">
-          Puedes gastar esto sin tocar tu ahorro ni dejar sin cubrir los pagos de los próximos 14 días.
-        </p>
       </div>
 
       <div className="flex items-center gap-4">
@@ -74,7 +86,7 @@ export function AvailableTodayCard({ real }: { real?: RealAvailableToday } = {})
           onClick={toggleCalc}
           aria-expanded={showCalc}
           aria-controls="disponible-hoy-desglose"
-          className="min-h-11 rounded-md border border-green px-4 py-[11px] text-base font-semibold text-green hover:bg-green-soft"
+          className="min-h-11 rounded-xl border border-brand px-4 py-[11px] text-base font-semibold text-brand hover:bg-brand-soft"
         >
           Ver cómo se calcula
         </button>

@@ -1,26 +1,42 @@
-import { Badge } from '../../components/Badge'
+import { Badge, type BadgeVariant } from '../../components/Badge'
 import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
 import { ProgressBar } from '../../components/ProgressBar'
+import { RingChart } from '../../components/RingChart'
 import { budget } from '../../data/demo'
 import type { RealVerdict } from '../budget/MonthVerdictCard'
 
-/** Bloque 3 — Presupuesto. Titular-conclusión + barra de ritmo real vs esperado. En real, sin "Comprometido": no hay dato de gasto comprometido. */
+const VARIANT_STROKE: Partial<Record<BadgeVariant, string>> = {
+  success: 'stroke-green',
+  warning: 'stroke-warning',
+  danger: 'stroke-danger',
+}
+
+/** Bloque 3 — Presupuesto. Titular-conclusión + anillo de ritmo real vs esperado. En real, sin "Comprometido": no hay dato de gasto comprometido. */
 export function BudgetPaceCard({ real }: { real?: RealVerdict } = {}) {
   if (real) {
     const spentPct = real.paceRealPct ?? 0
     return (
       <Card className="flex flex-col gap-3.5" padding="md">
         <div className="flex items-start justify-between gap-4">
-          <h2 className="font-serif text-[26px] leading-[1.2] font-semibold text-ink">{real.headline}</h2>
+          <h2 className="font-serif text-[22px] leading-[1.2] font-extrabold text-ink">{real.headline}</h2>
           <Badge variant={real.badgeVariant}>{real.badgeLabel}</Badge>
         </div>
 
         {real.paceRealPct !== null && (
           <>
-            <div className="text-base text-ink tabular">
-              <Money value={real.gastado} decimals={0} /> gastados de <Money value={real.presupuestado} decimals={0} /> presupuestados ·{' '}
-              {Math.round(real.paceRealPct)} %
+            <div className="flex items-center gap-4">
+              <RingChart
+                segments={[{ value: real.gastado, strokeClassName: VARIANT_STROKE[real.badgeVariant] ?? 'stroke-ink-faint' }]}
+                max={Math.max(real.presupuestado, real.gastado, 1)}
+                size={64}
+                strokeWidth={8}
+                ariaLabel={`${Math.round(real.paceRealPct)}% del presupuesto consumido`}
+              />
+              <div className="text-base text-ink tabular">
+                <Money value={real.gastado} decimals={0} /> gastados de <Money value={real.presupuestado} decimals={0} /> presupuestados ·{' '}
+                {Math.round(real.paceRealPct)} %
+              </div>
             </div>
             <ProgressBar
               percent={spentPct}
@@ -53,12 +69,21 @@ export function BudgetPaceCard({ real }: { real?: RealVerdict } = {}) {
   return (
     <Card className="flex flex-col gap-3.5" padding="md">
       <div className="flex items-start justify-between gap-4">
-        <h2 className="font-serif text-[26px] leading-[1.2] font-semibold text-ink">{budget.headline}</h2>
+        <h2 className="font-serif text-[22px] leading-[1.2] font-extrabold text-ink">{budget.headline}</h2>
         <Badge variant="warning">Por encima</Badge>
       </div>
 
-      <div className="text-base text-ink tabular">
-        <Money value={budget.spent} decimals={0} /> gastados de <Money value={budget.budgeted} decimals={0} /> presupuestados · {budget.paceReal} %
+      <div className="flex items-center gap-4">
+        <RingChart
+          segments={[{ value: budget.spent, strokeClassName: 'stroke-warning' }]}
+          max={Math.max(budget.budgeted, budget.spent, 1)}
+          size={64}
+          strokeWidth={8}
+          ariaLabel={`${budget.paceReal}% del presupuesto consumido`}
+        />
+        <div className="text-base text-ink tabular">
+          <Money value={budget.spent} decimals={0} /> gastados de <Money value={budget.budgeted} decimals={0} /> presupuestados · {budget.paceReal} %
+        </div>
       </div>
 
       <ProgressBar

@@ -6,58 +6,80 @@
    Blanco domina las superficies, grafito estructura, verde SOLO acción/positivo.
 --------------------------------------------------------------------------- */
 @theme {
-  --font-serif: "Source Serif 4", Charter, Georgia, serif;
+  /* "--font-serif" quedó como nombre histórico (así lo hereda automáticamente
+     la utilidad font-serif ya usada en toda la app) pero ya no es una serif:
+     es la tipografía de titulares/cifras grandes, redondeada y de acabado
+     nativo — ver docs de la Fase "Áurea Nativa". */
+  --font-serif: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
   --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 
   /* Superficies y texto */
   --color-surface: #ffffff;        /* tarjetas y paneles */
-  --color-canvas: #f6f8f7;         /* fondo de la app */
-  --color-ink: #161a19;            /* titulares y cifras */
-  --color-ink-muted: #5a6360;      /* descripciones y etiquetas */
-  --color-line: #e2e7e4;           /* filetes de 1 px */
+  --color-canvas: #f5f5f8;         /* fondo de la app */
+  --color-ink: #14141f;            /* titulares y cifras */
+  --color-ink-muted: #6b6b7d;      /* descripciones y etiquetas */
+  --color-ink-faint: #a3a3b3;      /* metadatos secundarios, iconos inactivos */
+  --color-line: #eaeaf1;           /* filetes de 1 px */
 
-  /* Verde financiero: acción, progreso, positivo */
-  --color-green: #0f6b4f;
-  --color-green-hover: #0a5138;
-  --color-green-soft: #e8f2ee;
-  --color-green-soft-line: #c7ded5;
-  --color-green-text: #0b563f;
+  /* Violeta de marca: navegación activa, acción principal — nunca positivo/negativo (eso lo dice el verde/rojo) */
+  --color-brand: #5b4cf0;
+  --color-brand-hover: #4a3ce0;
+  --color-brand-soft: #efedfe;
+  --color-brand-soft-line: #ddd8fc;
+  --color-brand-text: #423ac2;
+
+  /* Verde financiero: progreso, positivo */
+  --color-green: #17a673;
+  --color-green-hover: #128a5f;
+  --color-green-soft: #e4f7ef;
+  --color-green-soft-line: #bfe9d8;
+  --color-green-text: #0f7d55;
 
   /* Semánticos: siempre color + icono + palabra, nunca solo color */
-  --color-warning: #9a6410;
+  --color-warning: #b5760f;
   --color-warning-bg: #fdf3e3;
   --color-warning-line: #e8d6b4;
-  --color-warning-text: #7c4f09;
+  --color-warning-text: #8a5c0c;
 
-  --color-danger: #a82018;
-  --color-danger-bg: #fbebe9;
-  --color-danger-line: #efc9c5;
-  --color-danger-text: #8a1912;
+  --color-danger: #ef5a4c;
+  --color-danger-bg: #fdece9;
+  --color-danger-line: #f8ccc4;
+  --color-danger-text: #c23e30;
 
-  --color-info: #2e6e8e;
-  --color-info-bg: #eaf3f7;
-  --color-info-line: #c9dee7;
+  --color-info: #2f8fe0;
+  --color-info-bg: #eaf3fc;
+  --color-info-line: #c9def4;
 
-  --color-plum: #6b5b95;
-  --color-plum-bg: #f1eef7;
-  --color-plum-line: #dcd3ea;
+  --color-plum: #8b5cf6;
+  --color-plum-bg: #f1eefe;
+  --color-plum-line: #dcd0fc;
+
+  /* Categorías de gasto: color fijo por categoría (igual siempre, para reconocer sin leer) */
+  --color-cat-1: #17a673;
+  --color-cat-2: #ef5a4c;
+  --color-cat-3: #2f8fe0;
+  --color-cat-4: #8b5cf6;
+  --color-cat-5: #e0489a;
+  --color-cat-6: #e0a020;
+  --color-cat-7: #14b8a6;
+  --color-cat-8: #8a8a9c;
 
   /* Series de datos */
-  --color-series-1: #0f6b4f;
-  --color-series-2: #2e6e8e;
-  --color-series-3: #9a6410;
-  --color-series-4: #6b5b95;
-  --color-series-5: #a82018;
-  --color-series-6: #5a6360;
+  --color-series-1: #17a673;
+  --color-series-2: #2f8fe0;
+  --color-series-3: #e0a020;
+  --color-series-4: #8b5cf6;
+  --color-series-5: #ef5a4c;
+  --color-series-6: #6b6b7d;
 
   /* Forma */
-  --radius-card: 20px;
-  --radius-lg: 16px;
-  --radius-md: 10px;
-  --radius-sm: 8px;
+  --radius-card: 22px;
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --radius-sm: 9px;
 
-  --shadow-card: 0 1px 2px rgba(22, 26, 25, 0.04);
-  --shadow-pop: 0 8px 30px -12px rgba(22, 26, 25, 0.28);
+  --shadow-card: 0 1px 2px rgba(20, 20, 31, 0.04), 0 10px 24px -18px rgba(20, 20, 31, 0.22);
+  --shadow-pop: 0 20px 48px -20px rgba(20, 20, 31, 0.32);
 }
 
 @layer base {

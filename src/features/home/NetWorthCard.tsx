@@ -1,4 +1,4 @@
-import { Line, LineChart, ResponsiveContainer } from 'recharts'
+import { Area, AreaChart, ResponsiveContainer } from 'recharts'
 import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
 import { SectionLabel } from '../../components/SectionLabel'
@@ -45,17 +45,24 @@ export function NetWorthCard({ real }: { real?: RealNetWorth } = {}) {
             aria-label="Evolución del patrimonio neto en doce meses, tendencia al alza"
           >
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={netWorthSeries} margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
-                <Line
+              <AreaChart data={netWorthSeries} margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
+                <defs>
+                  <linearGradient id="netWorthFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#5b4cf0" stopOpacity={0.28} />
+                    <stop offset="100%" stopColor="#5b4cf0" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <Area
                   type="monotone"
                   dataKey="value"
-                  stroke="#0f6b4f" /* --color-green */
+                  stroke="#5b4cf0" /* --color-brand */
                   strokeWidth={2.5}
+                  fill="url(#netWorthFill)"
                   dot={false}
                   activeDot={false}
                   isAnimationActive={false}
                 />
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
           </div>
           <div className="flex justify-between text-[13px] text-ink-muted tabular">

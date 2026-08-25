@@ -2,12 +2,24 @@ import { Link } from 'react-router-dom'
 import { Card } from '../../components/Card'
 import { Money, type MoneyTone } from '../../components/Money'
 import { movimientos, totalMovementsThisMonth, type Movement } from '../../data/demo'
+import { categoryColorClass } from '../../lib/categoryColor'
 import { useHomeUIStore } from '../../store/useHomeUIStore'
 
 function toneFor(movement: Movement): MoneyTone {
   if (movement.importe > 0) return 'green'
   if (movement.estado === 'Requiere revisión') return 'danger'
   return 'ink'
+}
+
+function Avatar({ movement }: { movement: Movement }) {
+  return (
+    <div
+      aria-hidden="true"
+      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[13px] font-bold text-surface ${categoryColorClass(movement.categoria)}`}
+    >
+      {movement.comercio.charAt(0).toUpperCase()}
+    </div>
+  )
 }
 
 const TH = 'border-b border-line pr-4 pb-2.5 text-left text-[13px] font-semibold tracking-[0.06em] text-ink-muted uppercase'
@@ -37,6 +49,7 @@ export function RecentTransactions({ real }: { real?: RealRecentTransactions } =
         <table className="w-full border-collapse tabular">
           <thead>
             <tr>
+              <th className="border-b border-line py-3.5 pr-3" aria-hidden="true"></th>
               <th className={`${TH} whitespace-nowrap`}>Fecha</th>
               <th className={`${TH} whitespace-nowrap`}>Comercio</th>
               <th className={`${TH} whitespace-nowrap`}>Categoría</th>
@@ -54,6 +67,9 @@ export function RecentTransactions({ real }: { real?: RealRecentTransactions } =
           <tbody>
             {items.map((m) => (
               <tr key={`${m.fecha}-${m.comercio}`}>
+                <td className="border-b border-[#f0f3f1] py-3 pr-3">
+                  <Avatar movement={m} />
+                </td>
                 <td className={`${TD} whitespace-nowrap text-ink-muted`}>{m.fecha}</td>
                 <td className={`${TD} whitespace-nowrap font-semibold text-ink`}>{m.comercio}</td>
                 <td className={`${TD} whitespace-nowrap text-ink-muted`}>{m.categoria}</td>
@@ -78,7 +94,8 @@ export function RecentTransactions({ real }: { real?: RealRecentTransactions } =
             key={`${m.fecha}-${m.comercio}`}
             className="flex items-center justify-between gap-3 rounded-2xl border border-line p-3.5 tabular"
           >
-            <div className="min-w-0">
+            <Avatar movement={m} />
+            <div className="min-w-0 flex-1">
               <div className="truncate text-base font-semibold text-ink">{m.comercio}</div>
               <div className="mt-0.5 truncate text-sm text-ink-muted">
                 {m.fecha} · {m.categoria}

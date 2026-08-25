@@ -7,6 +7,7 @@ import { isSupabaseConfigured } from '../lib/supabase/client'
 import { useAuthStore } from '../lib/supabase/useAuth'
 import { usePrivacyStore } from '../store/usePrivacyStore'
 import { BottomNav } from './BottomNav'
+import { NAV_ICONS } from './NavIcons'
 
 export interface NavItem {
   label: string
@@ -67,22 +68,22 @@ function Sidebar() {
 
   return (
     <nav className="hidden w-[250px] shrink-0 flex-col gap-6 border-r border-line bg-surface p-5 py-7 lg:flex">
-      <div>
-        <div className="font-serif text-[28px] font-bold text-ink">Áurea</div>
-        <div className="mt-0.5 text-[13px] text-ink-muted">Tu dinero, con perspectiva</div>
+      <div className="flex items-center gap-2.5 px-1">
+        <div className="h-8 w-8 shrink-0 rounded-[10px] bg-gradient-to-br from-brand to-plum" aria-hidden="true" />
+        <div className="font-serif text-[19px] font-extrabold text-ink">Áurea</div>
       </div>
 
       <div className="flex flex-1 flex-col gap-6 overflow-y-auto">
         {NAV_SECTIONS.map((section) => (
           <div key={section.title} className="flex flex-col gap-1">
-            <div className="px-2.5 pb-1.5 text-[13px] font-semibold uppercase tracking-[0.08em] text-ink-muted">
+            <div className="px-2.5 pb-1.5 text-[12px] font-bold uppercase tracking-[0.07em] text-ink-faint">
               {section.title}
             </div>
             {section.items.map((item) => {
               const isActive = item.to !== undefined && location.pathname === item.to
-              const rowClasses =
-                'flex min-h-11 items-center justify-between rounded-md px-3 py-2.5 text-base'
+              const rowClasses = 'flex min-h-11 items-center gap-2.5 rounded-xl px-3 py-2.5 text-[14px] font-semibold'
               const badge = item.label === 'Movimientos' ? reviewCount : item.badge
+              const icon = NAV_ICONS[item.label]
 
               if (item.to) {
                 return (
@@ -90,26 +91,32 @@ function Sidebar() {
                     key={item.label}
                     to={item.to}
                     className={`${rowClasses} ${
-                      isActive ? 'bg-green-soft font-semibold text-green-text' : 'text-ink hover:bg-canvas'
+                      isActive ? 'bg-brand-soft text-brand-text' : 'text-ink-muted hover:bg-canvas hover:text-ink'
                     }`}
                   >
-                    {item.label}
-                    {!!badge && (
-                      <span className="rounded-full border border-danger-line bg-danger-bg px-2 py-0.5 text-[13px] font-bold text-danger-text">
-                        {badge}
+                    {icon && (
+                      <span aria-hidden="true" className="h-[18px] w-[18px] shrink-0">
+                        {icon}
                       </span>
+                    )}
+                    <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                    {!!badge && (
+                      <span className="rounded-full bg-danger px-2 py-0.5 text-[12px] font-bold text-surface">{badge}</span>
                     )}
                   </Link>
                 )
               }
 
               return (
-                <div key={item.label} className={`${rowClasses} text-ink-muted`}>
-                  {item.label}
-                  {!!badge && (
-                    <span className="rounded-full border border-danger-line bg-danger-bg px-2 py-0.5 text-[13px] font-bold text-danger-text">
-                      {badge}
+                <div key={item.label} className={`${rowClasses} text-ink-faint`}>
+                  {icon && (
+                    <span aria-hidden="true" className="h-[18px] w-[18px] shrink-0">
+                      {icon}
                     </span>
+                  )}
+                  <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                  {!!badge && (
+                    <span className="rounded-full bg-danger px-2 py-0.5 text-[12px] font-bold text-surface">{badge}</span>
                   )}
                 </div>
               )
@@ -120,12 +127,12 @@ function Sidebar() {
 
       <div className="flex flex-col gap-3 border-t border-line pt-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-soft text-base font-bold text-green-text">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-plum to-brand text-[13px] font-bold text-surface">
             {currentUser.initials}
           </div>
-          <div>
-            <div className="text-base font-semibold text-ink">{currentUser.name}</div>
-            <div className="text-[13px] text-ink-muted">{currentUser.note}</div>
+          <div className="min-w-0">
+            <div className="truncate text-[14px] font-bold text-ink">{currentUser.name}</div>
+            <div className="truncate text-[12px] text-ink-faint">{currentUser.note}</div>
           </div>
         </div>
         <PrivacyToggle />
@@ -145,7 +152,7 @@ export function PrivacyToggle() {
       type="button"
       onClick={toggle}
       aria-pressed={hidden}
-      className="flex min-h-11 items-center gap-2 rounded-md border border-line px-3 text-left text-[15px] font-semibold text-ink-muted hover:bg-canvas"
+      className="flex min-h-11 items-center gap-2 rounded-xl border border-line px-3 text-left text-[13.5px] font-bold text-ink-muted hover:bg-canvas"
     >
       <span aria-hidden="true">{hidden ? '◌' : '●'}</span>
       {hidden ? 'Mostrar cifras' : 'Ocultar cifras'}
