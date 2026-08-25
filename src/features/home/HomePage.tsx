@@ -67,12 +67,14 @@ function Header({
               <span className="rounded-full bg-danger px-2 py-0.5 text-[13px] font-bold text-surface">{alertCount}</span>
             </button>
           )}
-          <button
-            type="button"
-            className="min-h-11 rounded-md border border-brand bg-brand px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-brand-hover"
-          >
-            Añadir movimiento
-          </button>
+          {!isAuthenticated && (
+            <button
+              type="button"
+              className="min-h-11 rounded-md border border-brand bg-brand px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-brand-hover"
+            >
+              Añadir movimiento
+            </button>
+          )}
         </div>
       </div>
 

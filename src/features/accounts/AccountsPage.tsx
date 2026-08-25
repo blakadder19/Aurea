@@ -50,12 +50,14 @@ function Header({ isAuthenticated, realLastSynced }: { isAuthenticated: boolean;
               {isAuthenticated ? formatIsoDateTime(realLastSynced!) : syncedAt}
             </div>
           )}
-          <button
-            type="button"
-            className="min-h-11 rounded-md border border-brand bg-brand px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-brand-hover"
-          >
-            Añadir cuenta
-          </button>
+          {!isAuthenticated && (
+            <button
+              type="button"
+              className="min-h-11 rounded-md border border-brand bg-brand px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-brand-hover"
+            >
+              Añadir cuenta
+            </button>
+          )}
         </div>
       </div>
 
