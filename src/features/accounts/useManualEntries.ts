@@ -171,3 +171,133 @@ export async function addManualTransaction(
 
   return null
 }
+
+async function adjustManualBalance(accountId: string, userId: string, deltaCents: number): Promise<string | null> {
+  if (deltaCents === 0 || !supabase) return null
+  const { data: currentBalance, error: readError } = await supabase
+    .from('balances')
+    .select('amount_cents')
+    .eq('account_id', accountId)
+    .eq('balance_type', 'MANUAL')
+    .maybeSingle()
+  if (readError) {
+    console.error('adjustManualBalance: fallo al leer el saldo', readError)
+    return 'No hemos podido actualizar el saldo. Actualiza la página.'
+  }
+  const newBalanceCents = ((currentBalance?.amount_cents as number | undefined) ?? 0) + deltaCents
+  const { error: writeError } = await supabase
+    .from('balances')
+    .upsert(
+      { user_id: userId, account_id: accountId, balance_type: 'MANUAL', amount_cents: newBalanceCents, currency: 'EUR' },
+      { onConflict: 'account_id,balance_type' },
+    )
+  if (writeError) {
+    console.error('adjustManualBalance: fallo al guardar el saldo', writeError)
+    return 'No hemos podido actualizar el saldo. Actualiza la página.'
+  }
+  return null
+}
+
+/**
+ * Corrige un movimiento manual ya existente — importe, descripción o fecha —
+ * y ajusta el saldo de su cuenta solo por la diferencia entre el importe
+ * antiguo y el nuevo, nunca restando/sumando el importe completo dos veces.
+ */
+export async function updateManualTransaction(
+  id: string,
+  accountId: string,
+  description: string,
+  amountCents: number,
+  dateIso: string,
+): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  if (!description.trim()) return 'Ponle una descripción al movimiento.'
+  if (amountCents === 0) return 'El importe no puede ser 0.'
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return 'Inicia sesión de nuevo.'
+
+  const { data: current, error: readError } = await supabase.from('transactions').select('amount_cents').eq('id', id).maybeSingle()
+  if (readError || !current) {
+    console.error('updateManualTransaction: fallo al leer el movimiento', readError)
+    return 'No hemos podido leer el movimiento. Inténtalo de nuevo.'
+  }
+  const delta = amountCents - (current.amount_cents as number)
+
+  const { error: updateError } = await supabase
+    .from('transactions')
+    .update({
+      description: description.trim(),
+      amount_cents: amountCents,
+      credit_debit: amountCents >= 0 ? 'CRDT' : 'DBIT',
+      booking_date: dateIso,
+    })
+    .eq('id', id)
+  if (updateError) {
+    console.error('updateManualTransaction: fallo al guardar', updateError)
+    return 'No hemos podido guardar los cambios. Inténtalo de nuevo.'
+  }
+
+  return adjustManualBalance(accountId, user.id, delta)
+}
+
+/**
+ * Borra un movimiento manual y ajusta el saldo de su cuenta restando el
+ * importe que tenía. Solo puede afectar a movimientos que cuelgan de una
+ * cuenta manual — la base de datos lo impone también a nivel de RLS, esto
+ * es solo la capa de la app.
+ */
+export async function deleteManualTransaction(id: string, accountId: string): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return 'Inicia sesión de nuevo.'
+
+  const { data: current, error: readError } = await supabase.from('transactions').select('amount_cents').eq('id', id).maybeSingle()
+  if (readError || !current) {
+    console.error('deleteManualTransaction: fallo al leer el movimiento', readError)
+    return 'No hemos podido leer el movimiento. Inténtalo de nuevo.'
+  }
+
+  const { error: deleteError } = await supabase.from('transactions').delete().eq('id', id)
+  if (deleteError) {
+    console.error('deleteManualTransaction: fallo al borrar', deleteError)
+    return 'No hemos podido borrar el movimiento. Inténtalo de nuevo.'
+  }
+
+  return adjustManualBalance(accountId, user.id, -(current.amount_cents as number))
+}
+
+/**
+ * Borra una cuenta manual entera junto con sus movimientos y su saldo.
+ * Orden explícito (transactions y balances antes que accounts) para no
+ * depender de si el ON DELETE CASCADE de la base de datos se aplica bajo
+ * RLS — así el resultado es el mismo pase lo que pase ahí.
+ */
+export async function deleteManualAccount(accountId: string): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+
+  const { error: txError } = await supabase.from('transactions').delete().eq('account_id', accountId)
+  if (txError) {
+    console.error('deleteManualAccount: fallo al borrar los movimientos', txError)
+    return 'No hemos podido borrar los movimientos de la cuenta. Inténtalo de nuevo.'
+  }
+
+  const { error: balanceError } = await supabase.from('balances').delete().eq('account_id', accountId)
+  if (balanceError) {
+    console.error('deleteManualAccount: fallo al borrar el saldo', balanceError)
+    return 'No hemos podido borrar el saldo de la cuenta. Inténtalo de nuevo.'
+  }
+
+  const { error: accountError } = await supabase.from('accounts').delete().eq('id', accountId)
+  if (accountError) {
+    console.error('deleteManualAccount: fallo al borrar la cuenta', accountError)
+    return 'No hemos podido borrar la cuenta. Inténtalo de nuevo.'
+  }
+
+  return null
+}

@@ -18,16 +18,21 @@ function PanelContent({
   account,
   onChangeFunction,
   onChangeSharePercent,
+  onDeleteManual,
 }: {
   account: Account
   onChangeFunction?: (accountId: string, fn: AccountFunction) => Promise<string | null>
   onChangeSharePercent?: (accountId: string, percent: number) => Promise<string | null>
+  onDeleteManual?: (accountId: string) => Promise<string | null>
 }) {
   const [savingFn, setSavingFn] = useState(false)
   const [fnError, setFnError] = useState<string | null>(null)
   const [shareInput, setShareInput] = useState(String(account.sharePercent ?? 100))
   const [savingShare, setSavingShare] = useState(false)
   const [shareError, setShareError] = useState<string | null>(null)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   async function handleFunctionChange(fn: AccountFunction) {
     if (!onChangeFunction) return
@@ -36,6 +41,15 @@ function PanelContent({
     const error = await onChangeFunction(account.id, fn)
     if (error) setFnError(error)
     setSavingFn(false)
+  }
+
+  async function handleDelete() {
+    if (!onDeleteManual) return
+    setDeleting(true)
+    setDeleteError(null)
+    const error = await onDeleteManual(account.id)
+    setDeleting(false)
+    if (error) setDeleteError(error)
   }
 
   async function handleSaveSharePercent() {
@@ -197,13 +211,50 @@ function PanelContent({
         >
           Renombrar
         </button>
-        <button
-          type="button"
-          className="min-h-11 rounded-md border border-line px-4 py-2.5 text-base font-semibold text-danger-text"
-        >
-          Desconectar
-        </button>
+        {!account.isManual && (
+          <button
+            type="button"
+            className="min-h-11 rounded-md border border-line px-4 py-2.5 text-base font-semibold text-danger-text"
+          >
+            Desconectar
+          </button>
+        )}
       </div>
+
+      {account.isManual && onDeleteManual && (
+        <div className="flex flex-col gap-2 border-t border-line pt-4">
+          {confirmingDelete ? (
+            <div className="flex items-center gap-2.5">
+              <span className="text-sm text-danger-text">¿Borrar esta cuenta y todos sus movimientos?</span>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => void handleDelete()}
+                className="min-h-11 rounded-md border border-danger-line bg-danger-bg px-3.5 text-sm font-semibold text-danger-text"
+              >
+                Sí, borrar
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setConfirmingDelete(false)}
+                className="min-h-11 rounded-md border border-line px-3.5 text-sm font-semibold text-ink"
+              >
+                Cancelar
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(true)}
+              className="min-h-11 self-start rounded-md border border-danger-line px-4 py-2.5 text-base font-semibold text-danger-text hover:bg-danger-bg"
+            >
+              Borrar cuenta manual
+            </button>
+          )}
+          {deleteError && <p className="text-sm text-danger-text">{deleteError}</p>}
+        </div>
+      )}
     </>
   )
 }
@@ -213,10 +264,12 @@ export function AccountDetailPanel({
   accounts = demoAccounts,
   onChangeFunction,
   onChangeSharePercent,
+  onDeleteManual,
 }: {
   accounts?: Account[]
   onChangeFunction?: (accountId: string, fn: AccountFunction) => Promise<string | null>
   onChangeSharePercent?: (accountId: string, percent: number) => Promise<string | null>
+  onDeleteManual?: (accountId: string) => Promise<string | null>
 }) {
   const accountId = useAccountsStore((s) => s.panelAccountId)
   const closePanel = useAccountsStore((s) => s.closePanel)
@@ -243,6 +296,7 @@ export function AccountDetailPanel({
           account={account}
           onChangeFunction={onChangeFunction}
           onChangeSharePercent={onChangeSharePercent}
+          onDeleteManual={onDeleteManual}
         />
       )}
     </SidePanel>

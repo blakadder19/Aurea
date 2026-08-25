@@ -24,7 +24,7 @@ import { formatIsoDateTime } from '../../lib/format'
 import { useAuthStore } from '../../lib/supabase/useAuth'
 import { useRealAccounts } from '../accounts/useRealAccounts'
 import { ManualEntryPanel, type ManualEntryPanelMode } from '../accounts/ManualEntryPanel'
-import { addManualTransaction, createManualAccount } from '../accounts/useManualEntries'
+import { addManualTransaction, createManualAccount, deleteManualTransaction, updateManualTransaction } from '../accounts/useManualEntries'
 import { useRealConnections, latestSync } from '../settings/useRealConnections'
 
 const VIEWS: { value: TransactionsView; label: (reviewCount: number) => string }[] = [
@@ -149,12 +149,35 @@ export function TransactionsPage() {
     return error
   }
 
+  async function handleUpdateManual(id: string, accountId: string, description: string, amountCents: number, dateIso: string) {
+    const error = await updateManualTransaction(id, accountId, description, amountCents, dateIso)
+    if (!error) {
+      refetch()
+      refetchAccounts()
+    }
+    return error
+  }
+
+  async function handleDeleteManual(id: string, accountId: string) {
+    const error = await deleteManualTransaction(id, accountId)
+    if (!error) {
+      refetch()
+      refetchAccounts()
+    }
+    return error
+  }
+
+  const manualAccountIds = new Set((realAccounts ?? []).filter((a) => a.isManual).map((a) => a.id))
+
   const realProps = hasRealTransactions
     ? {
         categories: realCategories ?? [],
         onSaveCategory: handleSaveCategory,
         onSaveNotesAndTags: handleSaveNotesAndTags,
         onCreateRule: handleCreateRule,
+        manualAccountIds,
+        onUpdateManual: handleUpdateManual,
+        onDeleteManual: handleDeleteManual,
       }
     : undefined
 

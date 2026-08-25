@@ -95,12 +95,6 @@ function PanelContent({ item, onResolve }: { item: RecurringItem; onResolve: (me
         >
           Cancelar
         </button>
-        <button
-          type="button"
-          className="min-h-11 rounded-md border border-line px-4 py-2.5 text-base font-semibold text-ink"
-        >
-          Cambiar cuenta
-        </button>
       </div>
     </>
   )

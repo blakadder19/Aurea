@@ -61,16 +61,64 @@ interface RealFieldsProps {
   onSaveNotesAndTags: (id: string, note: string, tags: string[]) => Promise<string | null>
   onCreateRule: (matchValue: string, categoryId: string) => Promise<{ error: string | null; appliedCount: number }>
   onClose: () => void
+  manualAccountIds?: Set<string>
+  onUpdateManual?: (id: string, accountId: string, description: string, amountCents: number, dateIso: string) => Promise<string | null>
+  onDeleteManual?: (id: string, accountId: string) => Promise<string | null>
+}
+
+/** Solo tiene sentido para movimientos manuales: los sincronizados con el banco siempre reflejan lo que dice el banco. */
+function ManualFields({
+  transaction,
+  description,
+  setDescription,
+  amount,
+  setAmount,
+  dateIso,
+  setDateIso,
+  disabled,
+}: {
+  transaction: RealTransaction
+  description: string
+  setDescription: (v: string) => void
+  amount: string
+  setAmount: (v: string) => void
+  dateIso: string
+  setDateIso: (v: string) => void
+  disabled: boolean
+}) {
+  return (
+    <>
+      <label className={LABEL_CLASSES}>
+        Comercio o descripción
+        <input value={description} disabled={disabled} onChange={(e) => setDescription(e.target.value)} className={INPUT_CLASSES} />
+      </label>
+      <div className="flex gap-3">
+        <label className={`${LABEL_CLASSES} flex-1`}>
+          Importe ({transaction.importe < 0 ? 'gasto' : 'ingreso'})
+          <input type="number" step={1} value={amount} disabled={disabled} onChange={(e) => setAmount(e.target.value)} className={INPUT_CLASSES} />
+        </label>
+        <label className={`${LABEL_CLASSES} flex-1`}>
+          Fecha
+          <input type="date" value={dateIso} disabled={disabled} onChange={(e) => setDateIso(e.target.value)} className={INPUT_CLASSES} />
+        </label>
+      </div>
+    </>
+  )
 }
 
 /** Categoría/Etiquetas/Notas reales: cada cambio persiste de verdad en Supabase, bajo RLS. */
-function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTags, onCreateRule, onClose }: RealFieldsProps) {
+function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTags, onCreateRule, onClose, manualAccountIds, onUpdateManual, onDeleteManual }: RealFieldsProps) {
   const [categoryId, setCategoryId] = useState(transaction.categoryId ?? '')
   const [tagsInput, setTagsInput] = useState(transaction.tags.join(', '))
   const [noteInput, setNoteInput] = useState(transaction.userNote)
+  const isManual = manualAccountIds?.has(transaction.accountId) ?? false
+  const [manualDescription, setManualDescription] = useState(transaction.comercio)
+  const [manualAmount, setManualAmount] = useState(String(transaction.importe))
+  const [manualDateIso, setManualDateIso] = useState(transaction.dateISO ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [ruleMessage, setRuleMessage] = useState<string | null>(null)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   async function handleSave() {
     setSaving(true)
@@ -82,10 +130,23 @@ function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTag
     const errors = await Promise.all([
       categoryId !== (transaction.categoryId ?? '') ? onSaveCategory(transaction.id, categoryId) : null,
       onSaveNotesAndTags(transaction.id, noteInput, tags),
+      isManual && onUpdateManual
+        ? onUpdateManual(transaction.id, transaction.accountId, manualDescription, Math.round(Number(manualAmount || '0') * 100), manualDateIso)
+        : null,
     ])
     setSaving(false)
     const firstError = errors.find((e): e is string => Boolean(e))
     if (firstError) setError(firstError)
+    else onClose()
+  }
+
+  async function handleDelete() {
+    if (!onDeleteManual) return
+    setSaving(true)
+    setError(null)
+    const err = await onDeleteManual(transaction.id, transaction.accountId)
+    setSaving(false)
+    if (err) setError(err)
     else onClose()
   }
 
@@ -101,6 +162,42 @@ function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTag
 
   return (
     <>
+      {isManual && (
+        <ManualFields
+          transaction={transaction}
+          description={manualDescription}
+          setDescription={setManualDescription}
+          amount={manualAmount}
+          setAmount={setManualAmount}
+          dateIso={manualDateIso}
+          setDateIso={setManualDateIso}
+          disabled={saving}
+        />
+      )}
+      {isManual && onDeleteManual && (
+        <div className="flex items-center gap-2.5">
+          {confirmingDelete ? (
+            <>
+              <span className="text-sm text-danger-text">¿Borrar este movimiento?</span>
+              <button type="button" disabled={saving} onClick={() => void handleDelete()} className="min-h-11 rounded-md border border-danger-line bg-danger-bg px-3.5 text-sm font-semibold text-danger-text">
+                Sí, borrar
+              </button>
+              <button type="button" disabled={saving} onClick={() => setConfirmingDelete(false)} className="min-h-11 rounded-md border border-line px-3.5 text-sm font-semibold text-ink">
+                Cancelar
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => setConfirmingDelete(true)}
+              className="min-h-11 self-start rounded-md border border-danger-line px-4 py-2.5 text-base font-semibold text-danger-text hover:bg-danger-bg"
+            >
+              Borrar movimiento
+            </button>
+          )}
+        </div>
+      )}
       <label className={LABEL_CLASSES}>
         Categoría
         <select
