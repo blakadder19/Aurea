@@ -178,7 +178,9 @@ export function useRealHome(budgetMonthStart: number | null): RealHomeData | nul
       }
     }
 
-    const duplicateFlags = findPossibleDuplicates(transactions ?? [])
+    const nonTransferTx = (transactions ?? []).filter((t) => !t.isInternalTransfer)
+
+    const duplicateFlags = findPossibleDuplicates(nonTransferTx)
       .sort((a, b) => b.importeAbs - a.importeAbs)
       .slice(0, 3)
     for (const dup of duplicateFlags) {
@@ -190,7 +192,7 @@ export function useRealHome(budgetMonthStart: number | null): RealHomeData | nul
         actions: [{ label: 'Ver en Movimientos', to: '/movimientos' }],
       })
     }
-    const unusualFlags = findUnusualAmounts(transactions ?? [])
+    const unusualFlags = findUnusualAmounts(nonTransferTx)
       .sort((a, b) => b.importeAbs / b.typicalAbs - a.importeAbs / a.typicalAbs)
       .slice(0, 3)
     for (const flag of unusualFlags) {
@@ -221,7 +223,7 @@ export function useRealHome(budgetMonthStart: number | null): RealHomeData | nul
     }
 
     const monthPrefix = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
-    const thisMonthTx = (transactions ?? []).filter((t) => t.dateISO?.startsWith(monthPrefix))
+    const thisMonthTx = nonTransferTx.filter((t) => t.dateISO?.startsWith(monthPrefix))
     const monthIncome = thisMonthTx.filter((t) => t.importe > 0).reduce((sum, t) => sum + t.importe, 0)
     const monthExpense = thisMonthTx.filter((t) => t.importe < 0).reduce((sum, t) => sum - t.importe, 0)
     const savingsRatePct = computeSavingsRate(monthIncome, monthExpense)

@@ -26,6 +26,7 @@ const transactions: RealTransaction[] = [
     userNote: '',
     tags: [],
     dateISO: '2026-08-25',
+    isInternalTransfer: false,
   },
   {
     id: 'tx-2',
@@ -40,6 +41,7 @@ const transactions: RealTransaction[] = [
     userNote: '',
     tags: [],
     dateISO: '2026-08-25',
+    isInternalTransfer: false,
   },
 ]
 const categories: RealCategory[] = [

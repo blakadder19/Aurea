@@ -11,6 +11,7 @@ import {
   createRuleFromTransaction,
   updateTransactionCategory,
   updateTransactionDisplayName,
+  updateTransactionInternalTransfer,
   updateTransactionNotesAndTags,
   useRealTransactions,
 } from './useRealTransactions'
@@ -174,6 +175,12 @@ export function TransactionsPage() {
     return error
   }
 
+  async function handleSaveInternalTransfer(id: string, isInternalTransfer: boolean) {
+    const error = await updateTransactionInternalTransfer(id, isInternalTransfer)
+    if (!error) refetch()
+    return error
+  }
+
   const manualAccountIds = new Set((realAccounts ?? []).filter((a) => a.isManual).map((a) => a.id))
 
   const realProps = hasRealTransactions
@@ -186,6 +193,7 @@ export function TransactionsPage() {
         onUpdateManual: handleUpdateManual,
         onDeleteManual: handleDeleteManual,
         onSaveDisplayName: handleSaveDisplayName,
+        onSaveInternalTransfer: handleSaveInternalTransfer,
       }
     : undefined
 

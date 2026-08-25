@@ -31,6 +31,8 @@ const fixtures: Record<string, unknown[]> = {
       needs_review: false,
       user_note: null,
       tags: [],
+      display_name: null,
+      is_internal_transfer: false,
     },
     {
       id: 'tx-2',
@@ -43,6 +45,8 @@ const fixtures: Record<string, unknown[]> = {
       needs_review: false,
       user_note: 'revisar',
       tags: ['amazon'],
+      display_name: 'Compra de Amazon',
+      is_internal_transfer: false,
     },
   ],
   accounts: [{ id: 'acc-1', name: 'Nómina', product: null, connection_id: 'conn-1' }],
@@ -103,7 +107,9 @@ describe('useRealTransactions', () => {
         needsReview: false,
         userNote: '',
         tags: [],
+        displayName: null,
         dateISO: '2026-08-19',
+        isInternalTransfer: false,
       },
       {
         id: 'tx-2',
@@ -117,7 +123,9 @@ describe('useRealTransactions', () => {
         needsReview: false,
         userNote: 'revisar',
         tags: ['amazon'],
+        displayName: 'Compra de Amazon',
         dateISO: '2026-08-18',
+        isInternalTransfer: false,
       },
     ])
   })

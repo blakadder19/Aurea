@@ -14,6 +14,8 @@ export interface RealTransaction extends Transaction {
   tags: string[]
   /** Fecha ISO sin formatear (booking_date o value_date) — para cálculos, `fecha` es solo para mostrar. */
   dateISO: string | null
+  /** Dinero moviéndose entre tus propias cuentas: no es un gasto ni un ingreso real, se excluye de esos cálculos. */
+  isInternalTransfer: boolean
 }
 
 interface RealTransactionsResult {
@@ -54,7 +56,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
         supabase
           .from('transactions')
           .select(
-            'id, account_id, booking_date, value_date, description, amount_cents, category_id, needs_review, user_note, tags, display_name',
+            'id, account_id, booking_date, value_date, description, amount_cents, category_id, needs_review, user_note, tags, display_name, is_internal_transfer',
           )
           .order('booking_date', { ascending: false })
           .limit(TRANSACTIONS_LIMIT),
@@ -96,6 +98,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
           tags: (row.tags as string[] | null) ?? [],
           displayName: row.display_name as string | null,
           dateISO: isoDate,
+          isInternalTransfer: Boolean(row.is_internal_transfer),
         }
       })
 
@@ -143,6 +146,17 @@ export async function updateTransactionNotesAndTags(id: string, note: string, ta
     .eq('id', id)
   if (error) {
     console.error('updateTransactionNotesAndTags: fallo al guardar', error)
+    return 'No hemos podido guardar el cambio. Inténtalo de nuevo.'
+  }
+  return null
+}
+
+/** Marca o desmarca un movimiento como transferencia entre tus propias cuentas — se excluye de ingresos/gastos y de la detección de anomalías. */
+export async function updateTransactionInternalTransfer(id: string, isInternalTransfer: boolean): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  const { error } = await supabase.from('transactions').update({ is_internal_transfer: isInternalTransfer }).eq('id', id)
+  if (error) {
+    console.error('updateTransactionInternalTransfer: fallo al guardar', error)
     return 'No hemos podido guardar el cambio. Inténtalo de nuevo.'
   }
   return null

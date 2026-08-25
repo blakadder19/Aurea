@@ -66,6 +66,7 @@ interface RealFieldsProps {
   onUpdateManual?: (id: string, accountId: string, description: string, amountCents: number, dateIso: string) => Promise<string | null>
   onDeleteManual?: (id: string, accountId: string) => Promise<string | null>
   onSaveDisplayName?: (id: string, displayName: string) => Promise<string | null>
+  onSaveInternalTransfer?: (id: string, isInternalTransfer: boolean) => Promise<string | null>
 }
 
 /** Solo tiene sentido para movimientos manuales: los sincronizados con el banco siempre reflejan lo que dice el banco. */
@@ -109,11 +110,12 @@ function ManualFields({
 }
 
 /** Categoría/Etiquetas/Notas reales: cada cambio persiste de verdad en Supabase, bajo RLS. */
-function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTags, onCreateRule, onClose, manualAccountIds, onUpdateManual, onDeleteManual, onSaveDisplayName }: RealFieldsProps) {
+function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTags, onCreateRule, onClose, manualAccountIds, onUpdateManual, onDeleteManual, onSaveDisplayName, onSaveInternalTransfer }: RealFieldsProps) {
   const [categoryId, setCategoryId] = useState(transaction.categoryId ?? '')
   const [tagsInput, setTagsInput] = useState(transaction.tags.join(', '))
   const [noteInput, setNoteInput] = useState(transaction.userNote)
   const [displayNameInput, setDisplayNameInput] = useState(transaction.displayName ?? '')
+  const [isTransfer, setIsTransfer] = useState(transaction.isInternalTransfer)
   const isManual = manualAccountIds?.has(transaction.accountId) ?? false
   const [manualDescription, setManualDescription] = useState(transaction.comercio)
   const [manualAmount, setManualAmount] = useState(String(transaction.importe))
@@ -138,6 +140,9 @@ function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTag
         : null,
       !isManual && onSaveDisplayName && displayNameInput !== (transaction.displayName ?? '')
         ? onSaveDisplayName(transaction.id, displayNameInput)
+        : null,
+      onSaveInternalTransfer && isTransfer !== transaction.isInternalTransfer
+        ? onSaveInternalTransfer(transaction.id, isTransfer)
         : null,
     ])
     setSaving(false)
@@ -192,6 +197,19 @@ function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTag
           />
         </label>
       )}
+      {onSaveInternalTransfer && (
+        <label className="flex items-center gap-2.5 text-[15px] font-semibold text-ink">
+          <input
+            type="checkbox"
+            checked={isTransfer}
+            disabled={saving}
+            onChange={(e) => setIsTransfer(e.target.checked)}
+            className="h-5 w-5"
+          />
+          Es una transferencia entre mis propias cuentas
+        </label>
+      )}
+      {isTransfer && <p className="text-sm text-ink-muted">No contará como gasto ni ingreso, ni en detección de anomalías.</p>}
       {isManual && onDeleteManual && (
         <div className="flex items-center gap-2.5">
           {confirmingDelete ? (
