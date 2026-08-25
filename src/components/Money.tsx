@@ -1,4 +1,5 @@
-import { formatMoney, formatMoneySigned } from '../lib/format'
+import { currencySuffix, formatMoney, formatMoneySigned } from '../lib/format'
+import { usePrivacyStore } from '../store/usePrivacyStore'
 
 export type MoneyTone = 'ink' | 'green' | 'danger' | 'warning' | 'muted'
 
@@ -22,7 +23,7 @@ interface MoneyProps {
   currency?: string
 }
 
-/** Cifra en formato europeo, tabular, con signo − explícito en negativos. */
+/** Cifra en formato europeo, tabular, con signo − explícito en negativos. Respeta el modo privacidad (antifaz de ancho fijo, nunca proporcional al valor real). */
 export function Money({
   value,
   tone = 'ink',
@@ -32,8 +33,11 @@ export function Money({
   decimals = 2,
   currency = 'EUR',
 }: MoneyProps) {
-  const text = signed ? formatMoneySigned(value, decimals, currency) : formatMoney(value, decimals, currency)
+  const hidden = usePrivacyStore((s) => s.hidden)
+  const text = hidden ? `•••• ${currencySuffix(currency)}` : signed ? formatMoneySigned(value, decimals, currency) : formatMoney(value, decimals, currency)
   return (
-    <span className={`tabular ${serif ? 'font-serif' : ''} ${TONE_CLASSES[tone]} ${className}`}>{text}</span>
+    <span aria-label={hidden ? 'Importe oculto' : undefined} className={`tabular ${serif ? 'font-serif' : ''} ${TONE_CLASSES[tone]} ${className}`}>
+      {text}
+    </span>
   )
 }

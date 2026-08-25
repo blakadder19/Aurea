@@ -5,6 +5,7 @@ import { useRealCategories } from '../features/transactions/useRealCategories'
 import { useRealTransactions } from '../features/transactions/useRealTransactions'
 import { isSupabaseConfigured } from '../lib/supabase/client'
 import { useAuthStore } from '../lib/supabase/useAuth'
+import { usePrivacyStore } from '../store/usePrivacyStore'
 import { BottomNav } from './BottomNav'
 
 export interface NavItem {
@@ -127,9 +128,28 @@ function Sidebar() {
             <div className="text-[13px] text-ink-muted">{currentUser.note}</div>
           </div>
         </div>
+        <PrivacyToggle />
         <AuthLink />
       </div>
     </nav>
+  )
+}
+
+/** Modo privacidad: oculta todas las cifras de la app tras un antifaz, en toda pestaña/recarga. */
+export function PrivacyToggle() {
+  const hidden = usePrivacyStore((s) => s.hidden)
+  const toggle = usePrivacyStore((s) => s.toggle)
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-pressed={hidden}
+      className="flex min-h-11 items-center gap-2 rounded-md border border-line px-3 text-left text-[15px] font-semibold text-ink-muted hover:bg-canvas"
+    >
+      <span aria-hidden="true">{hidden ? '◌' : '●'}</span>
+      {hidden ? 'Mostrar cifras' : 'Ocultar cifras'}
+    </button>
   )
 }
 

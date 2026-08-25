@@ -22,7 +22,7 @@ function formatAmount(value: number, decimals: number): string {
 const CURRENCY_SYMBOLS: Record<string, string> = { EUR: '€', GBP: '£', USD: '$' }
 
 /** Símbolo si lo conocemos (€, £, $); si no, el código ISO tal cual (p. ej. "SEK", "PLN"). */
-function currencySuffix(currency: string): string {
+export function currencySuffix(currency: string): string {
   return CURRENCY_SYMBOLS[currency] ?? currency
 }
 
