@@ -1,10 +1,13 @@
 import { Badge } from '../../components/Badge'
 import { Card } from '../../components/Card'
 import { BUDGET_MONTH_START_OPTIONS, CURRENCY_OPTIONS, DATE_FORMAT_OPTIONS } from '../../data/settings'
+import { useAuthStore } from '../../lib/supabase/useAuth'
 import { useSettingsStore } from './store'
 
 /** Ajustes básicos: moneda, formato de fecha, inicio del mes presupuestario y borrado de datos de demostración. */
 export function SettingsBasics() {
+  const session = useAuthStore((s) => s.session)
+  const isAuthenticated = session !== null
   const currency = useSettingsStore((s) => s.currency)
   const dateFormat = useSettingsStore((s) => s.dateFormat)
   const budgetMonthStart = useSettingsStore((s) => s.budgetMonthStart)
@@ -65,23 +68,25 @@ export function SettingsBasics() {
         </label>
       </div>
 
-      <div className="flex flex-wrap items-center gap-4 border-t border-line pt-4">
-        <div>
-          <div className="text-base font-semibold text-ink">Borrar datos de demostración</div>
-          <div className="text-[15px] text-ink-muted">Restablece las cuentas, movimientos y objetivos ficticios de esta demo.</div>
+      {!isAuthenticated && (
+        <div className="flex flex-wrap items-center gap-4 border-t border-line pt-4">
+          <div>
+            <div className="text-base font-semibold text-ink">Borrar datos de demostración</div>
+            <div className="text-[15px] text-ink-muted">Restablece las cuentas, movimientos y objetivos ficticios de esta demo.</div>
+          </div>
+          {demoDataCleared ? (
+            <Badge variant="success">Datos de demostración restablecidos</Badge>
+          ) : (
+            <button
+              type="button"
+              onClick={clearDemoData}
+              className="min-h-11 rounded-md border border-danger-line bg-surface px-[18px] text-base font-semibold text-danger-text hover:bg-danger-bg"
+            >
+              Borrar datos de demostración
+            </button>
+          )}
         </div>
-        {demoDataCleared ? (
-          <Badge variant="success">Datos de demostración restablecidos</Badge>
-        ) : (
-          <button
-            type="button"
-            onClick={clearDemoData}
-            className="min-h-11 rounded-md border border-danger-line bg-surface px-[18px] text-base font-semibold text-danger-text hover:bg-danger-bg"
-          >
-            Borrar datos de demostración
-          </button>
-        )}
-      </div>
+      )}
     </Card>
   )
 }
