@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { StaleDataNotice } from '../../components/states/StaleDataNotice'
 import { EmptyState } from '../../components/states/EmptyState'
+import { LoadingRealData } from '../../components/states/LoadingRealData'
 import { UndoBar } from '../../components/UndoBar'
 import { connections } from '../../data/settings'
 import { useSettingsStore } from '../settings/store'
@@ -142,7 +143,9 @@ export function InvestmentsPage() {
             onReconnect={() => reconnect('myinvestor')}
           />
         )}
-        {isAuthenticated && !loadingReal && realInvestments?.length === 0 ? (
+        {isAuthenticated && loadingReal ? (
+          <LoadingRealData />
+        ) : isAuthenticated && !loadingReal && realInvestments?.length === 0 ? (
           <EmptyState
             headline="Todavía no tienes posiciones"
             body="Añade la primera para llevar el seguimiento de tus inversiones."

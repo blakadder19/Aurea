@@ -16,6 +16,7 @@ import {
 import { useRealCategories } from './useRealCategories'
 import { ErrorState } from '../../components/states/ErrorState'
 import { EmptyState } from '../../components/states/EmptyState'
+import { LoadingRealData } from '../../components/states/LoadingRealData'
 import { UndoBar } from '../../components/UndoBar'
 import { defaultUndoMessage, monthContextLabel, totalMovementsThisMonth, transactions as demoTransactions } from '../../data/transactions'
 import { syncedAt } from '../../data/demo'
@@ -137,7 +138,9 @@ export function TransactionsPage() {
     <>
       <Header isAuthenticated={isAuthenticated} realCount={realTransactions?.length ?? 0} realReviewCount={realReviewCount} />
       <main className="flex flex-1 flex-col gap-5 overflow-y-auto p-4 lg:p-8">
-        {isAuthenticated && !loadingReal && realTransactions?.length === 0 ? (
+        {isAuthenticated && loadingReal ? (
+          <LoadingRealData />
+        ) : isAuthenticated && !loadingReal && realTransactions?.length === 0 ? (
           <EmptyState
             headline="Todavía no hay movimientos sincronizados"
             body="En cuanto conectes un banco en Cuentas y patrimonio, sus movimientos aparecerán aquí."

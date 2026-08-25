@@ -10,6 +10,7 @@ import { useAccountsStore, type AccountsView } from './store'
 import { CONTEXT_DATE, syncedAt } from '../../data/demo'
 import { formatMonthYearLong, formatWeekdayDate } from '../../lib/format'
 import { EmptyState } from '../../components/states/EmptyState'
+import { LoadingRealData } from '../../components/states/LoadingRealData'
 import { SyncingNotice } from '../../components/states/SyncingNotice'
 import { connections } from '../../data/settings'
 import { useAuthStore } from '../../lib/supabase/useAuth'
@@ -153,7 +154,9 @@ export function AccountsPage() {
           <SyncingNotice accountLabel="Revolut" body="Puede tardar hasta un minuto. Las demás cuentas ya están actualizadas." />
         )}
 
-        {isAuthenticated && !loadingReal && realAccounts?.length === 0 ? (
+        {isAuthenticated && loadingReal ? (
+          <LoadingRealData />
+        ) : isAuthenticated && !loadingReal && realAccounts?.length === 0 ? (
           <EmptyState
             headline="Todavía no has conectado ningún banco"
             body="Conecta tu banco para ver aquí tus cuentas y tu patrimonio real."

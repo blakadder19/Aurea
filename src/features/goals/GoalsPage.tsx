@@ -6,6 +6,7 @@ import { RealGoalPanel, type RealGoalPanelMode } from './RealGoalPanel'
 import { useGoalsStore } from './store'
 import { contributeToGoal, createGoal, toGoalCardProps, useRealGoals } from './useRealGoals'
 import { EmptyState } from '../../components/states/EmptyState'
+import { LoadingRealData } from '../../components/states/LoadingRealData'
 import { UndoBar } from '../../components/UndoBar'
 import { goals as demoGoals } from '../../data/goals'
 import { useAuthStore } from '../../lib/supabase/useAuth'
@@ -91,7 +92,9 @@ export function GoalsPage() {
       />
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
         {!isAuthenticated && <EmergencyFundCard />}
-        {isAuthenticated && !loadingReal && realGoals?.length === 0 ? (
+        {isAuthenticated && loadingReal ? (
+          <LoadingRealData />
+        ) : isAuthenticated && !loadingReal && realGoals?.length === 0 ? (
           <EmptyState
             headline="Todavía no hay objetivos"
             body="Crea el primero para ver aquí tu progreso real frente al previsto."

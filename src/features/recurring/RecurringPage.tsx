@@ -5,6 +5,7 @@ import { SubscriptionDetailPanel } from './SubscriptionDetailPanel'
 import { useRecurringStore, type RecurringView } from './store'
 import { dismissHighlight, dismissItem, undoDismiss, useRealRecurring } from './useRealRecurring'
 import { EmptyState } from '../../components/states/EmptyState'
+import { LoadingRealData } from '../../components/states/LoadingRealData'
 import { UndoBar } from '../../components/UndoBar'
 import { recurringItems, type RecurringItem } from '../../data/recurring'
 import { formatMoney } from '../../lib/format'
@@ -81,7 +82,10 @@ export function RecurringPage() {
   const [pendingUndo, setPendingUndo] = useState<{ dismissalId: string; message: string } | null>(null)
 
   const hasLoadedReal = isAuthenticated && !loadingReal && realItems !== null
-  const items = hasLoadedReal ? realItems! : recurringItems
+  // Autenticado pero todavía cargando: nunca caer a la lista de demo, ni
+  // para el titular ni para el listado — aunque sea un instante.
+  const isLoadingAuth = isAuthenticated && loadingReal
+  const items = hasLoadedReal ? realItems! : isLoadingAuth ? [] : recurringItems
 
   async function handleResolveHighlight(item: RecurringItem) {
     const { dismissalId, error } = await dismissHighlight(item.id)
@@ -108,7 +112,9 @@ export function RecurringPage() {
     <>
       <Header isAuthenticated={isAuthenticated} items={items} />
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
-        {isAuthenticated && hasLoadedReal && items.length === 0 ? (
+        {isLoadingAuth ? (
+          <LoadingRealData />
+        ) : isAuthenticated && hasLoadedReal && items.length === 0 ? (
           <EmptyState
             headline="Todavía no hemos detectado recurrentes"
             body="En cuanto tengas dos cargos mensuales seguidos del mismo comercio, aparecerán aquí automáticamente."

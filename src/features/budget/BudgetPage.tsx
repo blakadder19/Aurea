@@ -5,6 +5,7 @@ import { NonSpendCards } from './NonSpendCards'
 import { useBudgetStore, type BudgetView } from './store'
 import { saveCategoryBudget, toBudgetViewModel, useRealBudget } from './useRealBudget'
 import { useRealCategories } from '../transactions/useRealCategories'
+import { LoadingRealData } from '../../components/states/LoadingRealData'
 import { UndoBar } from '../../components/UndoBar'
 import { budgetSummary } from '../../data/budget'
 import { useAuthStore } from '../../lib/supabase/useAuth'
@@ -14,7 +15,19 @@ const VIEWS: { value: BudgetView; label: string }[] = [
   { value: 'detalle', label: 'Detalle' },
 ]
 
-function Header({ isAuthenticated, monthLabel, dayOfMonth, daysInMonthCount }: { isAuthenticated: boolean; monthLabel: string; dayOfMonth: number; daysInMonthCount: number }) {
+function Header({
+  isAuthenticated,
+  monthLabel,
+  dayOfMonth,
+  daysInMonthCount,
+  loading = false,
+}: {
+  isAuthenticated: boolean
+  monthLabel: string
+  dayOfMonth: number
+  daysInMonthCount: number
+  loading?: boolean
+}) {
   const mode = useBudgetStore((s) => s.mode)
   const setMode = useBudgetStore((s) => s.setMode)
   const openPanel = useBudgetStore((s) => s.openPanel)
@@ -24,9 +37,11 @@ function Header({ isAuthenticated, monthLabel, dayOfMonth, daysInMonthCount }: {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-serif text-[32px] font-semibold tracking-[-0.01em] text-ink">Presupuesto</h1>
-          <div className="mt-1 text-base text-ink-muted">
-            {monthLabel} · día {dayOfMonth} de {daysInMonthCount}
-          </div>
+          {!loading && (
+            <div className="mt-1 text-base text-ink-muted">
+              {monthLabel} · día {dayOfMonth} de {daysInMonthCount}
+            </div>
+          )}
         </div>
         <button
           type="button"
@@ -58,7 +73,7 @@ function Header({ isAuthenticated, monthLabel, dayOfMonth, daysInMonthCount }: {
           ))}
         </div>
       </div>
-      {isAuthenticated && (
+      {isAuthenticated && !loading && (
         <p className="text-sm text-ink-muted">
           Sin "Comprometido": todavía no hay movimientos planificados en Aurea, solo lo ya gastado.
         </p>
@@ -82,6 +97,19 @@ export function BudgetPage() {
 
   async function handleSaveCategoryBudget(categoryId: string, amountCents: number) {
     return saveCategoryBudget(categoryId, amountCents)
+  }
+
+  // Nunca mostrar la demo de relleno mientras el presupuesto real todavía
+  // está cargando: se vería un mes/cifras que no son las tuyas.
+  if (isAuthenticated && loadingReal) {
+    return (
+      <>
+        <Header isAuthenticated monthLabel="" dayOfMonth={0} daysInMonthCount={0} loading />
+        <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
+          <LoadingRealData />
+        </main>
+      </>
+    )
   }
 
   return (

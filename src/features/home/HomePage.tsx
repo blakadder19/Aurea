@@ -8,6 +8,8 @@ import { NetWorthCard } from './NetWorthCard'
 import { RecentTransactions } from './RecentTransactions'
 import { UpcomingTimeline } from './UpcomingTimeline'
 import { useRealHome } from './useRealHome'
+import { Card } from '../../components/Card'
+import { Skeleton } from '../../components/states/Skeleton'
 import { UndoBar } from '../../components/UndoBar'
 import { CONTEXT_DATE, alertsCount, syncedAt, undoBanner } from '../../data/demo'
 import { formatMonthYearLong, formatWeekdayDate } from '../../lib/format'
@@ -20,7 +22,17 @@ const VIEW_MODES: { value: ViewMode; label: string }[] = [
   { value: 'detalle', label: 'Detalle' },
 ]
 
-function Header({ isAuthenticated, today, alertCount }: { isAuthenticated: boolean; today: Date; alertCount: number }) {
+function Header({
+  isAuthenticated,
+  today,
+  alertCount,
+  loading = false,
+}: {
+  isAuthenticated: boolean
+  today: Date
+  alertCount: number
+  loading?: boolean
+}) {
   const mode = useHomeUIStore((s) => s.mode)
   const setMode = useHomeUIStore((s) => s.setMode)
   const [period, setPeriod] = useState(PERIODS[0])
@@ -36,9 +48,15 @@ function Header({ isAuthenticated, today, alertCount }: { isAuthenticated: boole
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex min-h-11 items-center gap-2 rounded-md border border-green-soft-line bg-green-soft px-3 py-2 text-sm font-semibold text-green-text">
-            <span aria-hidden="true">✓</span> {isAuthenticated ? 'Sincronizado' : `Sincronizado · ${syncedAt}`}
-          </div>
+          {loading ? (
+            <div className="flex min-h-11 items-center gap-2 rounded-md border border-line bg-canvas px-3 py-2 text-sm font-semibold text-ink-muted">
+              Cargando tus datos…
+            </div>
+          ) : (
+            <div className="flex min-h-11 items-center gap-2 rounded-md border border-green-soft-line bg-green-soft px-3 py-2 text-sm font-semibold text-green-text">
+              <span aria-hidden="true">✓</span> {isAuthenticated ? 'Sincronizado' : `Sincronizado · ${syncedAt}`}
+            </div>
+          )}
           {alertCount > 0 && (
             <button
               type="button"
@@ -110,8 +128,42 @@ export function HomePage() {
   const home = useRealHome()
 
   const hasReal = isAuthenticated && home !== null
+  // Autenticado pero home aún no resolvió: NUNCA mostrar la demo de relleno
+  // aquí, aunque sea un instante — se ve un patrimonio/cifras que no son
+  // las tuyas. Se muestra un estado de carga neutro en su lugar.
+  const loadingReal = isAuthenticated && home === null
   const today = hasReal ? home!.today : CONTEXT_DATE
   const alertCount = hasReal ? home!.attentionItems.length : alertsCount
+
+  if (loadingReal) {
+    return (
+      <>
+        <Header isAuthenticated today={new Date()} alertCount={0} loading />
+        <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
+          <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-[1.25fr_1fr]">
+            <Card className="flex flex-col gap-3" padding="lg">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-14 w-64" label="Cargando Disponible hoy…" />
+              <Skeleton className="h-4 w-3/5" />
+            </Card>
+            <div className="flex flex-col gap-6">
+              <Card className="flex flex-col gap-3" padding="md">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-10 w-48" label="Cargando patrimonio neto…" />
+              </Card>
+              <Card className="flex flex-col gap-3" padding="md">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-6 w-full" />
+              </Card>
+            </div>
+          </div>
+          <Card padding="lg">
+            <Skeleton className="h-24 w-full" label="Cargando próximos pagos…" />
+          </Card>
+        </main>
+      </>
+    )
+  }
 
   return (
     <>

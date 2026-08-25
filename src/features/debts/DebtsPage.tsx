@@ -7,6 +7,7 @@ import { useDebtsStore } from './store'
 import { saveDebtDetails, toDebtTableRow, useRealDebts } from './useRealDebts'
 import { useRealAccounts } from '../accounts/useRealAccounts'
 import { EmptyState } from '../../components/states/EmptyState'
+import { LoadingRealData } from '../../components/states/LoadingRealData'
 import { Money } from '../../components/Money'
 import { totalDebt } from '../../data/debts'
 import { useAuthStore } from '../../lib/supabase/useAuth'
@@ -81,7 +82,9 @@ export function DebtsPage() {
         count={isAuthenticated ? (realDebts?.length ?? 0) : 4}
       />
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
-        {isAuthenticated && !loadingReal && realDebts?.length === 0 ? (
+        {isAuthenticated && loadingReal ? (
+          <LoadingRealData />
+        ) : isAuthenticated && !loadingReal && realDebts?.length === 0 ? (
           <EmptyState
             headline="No tienes ninguna cuenta marcada como Deuda"
             body="Clasifica una cuenta como «Deuda» en Cuentas y patrimonio para verla aquí."
