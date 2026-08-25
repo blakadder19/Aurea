@@ -153,10 +153,56 @@ export function buildAmortizarAnswer(debt: DebtInput, extra: number): Answer {
   }
 }
 
+export interface FinancialSnapshot {
+  todayIso: string
+  availableToday: number
+  netWorth: number
+  assets: number
+  liabilities: number
+  savingsRatePct: number | null
+  budget: {
+    monthLabel: string
+    totalBudgetedCents: number
+    totalSpentCents: number
+    categories: { name: string; budgetedCents: number; spentCents: number; status: string }[]
+  } | null
+  goals: { name: string; savedCents: number; targetCents: number; monthlyContributionCents: number }[]
+  debts: { name: string; balanceCents: number; annualRateBps: number; monthlyPaymentCents: number | null }[]
+}
+
+/** Los mismos datos reales que ya se muestran en Inicio/Presupuesto/Objetivos/Deudas, en un solo objeto — la única fuente de verdad que puede usar el Asistente libre para responder. */
+function buildFinancialSnapshot(
+  home: NonNullable<ReturnType<typeof useRealHome>>,
+  budget: ReturnType<typeof useRealBudget>['budget'],
+  goals: ReturnType<typeof useRealGoals>['goals'],
+  debts: ReturnType<typeof useRealDebts>['debts'],
+): FinancialSnapshot {
+  return {
+    todayIso: home.today.toISOString().slice(0, 10),
+    availableToday: home.availableToday,
+    netWorth: home.netWorth,
+    assets: home.assets,
+    liabilities: home.liabilities,
+    savingsRatePct: home.savingsRatePct,
+    budget: budget
+      ? {
+          monthLabel: budget.monthLabel,
+          totalBudgetedCents: budget.totalBudgetedCents,
+          totalSpentCents: budget.totalSpentCents,
+          categories: budget.categories.map((c) => ({ name: c.name, budgetedCents: c.budgetedCents, spentCents: c.spentCents, status: c.status })),
+        }
+      : null,
+    goals: (goals ?? []).map((g) => ({ name: g.name, savedCents: g.savedCents, targetCents: g.targetCents, monthlyContributionCents: g.monthlyContributionCents })),
+    debts: (debts ?? []).map((d) => ({ name: d.name, balanceCents: d.balanceCents, annualRateBps: d.annualRateBps, monthlyPaymentCents: d.monthlyPaymentCents })),
+  }
+}
+
 interface RealAnswersResult {
   loading: boolean
   /** null mientras carga o si no hay sesión. */
   answers: Answer[] | null
+  /** Mismo criterio que `answers`: null mientras carga o sin sesión. */
+  snapshot: FinancialSnapshot | null
 }
 
 /**
@@ -179,7 +225,7 @@ export function useRealAnswers(): RealAnswersResult {
   const loading = loadingBudget || loadingGoals || loadingAccounts || loadingDebts
 
   return useMemo(() => {
-    if (home === null) return { loading, answers: null }
+    if (home === null) return { loading, answers: null, snapshot: null }
 
     const answers: Answer[] = [buildViajeAnswer(home.availableToday)]
 
@@ -214,6 +260,6 @@ export function useRealAnswers(): RealAnswersResult {
       )
     }
 
-    return { loading, answers }
+    return { loading, answers, snapshot: buildFinancialSnapshot(home, budget, goals, debts) }
   }, [home, budget, goals, debts, loading])
 }

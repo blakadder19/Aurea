@@ -24,7 +24,7 @@ export function AssistantPage() {
   const session = useAuthStore((s) => s.session)
   const isAuthenticated = session !== null
 
-  const { loading: loadingReal, answers: realAnswers } = useRealAnswers()
+  const { loading: loadingReal, answers: realAnswers, snapshot } = useRealAnswers()
 
   // Nunca mostrar las preguntas/respuestas de demo mientras las reales
   // todavía se están calculando a partir de tus datos.
@@ -48,7 +48,7 @@ export function AssistantPage() {
       <main className="flex max-w-[920px] flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
         <SuggestedQuestions questions={isAuthenticated ? answers.map((a) => ({ id: a.id, question: a.question })) : undefined} />
         {selectedAnswer && <AnswerCard answer={selectedAnswer} />}
-        <FreeformQuestion />
+        <FreeformQuestion snapshot={isAuthenticated ? snapshot : undefined} />
       </main>
     </>
   )
