@@ -20,14 +20,26 @@ import { LoadingRealData } from '../../components/states/LoadingRealData'
 import { UndoBar } from '../../components/UndoBar'
 import { defaultUndoMessage, monthContextLabel, totalMovementsThisMonth, transactions as demoTransactions } from '../../data/transactions'
 import { syncedAt } from '../../data/demo'
+import { formatIsoDateTime } from '../../lib/format'
 import { useAuthStore } from '../../lib/supabase/useAuth'
+import { useRealConnections, latestSync } from '../settings/useRealConnections'
 
 const VIEWS: { value: TransactionsView; label: (reviewCount: number) => string }[] = [
   { value: 'tabla', label: () => 'Todos los movimientos' },
   { value: 'revision', label: (n) => `Centro de revisión (${n})` },
 ]
 
-function Header({ isAuthenticated, realCount, realReviewCount }: { isAuthenticated: boolean; realCount: number; realReviewCount: number }) {
+function Header({
+  isAuthenticated,
+  realCount,
+  realReviewCount,
+  realLastSynced,
+}: {
+  isAuthenticated: boolean
+  realCount: number
+  realReviewCount: number
+  realLastSynced: string | null
+}) {
   const view = useTransactionsStore((s) => s.view)
   const setView = useTransactionsStore((s) => s.setView)
   const demoReviewCount = useTransactionsStore((s) => s.reviewItems.length)
@@ -43,15 +55,20 @@ function Header({ isAuthenticated, realCount, realReviewCount }: { isAuthenticat
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex min-h-11 items-center gap-2 rounded-md border border-green-soft-line bg-green-soft px-3 py-2 text-sm font-semibold text-green-text">
-            <span aria-hidden="true">✓</span> Sincronizado · {syncedAt}
-          </div>
-          <button
-            type="button"
-            className="min-h-11 rounded-md border border-brand bg-brand px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-brand-hover"
-          >
-            Añadir movimiento
-          </button>
+          {(!isAuthenticated || realLastSynced) && (
+            <div className="flex min-h-11 items-center gap-2 rounded-md border border-green-soft-line bg-green-soft px-3 py-2 text-sm font-semibold text-green-text">
+              <span aria-hidden="true">✓</span> Sincronizado ·{' '}
+              {isAuthenticated ? formatIsoDateTime(realLastSynced!) : syncedAt}
+            </div>
+          )}
+          {!isAuthenticated && (
+            <button
+              type="button"
+              className="min-h-11 rounded-md border border-brand bg-brand px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-brand-hover"
+            >
+              Añadir movimiento
+            </button>
+          )}
         </div>
       </div>
 
@@ -89,6 +106,7 @@ export function TransactionsPage() {
 
   const { categories: realCategories } = useRealCategories()
   const { loading: loadingReal, transactions: realTransactions, refetch } = useRealTransactions(realCategories)
+  const { connections: realConnections } = useRealConnections()
 
   const isAuthenticated = session !== null
   const hasRealTransactions = isAuthenticated && !loadingReal && realTransactions !== null && realTransactions.length > 0
@@ -136,7 +154,12 @@ export function TransactionsPage() {
 
   return (
     <>
-      <Header isAuthenticated={isAuthenticated} realCount={realTransactions?.length ?? 0} realReviewCount={realReviewCount} />
+      <Header
+        isAuthenticated={isAuthenticated}
+        realCount={realTransactions?.length ?? 0}
+        realReviewCount={realReviewCount}
+        realLastSynced={latestSync(realConnections ?? [])}
+      />
       <main className="flex flex-1 flex-col gap-5 overflow-y-auto p-4 lg:p-8">
         {isAuthenticated && loadingReal ? (
           <LoadingRealData />
