@@ -38,6 +38,20 @@ export async function updateAccountFunction(accountId: string, fn: AccountFuncti
 }
 
 /**
+ * Guarda un nombre personal para la cuenta — nunca se guarda en `name`
+ * (el campo que rellena el sync del banco), así un resync no lo borra.
+ */
+export async function updateAccountDisplayName(accountId: string, displayName: string): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  const { error } = await supabase.from('accounts').update({ display_name: displayName.trim() || null }).eq('id', accountId)
+  if (error) {
+    console.error('updateAccountDisplayName: fallo al guardar', error)
+    return 'No hemos podido guardar el nombre. Inténtalo de nuevo.'
+  }
+  return null
+}
+
+/**
  * Escribe qué porcentaje del saldo de una cuenta cuenta como patrimonio
  * propio del usuario (0-100, 100 por defecto) — pensado para cuentas
  * compartidas (p. ej. una cuenta conjunta), pero aplicable a cualquier cuenta.
@@ -88,7 +102,7 @@ export function useRealAccounts(): RealAccountsResult {
       const [{ data: accountRows, error: accountsError }, { data: connectionRows }] = await Promise.all([
         supabase
           .from('accounts')
-          .select('id, name, product, connection_id, account_function, share_percent, currency')
+          .select('id, name, display_name, product, connection_id, account_function, share_percent, currency')
           .neq('account_function', 'excluida')
           .order('created_at', { ascending: true }),
         supabase.from('bank_connections').select('id, aspsp_name, provider'),
@@ -139,7 +153,7 @@ export function useRealAccounts(): RealAccountsResult {
         const fn = FUNCTION_MAP[row.account_function as string] ?? 'Por confirmar'
         return {
           id: row.id as string,
-          name: (row.name as string | null) || (row.product as string | null) || 'Cuenta',
+          name: (row.display_name as string | null) || (row.name as string | null) || (row.product as string | null) || 'Cuenta',
           institution: institutionByConnection.get(row.connection_id as string) ?? 'Banco conectado',
           fn,
           balance: (balanceByAccount.get(row.id as string) ?? 0) / 100,

@@ -19,11 +19,13 @@ function PanelContent({
   onChangeFunction,
   onChangeSharePercent,
   onDeleteManual,
+  onRename,
 }: {
   account: Account
   onChangeFunction?: (accountId: string, fn: AccountFunction) => Promise<string | null>
   onChangeSharePercent?: (accountId: string, percent: number) => Promise<string | null>
   onDeleteManual?: (accountId: string) => Promise<string | null>
+  onRename?: (accountId: string, displayName: string) => Promise<string | null>
 }) {
   const [savingFn, setSavingFn] = useState(false)
   const [fnError, setFnError] = useState<string | null>(null)
@@ -33,6 +35,20 @@ function PanelContent({
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [renaming, setRenaming] = useState(false)
+  const [nameInput, setNameInput] = useState(account.name)
+  const [savingName, setSavingName] = useState(false)
+  const [nameError, setNameError] = useState<string | null>(null)
+
+  async function handleSaveName() {
+    if (!onRename) return
+    setSavingName(true)
+    setNameError(null)
+    const error = await onRename(account.id, nameInput)
+    setSavingName(false)
+    if (error) setNameError(error)
+    else setRenaming(false)
+  }
 
   async function handleFunctionChange(fn: AccountFunction) {
     if (!onChangeFunction) return
@@ -69,9 +85,42 @@ function PanelContent({
   return (
     <>
       <div className="flex items-start justify-between">
-        <div>
+        <div className="min-w-0 flex-1">
           <SectionLabel>Detalle de cuenta</SectionLabel>
-          <Dialog.Title className="mt-1 font-serif text-[28px] font-semibold text-ink">{account.name}</Dialog.Title>
+          {renaming ? (
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <input
+                autoFocus
+                value={nameInput}
+                disabled={savingName}
+                onChange={(e) => setNameInput(e.target.value)}
+                className="min-h-11 min-w-0 flex-1 rounded-md border border-line bg-surface px-3 font-serif text-[22px] font-semibold text-ink"
+              />
+              <button
+                type="button"
+                disabled={savingName}
+                onClick={() => void handleSaveName()}
+                className="min-h-11 rounded-md border border-brand bg-brand px-3.5 text-sm font-semibold text-surface hover:bg-brand-hover"
+              >
+                Guardar
+              </button>
+              <button
+                type="button"
+                disabled={savingName}
+                onClick={() => {
+                  setRenaming(false)
+                  setNameInput(account.name)
+                  setNameError(null)
+                }}
+                className="min-h-11 rounded-md border border-line px-3.5 text-sm font-semibold text-ink"
+              >
+                Cancelar
+              </button>
+            </div>
+          ) : (
+            <Dialog.Title className="mt-1 font-serif text-[28px] font-semibold text-ink">{account.name}</Dialog.Title>
+          )}
+          {nameError && <p className="mt-1 text-sm text-danger-text">{nameError}</p>}
         </div>
         <Dialog.Close asChild>
           <button
@@ -205,12 +254,15 @@ function PanelContent({
             Cambiar función
           </button>
         )}
-        <button
-          type="button"
-          className="min-h-11 rounded-md border border-line px-4 py-2.5 text-base font-semibold text-ink"
-        >
-          Renombrar
-        </button>
+        {onRename && !renaming && (
+          <button
+            type="button"
+            onClick={() => setRenaming(true)}
+            className="min-h-11 rounded-md border border-line px-4 py-2.5 text-base font-semibold text-ink"
+          >
+            Renombrar
+          </button>
+        )}
         {!account.isManual && (
           <button
             type="button"
@@ -265,11 +317,13 @@ export function AccountDetailPanel({
   onChangeFunction,
   onChangeSharePercent,
   onDeleteManual,
+  onRename,
 }: {
   accounts?: Account[]
   onChangeFunction?: (accountId: string, fn: AccountFunction) => Promise<string | null>
   onChangeSharePercent?: (accountId: string, percent: number) => Promise<string | null>
   onDeleteManual?: (accountId: string) => Promise<string | null>
+  onRename?: (accountId: string, displayName: string) => Promise<string | null>
 }) {
   const accountId = useAccountsStore((s) => s.panelAccountId)
   const closePanel = useAccountsStore((s) => s.closePanel)
@@ -297,6 +351,7 @@ export function AccountDetailPanel({
           onChangeFunction={onChangeFunction}
           onChangeSharePercent={onChangeSharePercent}
           onDeleteManual={onDeleteManual}
+          onRename={onRename}
         />
       )}
     </SidePanel>

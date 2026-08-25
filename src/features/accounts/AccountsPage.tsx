@@ -8,7 +8,7 @@ import { NetWorthTrendChart } from './NetWorthTrendChart'
 import { periodStartIso, type NetWorthPeriod } from './netWorthHistory'
 import { useNetWorthHistory } from './useNetWorthHistory'
 import { addManualTransaction, createManualAccount, deleteManualAccount } from './useManualEntries'
-import { updateAccountFunction, updateAccountSharePercent, useRealAccounts } from './useRealAccounts'
+import { updateAccountDisplayName, updateAccountFunction, updateAccountSharePercent, useRealAccounts } from './useRealAccounts'
 import type { AccountFunction } from '../../data/accounts'
 import { startBankConnection } from '../settings/bankConnection'
 import { useAccountsStore, type AccountsView } from './store'
@@ -172,6 +172,12 @@ export function AccountsPage() {
     return error
   }
 
+  async function handleRenameAccount(accountId: string, displayName: string) {
+    const error = await updateAccountDisplayName(accountId, displayName)
+    if (!error) refetch()
+    return error
+  }
+
   const isAuthenticated = session !== null
   const hasRealAccounts = isAuthenticated && !loadingReal && realAccounts !== null && realAccounts.length > 0
 
@@ -248,6 +254,7 @@ export function AccountsPage() {
         onChangeFunction={hasRealAccounts ? handleChangeFunction : undefined}
         onChangeSharePercent={hasRealAccounts ? handleChangeSharePercent : undefined}
         onDeleteManual={hasRealAccounts ? handleDeleteManualAccount : undefined}
+        onRename={hasRealAccounts ? handleRenameAccount : undefined}
       />
       <ManualEntryPanel
         mode={manualPanelMode}
