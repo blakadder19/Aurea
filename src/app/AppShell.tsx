@@ -9,6 +9,22 @@ import { usePrivacyStore } from '../store/usePrivacyStore'
 import { BottomNav } from './BottomNav'
 import { NAV_ICONS } from './NavIcons'
 
+/** "blakadder2" → "BL"; si el correo no tiene letras, cae en las dos primeras posiciones tal cual. */
+function initialsFromEmail(email: string): string {
+  const local = email.split('@')[0] ?? ''
+  const letters = local.replace(/[^a-zA-Z]/g, '')
+  return (letters.slice(0, 2) || local.slice(0, 2) || '??').toUpperCase()
+}
+
+/** Identidad a mostrar en la barra/menú: el correo real de la sesión, o la persona de demostración sin sesión. No hay nombre real guardado (login por enlace mágico) — el correo es lo único honesto que mostrar. */
+export function useIdentity(): { initials: string; name: string; note: string } {
+  const session = useAuthStore((s) => s.session)
+  if (session?.user.email) {
+    return { initials: initialsFromEmail(session.user.email), name: session.user.email, note: 'Sesión real' }
+  }
+  return currentUser
+}
+
 export interface NavItem {
   label: string
   to?: string
@@ -65,6 +81,7 @@ function Sidebar() {
     session !== null && realTransactions !== null
       ? realTransactions.filter((t) => !t.categoryId || t.needsReview).length
       : demoReviewCount
+  const identity = useIdentity()
 
   return (
     <nav className="hidden w-[250px] shrink-0 flex-col gap-6 border-r border-line bg-surface p-5 py-7 lg:flex">
@@ -128,11 +145,11 @@ function Sidebar() {
       <div className="flex flex-col gap-3 border-t border-line pt-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-plum to-brand text-[13px] font-bold text-surface">
-            {currentUser.initials}
+            {identity.initials}
           </div>
           <div className="min-w-0">
-            <div className="truncate text-[14px] font-bold text-ink">{currentUser.name}</div>
-            <div className="truncate text-[12px] text-ink-faint">{currentUser.note}</div>
+            <div className="truncate text-[14px] font-bold text-ink">{identity.name}</div>
+            <div className="truncate text-[12px] text-ink-faint">{identity.note}</div>
           </div>
         </div>
         <PrivacyToggle />

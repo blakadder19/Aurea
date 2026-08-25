@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom'
-import { currentUser } from '../data/demo'
-import { NAV_SECTIONS, PrivacyToggle } from './AppShell'
+import { NAV_SECTIONS, PrivacyToggle, useIdentity } from './AppShell'
 
 const BOTTOM_TAB_ROUTES = new Set(['/', '/movimientos', '/presupuesto', '/objetivos'])
 
 /** «Más»: el resto del sidebar que no cabe en la navegación inferior de móvil. */
 export function MorePage() {
+  const identity = useIdentity()
   const sections = NAV_SECTIONS.map((section) => ({
     ...section,
     items: section.items.filter((item) => item.to && !BOTTOM_TAB_ROUTES.has(item.to)),
@@ -50,11 +50,11 @@ export function MorePage() {
         <div className="mt-2 flex flex-col gap-3 border-t border-line pt-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-soft text-base font-bold text-green-text">
-              {currentUser.initials}
+              {identity.initials}
             </div>
             <div>
-              <div className="text-base font-semibold text-ink">{currentUser.name}</div>
-              <div className="text-[13px] text-ink-muted">{currentUser.note}</div>
+              <div className="text-base font-semibold text-ink">{identity.name}</div>
+              <div className="text-[13px] text-ink-muted">{identity.note}</div>
             </div>
           </div>
           <PrivacyToggle />
