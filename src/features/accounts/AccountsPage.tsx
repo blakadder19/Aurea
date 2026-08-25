@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { AccountDetailPanel } from './AccountDetailPanel'
 import { AccountsTable } from './AccountsTable'
 import { DetailBreakdowns } from './DetailBreakdowns'
+import { ManualEntryPanel, type ManualEntryPanelMode } from './ManualEntryPanel'
 import { NetWorthKpis } from './NetWorthKpis'
 import { NetWorthTrendChart } from './NetWorthTrendChart'
 import { periodStartIso, type NetWorthPeriod } from './netWorthHistory'
 import { useNetWorthHistory } from './useNetWorthHistory'
+import { addManualTransaction, createManualAccount } from './useManualEntries'
 import { updateAccountFunction, updateAccountSharePercent, useRealAccounts } from './useRealAccounts'
 import type { AccountFunction } from '../../data/accounts'
 import { startBankConnection } from '../settings/bankConnection'
@@ -36,6 +38,7 @@ function Header({
   onPeriodChange,
   customFrom,
   onCustomFromChange,
+  onAddManualAccount,
 }: {
   isAuthenticated: boolean
   realLastSynced: string | null
@@ -43,6 +46,7 @@ function Header({
   onPeriodChange: (p: NetWorthPeriod) => void
   customFrom: string
   onCustomFromChange: (v: string) => void
+  onAddManualAccount: () => void
 }) {
   const mode = useAccountsStore((s) => s.mode)
   const setMode = useAccountsStore((s) => s.setMode)
@@ -66,14 +70,13 @@ function Header({
               {isAuthenticated ? formatIsoDateTime(realLastSynced!) : syncedAt}
             </div>
           )}
-          {!isAuthenticated && (
-            <button
-              type="button"
-              className="min-h-11 rounded-md border border-brand bg-brand px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-brand-hover"
-            >
-              Añadir cuenta
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={isAuthenticated ? onAddManualAccount : undefined}
+            className="min-h-11 rounded-md border border-brand bg-brand px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-brand-hover"
+          >
+            {isAuthenticated ? 'Añadir cuenta manual' : 'Añadir cuenta'}
+          </button>
         </div>
       </div>
 
@@ -143,6 +146,7 @@ export function AccountsPage() {
   const [connectError, setConnectError] = useState<string | null>(null)
   const [period, setPeriod] = useState<NetWorthPeriod>('Mes actual')
   const [customFrom, setCustomFrom] = useState('')
+  const [manualPanelMode, setManualPanelMode] = useState<ManualEntryPanelMode>(null)
 
   async function handleConnectBank() {
     setConnectError(null)
@@ -200,6 +204,7 @@ export function AccountsPage() {
         onPeriodChange={setPeriod}
         customFrom={customFrom}
         onCustomFromChange={setCustomFrom}
+        onAddManualAccount={() => setManualPanelMode('account')}
       />
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
         {!isAuthenticated && revolutStatus === 'syncing' && (
@@ -231,6 +236,18 @@ export function AccountsPage() {
         accounts={hasRealAccounts ? realAccounts! : undefined}
         onChangeFunction={hasRealAccounts ? handleChangeFunction : undefined}
         onChangeSharePercent={hasRealAccounts ? handleChangeSharePercent : undefined}
+      />
+      <ManualEntryPanel
+        mode={manualPanelMode}
+        manualAccounts={realAccounts?.filter((a) => a.isManual) ?? []}
+        categories={[]}
+        onClose={() => setManualPanelMode(null)}
+        onCreateAccount={createManualAccount}
+        onAddMovement={addManualTransaction}
+        onDone={() => {
+          refetch()
+          setManualPanelMode(null)
+        }}
       />
     </>
   )

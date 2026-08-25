@@ -15,8 +15,11 @@ import { CONTEXT_DATE, alertsCount, syncedAt, undoBanner } from '../../data/demo
 import { formatMonthYearLong, formatWeekdayDate } from '../../lib/format'
 import { useAuthStore } from '../../lib/supabase/useAuth'
 import { useRealAccounts } from '../accounts/useRealAccounts'
+import { ManualEntryPanel, type ManualEntryPanelMode } from '../accounts/ManualEntryPanel'
 import { periodStartIso, type NetWorthPeriod } from '../accounts/netWorthHistory'
 import { useNetWorthHistory } from '../accounts/useNetWorthHistory'
+import { addManualTransaction, createManualAccount } from '../accounts/useManualEntries'
+import { useRealCategories } from '../transactions/useRealCategories'
 import { useRealSettings } from '../settings/useRealSettings'
 import { useHomeUIStore, type ViewMode } from '../../store/useHomeUIStore'
 
@@ -35,6 +38,7 @@ function Header({
   onPeriodChange,
   customFrom,
   onCustomFromChange,
+  onAddManualMovement,
 }: {
   isAuthenticated: boolean
   today: Date
@@ -44,6 +48,7 @@ function Header({
   onPeriodChange: (p: NetWorthPeriod) => void
   customFrom: string
   onCustomFromChange: (v: string) => void
+  onAddManualMovement: () => void
 }) {
   const mode = useHomeUIStore((s) => s.mode)
   const setMode = useHomeUIStore((s) => s.setMode)
@@ -78,14 +83,13 @@ function Header({
               <span className="rounded-full bg-danger px-2 py-0.5 text-[13px] font-bold text-surface">{alertCount}</span>
             </button>
           )}
-          {!isAuthenticated && (
-            <button
-              type="button"
-              className="min-h-11 rounded-md border border-brand bg-brand px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-brand-hover"
-            >
-              Añadir movimiento
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={isAuthenticated ? onAddManualMovement : undefined}
+            className="min-h-11 rounded-md border border-brand bg-brand px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-brand-hover"
+          >
+            Añadir movimiento
+          </button>
         </div>
       </div>
 
@@ -153,9 +157,11 @@ export function HomePage() {
   const { loading: loadingSettings, settings: realSettings } = useRealSettings()
   const budgetMonthStart = loadingSettings ? null : (realSettings?.budgetMonthStart ?? 1)
   const home = useRealHome(budgetMonthStart)
-  const { accounts: realAccounts } = useRealAccounts()
+  const { accounts: realAccounts, refetch: refetchAccounts } = useRealAccounts()
+  const { categories: realCategories } = useRealCategories()
   const [period, setPeriod] = useState<NetWorthPeriod>('Mes actual')
   const [customFrom, setCustomFrom] = useState('')
+  const [manualPanelMode, setManualPanelMode] = useState<ManualEntryPanelMode>(null)
 
   const hasReal = isAuthenticated && home !== null
   // Autenticado pero home aún no resolvió: NUNCA mostrar la demo de relleno
@@ -180,6 +186,7 @@ export function HomePage() {
           onPeriodChange={setPeriod}
           customFrom={customFrom}
           onCustomFromChange={setCustomFrom}
+          onAddManualMovement={() => setManualPanelMode('movement')}
         />
         <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
           <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-[1.25fr_1fr]">
@@ -217,6 +224,7 @@ export function HomePage() {
         onPeriodChange={setPeriod}
         customFrom={customFrom}
         onCustomFromChange={setCustomFrom}
+        onAddManualMovement={() => setManualPanelMode('movement')}
       />
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
         <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-[1.25fr_1fr]">
@@ -273,6 +281,18 @@ export function HomePage() {
 
         {!isAuthenticated && <UndoBar message={undoBanner.message} />}
       </main>
+      <ManualEntryPanel
+        mode={manualPanelMode}
+        manualAccounts={realAccounts?.filter((a) => a.isManual) ?? []}
+        categories={realCategories ?? []}
+        onClose={() => setManualPanelMode(null)}
+        onCreateAccount={createManualAccount}
+        onAddMovement={addManualTransaction}
+        onDone={() => {
+          refetchAccounts()
+          setManualPanelMode(null)
+        }}
+      />
     </>
   )
 }

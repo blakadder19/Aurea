@@ -75,6 +75,7 @@ describe('useRealAccounts', () => {
         currency: 'EUR',
         countsInAvailableToday: true,
         recentMovements: [{ date: '19 ago', label: 'Mercadona', amount: -62.18 }],
+        isManual: false,
       },
       {
         id: 'acc-2',
@@ -86,6 +87,7 @@ describe('useRealAccounts', () => {
         currency: 'GBP',
         countsInAvailableToday: false,
         recentMovements: [],
+        isManual: false,
       },
     ])
   })

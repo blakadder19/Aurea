@@ -38,6 +38,8 @@ export interface Account {
   sharePercent?: number
   /** Código ISO de la divisa real del saldo. undefined = EUR (todas las cuentas demo). */
   currency?: string
+  /** Cuenta creada a mano (sin banco conectado detrás), real solo. undefined = false. */
+  isManual?: boolean
 }
 
 export const accounts: Account[] = [

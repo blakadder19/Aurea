@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { BulkActionsBar } from './BulkActionsBar'
 import { FilterBar } from './FilterBar'
 import { RealReviewCenter } from './RealReviewCenter'
@@ -22,6 +22,9 @@ import { defaultUndoMessage, monthContextLabel, totalMovementsThisMonth, transac
 import { syncedAt } from '../../data/demo'
 import { formatIsoDateTime } from '../../lib/format'
 import { useAuthStore } from '../../lib/supabase/useAuth'
+import { useRealAccounts } from '../accounts/useRealAccounts'
+import { ManualEntryPanel, type ManualEntryPanelMode } from '../accounts/ManualEntryPanel'
+import { addManualTransaction, createManualAccount } from '../accounts/useManualEntries'
 import { useRealConnections, latestSync } from '../settings/useRealConnections'
 
 const VIEWS: { value: TransactionsView; label: (reviewCount: number) => string }[] = [
@@ -34,11 +37,13 @@ function Header({
   realCount,
   realReviewCount,
   realLastSynced,
+  onAddManualMovement,
 }: {
   isAuthenticated: boolean
   realCount: number
   realReviewCount: number
   realLastSynced: string | null
+  onAddManualMovement: () => void
 }) {
   const view = useTransactionsStore((s) => s.view)
   const setView = useTransactionsStore((s) => s.setView)
@@ -61,14 +66,13 @@ function Header({
               {isAuthenticated ? formatIsoDateTime(realLastSynced!) : syncedAt}
             </div>
           )}
-          {!isAuthenticated && (
-            <button
-              type="button"
-              className="min-h-11 rounded-md border border-brand bg-brand px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-brand-hover"
-            >
-              Añadir movimiento
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={isAuthenticated ? onAddManualMovement : undefined}
+            className="min-h-11 rounded-md border border-brand bg-brand px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-brand-hover"
+          >
+            Añadir movimiento
+          </button>
         </div>
       </div>
 
@@ -107,6 +111,8 @@ export function TransactionsPage() {
   const { categories: realCategories } = useRealCategories()
   const { loading: loadingReal, transactions: realTransactions, refetch } = useRealTransactions(realCategories)
   const { connections: realConnections } = useRealConnections()
+  const { accounts: realAccounts, refetch: refetchAccounts } = useRealAccounts()
+  const [manualPanelMode, setManualPanelMode] = useState<ManualEntryPanelMode>(null)
 
   const isAuthenticated = session !== null
   const hasRealTransactions = isAuthenticated && !loadingReal && realTransactions !== null && realTransactions.length > 0
@@ -159,6 +165,7 @@ export function TransactionsPage() {
         realCount={realTransactions?.length ?? 0}
         realReviewCount={realReviewCount}
         realLastSynced={latestSync(realConnections ?? [])}
+        onAddManualMovement={() => setManualPanelMode('movement')}
       />
       <main className="flex flex-1 flex-col gap-5 overflow-y-auto p-4 lg:p-8">
         {isAuthenticated && loadingReal ? (
@@ -199,6 +206,19 @@ export function TransactionsPage() {
         )}
       </main>
       <TransactionPanel transactions={hasRealTransactions ? realTransactions! : undefined} real={realProps} />
+      <ManualEntryPanel
+        mode={manualPanelMode}
+        manualAccounts={realAccounts?.filter((a) => a.isManual) ?? []}
+        categories={realCategories ?? []}
+        onClose={() => setManualPanelMode(null)}
+        onCreateAccount={createManualAccount}
+        onAddMovement={addManualTransaction}
+        onDone={() => {
+          refetch()
+          refetchAccounts()
+          setManualPanelMode(null)
+        }}
+      />
     </>
   )
 }

@@ -16,7 +16,7 @@ const FUNCTION_MAP: Record<string, AccountFunction> = {
 }
 
 /** AccountFunction (UI) → account_function (esquema real). Inverso de FUNCTION_MAP, sin 'Por confirmar' (no es un destino válido). */
-const REVERSE_FUNCTION_MAP: Partial<Record<AccountFunction, string>> = {
+export const REVERSE_FUNCTION_MAP: Partial<Record<AccountFunction, string>> = {
   'Para gastar': 'gastar',
   Ahorro: 'ahorro',
   Inversión: 'inversion',
@@ -91,7 +91,7 @@ export function useRealAccounts(): RealAccountsResult {
           .select('id, name, product, connection_id, account_function, share_percent, currency')
           .neq('account_function', 'excluida')
           .order('created_at', { ascending: true }),
-        supabase.from('bank_connections').select('id, aspsp_name'),
+        supabase.from('bank_connections').select('id, aspsp_name, provider'),
       ])
       if (cancelled) return
       if (accountsError || !accountRows) {
@@ -102,6 +102,7 @@ export function useRealAccounts(): RealAccountsResult {
       }
 
       const institutionByConnection = new Map((connectionRows ?? []).map((c) => [c.id, c.aspsp_name as string]))
+      const manualConnectionIds = new Set((connectionRows ?? []).filter((c) => c.provider === 'manual').map((c) => c.id as string))
       const accountIds = accountRows.map((a) => a.id as string)
       if (accountIds.length === 0) {
         setAccounts([])
@@ -146,6 +147,7 @@ export function useRealAccounts(): RealAccountsResult {
           currency: row.currency as string,
           countsInAvailableToday: fn === 'Para gastar',
           recentMovements: movementsByAccount.get(row.id as string) ?? [],
+          isManual: manualConnectionIds.has(row.connection_id as string),
         }
       })
 
