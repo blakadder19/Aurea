@@ -10,8 +10,21 @@ import { UndoBar } from '../../components/UndoBar'
 import { goals as demoGoals } from '../../data/goals'
 import { useAuthStore } from '../../lib/supabase/useAuth'
 
-function Header({ isAuthenticated, count, onCreate, onContribute }: { isAuthenticated: boolean; count: number; onCreate: () => void; onContribute: () => void }) {
+function Header({
+  isAuthenticated,
+  hasRealGoals,
+  count,
+  onCreate,
+  onContribute,
+}: {
+  isAuthenticated: boolean
+  hasRealGoals: boolean
+  count: number
+  onCreate: () => void
+  onContribute: () => void
+}) {
   const openPanel = useGoalsStore((s) => s.openPanel)
+  const canContribute = !isAuthenticated || hasRealGoals
 
   return (
     <header className="flex flex-wrap items-start justify-between gap-4 border-b border-line bg-surface px-4 py-5 lg:px-8">
@@ -29,14 +42,16 @@ function Header({ isAuthenticated, count, onCreate, onContribute }: { isAuthenti
             Nuevo objetivo
           </button>
         )}
-        <button
-          type="button"
-          id="registrar-aportacion-btn"
-          onClick={isAuthenticated ? onContribute : openPanel}
-          className="min-h-11 rounded-md border border-green bg-green px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-green-hover"
-        >
-          Registrar aportación
-        </button>
+        {canContribute && (
+          <button
+            type="button"
+            id="registrar-aportacion-btn"
+            onClick={isAuthenticated ? onContribute : openPanel}
+            className="min-h-11 rounded-md border border-green bg-green px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-green-hover"
+          >
+            Registrar aportación
+          </button>
+        )}
       </div>
     </header>
   )
@@ -69,6 +84,7 @@ export function GoalsPage() {
     <>
       <Header
         isAuthenticated={isAuthenticated}
+        hasRealGoals={hasRealGoals}
         count={count}
         onCreate={() => setPanelMode('create')}
         onContribute={() => setPanelMode('contribute')}

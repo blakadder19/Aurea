@@ -11,8 +11,19 @@ import { Money } from '../../components/Money'
 import { totalDebt } from '../../data/debts'
 import { useAuthStore } from '../../lib/supabase/useAuth'
 
-function Header({ isAuthenticated, totalCents, count }: { isAuthenticated: boolean; totalCents: number; count: number }) {
+function Header({
+  isAuthenticated,
+  hasRealDebts,
+  totalCents,
+  count,
+}: {
+  isAuthenticated: boolean
+  hasRealDebts: boolean
+  totalCents: number
+  count: number
+}) {
   const openSimulator = useDebtsStore((s) => s.openSimulator)
+  const canSimulate = !isAuthenticated || hasRealDebts
 
   return (
     <header className="flex flex-wrap items-start justify-between gap-4 border-b border-line bg-surface px-4 py-5 lg:px-8">
@@ -27,14 +38,16 @@ function Header({ isAuthenticated, totalCents, count }: { isAuthenticated: boole
           pendientes en {count} deuda{count === 1 ? '' : 's'}
         </div>
       </div>
-      <button
-        type="button"
-        id="simular-pago-btn"
-        onClick={openSimulator}
-        className="min-h-11 rounded-md border border-green bg-green px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-green-hover"
-      >
-        Simular pago extraordinario
-      </button>
+      {canSimulate && (
+        <button
+          type="button"
+          id="simular-pago-btn"
+          onClick={openSimulator}
+          className="min-h-11 rounded-md border border-green bg-green px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-green-hover"
+        >
+          Simular pago extraordinario
+        </button>
+      )}
     </header>
   )
 }
@@ -61,7 +74,12 @@ export function DebtsPage() {
 
   return (
     <>
-      <Header isAuthenticated={isAuthenticated} totalCents={totalCents} count={isAuthenticated ? (realDebts?.length ?? 0) : 4} />
+      <Header
+        isAuthenticated={isAuthenticated}
+        hasRealDebts={hasRealDebts}
+        totalCents={totalCents}
+        count={isAuthenticated ? (realDebts?.length ?? 0) : 4}
+      />
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
         {isAuthenticated && !loadingReal && realDebts?.length === 0 ? (
           <EmptyState
