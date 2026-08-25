@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { currentUser } from '../data/demo'
 import { useTransactionsStore } from '../features/transactions/store'
@@ -8,6 +9,7 @@ import { useAuthStore } from '../lib/supabase/useAuth'
 import { usePrivacyStore } from '../store/usePrivacyStore'
 import { BottomNav } from './BottomNav'
 import { NAV_ICONS } from './NavIcons'
+import { RouteFallback } from './RouteFallback'
 
 /** "blakadder2" → "BL"; si el correo no tiene letras, cae en las dos primeras posiciones tal cual. */
 function initialsFromEmail(email: string): string {
@@ -214,7 +216,9 @@ export function AppShell() {
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col">
-          <Outlet />
+          <Suspense fallback={<RouteFallback />}>
+            <Outlet />
+          </Suspense>
         </div>
         <BottomNav />
       </div>
