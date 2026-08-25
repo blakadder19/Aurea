@@ -3,6 +3,9 @@ import { AccountDetailPanel } from './AccountDetailPanel'
 import { AccountsTable } from './AccountsTable'
 import { DetailBreakdowns } from './DetailBreakdowns'
 import { NetWorthKpis } from './NetWorthKpis'
+import { NetWorthTrendChart } from './NetWorthTrendChart'
+import { periodStartIso, type NetWorthPeriod } from './netWorthHistory'
+import { useNetWorthHistory } from './useNetWorthHistory'
 import { updateAccountFunction, updateAccountSharePercent, useRealAccounts } from './useRealAccounts'
 import type { AccountFunction } from '../../data/accounts'
 import { startBankConnection } from '../settings/bankConnection'
@@ -20,16 +23,29 @@ import { useRealConnections, latestSync } from '../settings/useRealConnections'
 
 const revolutBase = connections.find((c) => c.id === 'revolut')!
 
-const PERIODS = ['Mes actual', '3 meses', 'Año', 'Personalizado']
+const PERIODS: NetWorthPeriod[] = ['Mes actual', '3 meses', 'Año', 'Personalizado']
 const VIEWS: { value: AccountsView; label: string }[] = [
   { value: 'resumen', label: 'Resumen' },
   { value: 'detalle', label: 'Detalle' },
 ]
 
-function Header({ isAuthenticated, realLastSynced }: { isAuthenticated: boolean; realLastSynced: string | null }) {
+function Header({
+  isAuthenticated,
+  realLastSynced,
+  period,
+  onPeriodChange,
+  customFrom,
+  onCustomFromChange,
+}: {
+  isAuthenticated: boolean
+  realLastSynced: string | null
+  period: NetWorthPeriod
+  onPeriodChange: (p: NetWorthPeriod) => void
+  customFrom: string
+  onCustomFromChange: (v: string) => void
+}) {
   const mode = useAccountsStore((s) => s.mode)
   const setMode = useAccountsStore((s) => s.setMode)
-  const [period, setPeriod] = useState(PERIODS[0])
 
   const dateLabel = `${formatWeekdayDate(CONTEXT_DATE)} · ${formatMonthYearLong(
     CONTEXT_DATE.getMonth(),
@@ -69,7 +85,7 @@ function Header({ isAuthenticated, realLastSynced }: { isAuthenticated: boolean;
               <button
                 key={p}
                 type="button"
-                onClick={() => setPeriod(p)}
+                onClick={() => onPeriodChange(p)}
                 aria-pressed={period === p}
                 className={`min-h-11 rounded-sm px-3.5 py-2 text-[15px] font-semibold ${
                   period === p ? 'border border-line bg-surface text-ink' : 'border border-transparent text-ink-muted hover:text-ink'
@@ -79,6 +95,17 @@ function Header({ isAuthenticated, realLastSynced }: { isAuthenticated: boolean;
               </button>
             ))}
           </div>
+          {isAuthenticated && period === 'Personalizado' && (
+            <label className="flex items-center gap-2 text-[15px] text-ink-muted">
+              Desde
+              <input
+                type="date"
+                value={customFrom}
+                onChange={(e) => onCustomFromChange(e.target.value)}
+                className="min-h-11 rounded-md border border-line bg-surface px-2.5 text-[15px] text-ink"
+              />
+            </label>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
@@ -114,6 +141,8 @@ export function AccountsPage() {
   const { loading: loadingReal, accounts: realAccounts, refetch } = useRealAccounts()
   const { connections: realConnections } = useRealConnections()
   const [connectError, setConnectError] = useState<string | null>(null)
+  const [period, setPeriod] = useState<NetWorthPeriod>('Mes actual')
+  const [customFrom, setCustomFrom] = useState('')
 
   async function handleConnectBank() {
     setConnectError(null)
@@ -153,10 +182,25 @@ export function AccountsPage() {
           { assets: 0, liabilities: 0 },
         )
     : null
+  const realNetWorth = realKpis ? realKpis.assets - realKpis.liabilities : null
+
+  const fromDateIso = hasRealAccounts ? periodStartIso(period, new Date(), customFrom || undefined) : null
+  const { loading: loadingHistory, points: netWorthHistory } = useNetWorthHistory(
+    hasRealAccounts ? realAccounts : null,
+    realNetWorth,
+    fromDateIso,
+  )
 
   return (
     <>
-      <Header isAuthenticated={isAuthenticated} realLastSynced={latestSync(realConnections ?? [])} />
+      <Header
+        isAuthenticated={isAuthenticated}
+        realLastSynced={latestSync(realConnections ?? [])}
+        period={period}
+        onPeriodChange={setPeriod}
+        customFrom={customFrom}
+        onCustomFromChange={setCustomFrom}
+      />
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
         {!isAuthenticated && revolutStatus === 'syncing' && (
           <SyncingNotice accountLabel="Revolut" body="Puede tardar hasta un minuto. Las demás cuentas ya están actualizadas." />
@@ -177,6 +221,7 @@ export function AccountsPage() {
               kpis={hasRealAccounts ? { ...realKpis!, netWorth: realKpis!.assets - realKpis!.liabilities } : undefined}
               excludedForeignCount={excludedForeignCount}
             />
+            {hasRealAccounts && <NetWorthTrendChart points={netWorthHistory} loading={loadingHistory} />}
             <AccountsTable accounts={hasRealAccounts ? realAccounts! : undefined} />
             {isDetalle && !isAuthenticated && <DetailBreakdowns />}
           </>

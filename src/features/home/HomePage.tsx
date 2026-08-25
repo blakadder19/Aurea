@@ -14,10 +14,13 @@ import { UndoBar } from '../../components/UndoBar'
 import { CONTEXT_DATE, alertsCount, syncedAt, undoBanner } from '../../data/demo'
 import { formatMonthYearLong, formatWeekdayDate } from '../../lib/format'
 import { useAuthStore } from '../../lib/supabase/useAuth'
+import { useRealAccounts } from '../accounts/useRealAccounts'
+import { periodStartIso, type NetWorthPeriod } from '../accounts/netWorthHistory'
+import { useNetWorthHistory } from '../accounts/useNetWorthHistory'
 import { useRealSettings } from '../settings/useRealSettings'
 import { useHomeUIStore, type ViewMode } from '../../store/useHomeUIStore'
 
-const PERIODS = ['Mes actual', '3 meses', 'Año', 'Personalizado']
+const PERIODS: NetWorthPeriod[] = ['Mes actual', '3 meses', 'Año', 'Personalizado']
 const VIEW_MODES: { value: ViewMode; label: string }[] = [
   { value: 'resumen', label: 'Resumen' },
   { value: 'detalle', label: 'Detalle' },
@@ -28,15 +31,22 @@ function Header({
   today,
   alertCount,
   loading = false,
+  period,
+  onPeriodChange,
+  customFrom,
+  onCustomFromChange,
 }: {
   isAuthenticated: boolean
   today: Date
   alertCount: number
   loading?: boolean
+  period: NetWorthPeriod
+  onPeriodChange: (p: NetWorthPeriod) => void
+  customFrom: string
+  onCustomFromChange: (v: string) => void
 }) {
   const mode = useHomeUIStore((s) => s.mode)
   const setMode = useHomeUIStore((s) => s.setMode)
-  const [period, setPeriod] = useState(PERIODS[0])
 
   const dateLabel = `${formatWeekdayDate(today)} · ${formatMonthYearLong(today.getMonth(), today.getFullYear())}`
 
@@ -87,7 +97,7 @@ function Header({
               <button
                 key={p}
                 type="button"
-                onClick={() => setPeriod(p)}
+                onClick={() => onPeriodChange(p)}
                 aria-pressed={period === p}
                 className={`min-h-11 rounded-sm px-3.5 py-2 text-[15px] font-semibold ${
                   period === p ? 'border border-line bg-surface text-ink' : 'border border-transparent text-ink-muted hover:text-ink'
@@ -97,6 +107,17 @@ function Header({
               </button>
             ))}
           </div>
+          {isAuthenticated && period === 'Personalizado' && (
+            <label className="flex items-center gap-2 text-[15px] text-ink-muted">
+              Desde
+              <input
+                type="date"
+                value={customFrom}
+                onChange={(e) => onCustomFromChange(e.target.value)}
+                className="min-h-11 rounded-md border border-line bg-surface px-2.5 text-[15px] text-ink"
+              />
+            </label>
+          )}
         </div>
 
         <div className="flex items-center gap-2.5">
@@ -132,6 +153,9 @@ export function HomePage() {
   const { loading: loadingSettings, settings: realSettings } = useRealSettings()
   const budgetMonthStart = loadingSettings ? null : (realSettings?.budgetMonthStart ?? 1)
   const home = useRealHome(budgetMonthStart)
+  const { accounts: realAccounts } = useRealAccounts()
+  const [period, setPeriod] = useState<NetWorthPeriod>('Mes actual')
+  const [customFrom, setCustomFrom] = useState('')
 
   const hasReal = isAuthenticated && home !== null
   // Autenticado pero home aún no resolvió: NUNCA mostrar la demo de relleno
@@ -141,10 +165,22 @@ export function HomePage() {
   const today = hasReal ? home!.today : CONTEXT_DATE
   const alertCount = hasReal ? home!.attentionItems.length : alertsCount
 
+  const fromDateIso = hasReal ? periodStartIso(period, today, customFrom || undefined) : null
+  const { points: netWorthHistory } = useNetWorthHistory(hasReal ? realAccounts : null, hasReal ? home!.netWorth : null, fromDateIso)
+
   if (loadingReal) {
     return (
       <>
-        <Header isAuthenticated today={new Date()} alertCount={0} loading />
+        <Header
+          isAuthenticated
+          today={new Date()}
+          alertCount={0}
+          loading
+          period={period}
+          onPeriodChange={setPeriod}
+          customFrom={customFrom}
+          onCustomFromChange={setCustomFrom}
+        />
         <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
           <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-[1.25fr_1fr]">
             <Card className="flex flex-col gap-3" padding="lg">
@@ -173,7 +209,15 @@ export function HomePage() {
 
   return (
     <>
-      <Header isAuthenticated={isAuthenticated} today={today} alertCount={alertCount} />
+      <Header
+        isAuthenticated={isAuthenticated}
+        today={today}
+        alertCount={alertCount}
+        period={period}
+        onPeriodChange={setPeriod}
+        customFrom={customFrom}
+        onCustomFromChange={setCustomFrom}
+      />
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
         <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-[1.25fr_1fr]">
           <div className="min-w-0">
@@ -199,6 +243,7 @@ export function HomePage() {
                   ? { netWorth: home!.netWorth, assets: home!.assets, liabilities: home!.liabilities, savingsRatePct: home!.savingsRatePct }
                   : undefined
               }
+              history={hasReal ? netWorthHistory : undefined}
             />
             <BudgetPaceCard real={hasReal ? (home!.budgetVerdict ?? undefined) : undefined} />
           </div>
