@@ -1,5 +1,7 @@
 import { useAuthStore } from '../../lib/supabase/useAuth'
 import { useRealAccounts } from '../accounts/useRealAccounts'
+import { useRealCategories } from '../transactions/useRealCategories'
+import { CategoryIconsCard } from './CategoryIconsCard'
 import { ConnectionsList } from './ConnectionsList'
 import { ImportCsvPanel } from './ImportCsvPanel'
 import { RealConnectionsCard } from './RealConnectionsCard'
@@ -37,6 +39,7 @@ export function SettingsPage() {
   const session = useAuthStore((s) => s.session)
   const isAuthenticated = session !== null
   const { accounts: realAccounts, refetch } = useRealAccounts()
+  const { categories: realCategories, refetch: refetchCategories } = useRealCategories()
 
   return (
     <>
@@ -48,6 +51,7 @@ export function SettingsPage() {
           <RealImportCsvPanel manualAccounts={realAccounts?.filter((a) => a.isManual) ?? []} onDone={refetch} />
         )}
         {importOpen && !isAuthenticated && <ImportCsvPanel />}
+        {isAuthenticated && <CategoryIconsCard categories={realCategories ?? []} onRefetch={refetchCategories} />}
         <SettingsBasics />
       </main>
     </>

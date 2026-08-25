@@ -7,7 +7,7 @@ import { filterCategories, transactions as demoTransactions, type Transaction } 
 import { focusRowById } from '../../lib/dom'
 import { displayLabelFor } from './TransactionsTable'
 import { useTransactionsStore } from './store'
-import type { RealCategory } from './useRealCategories'
+import { categoryLabel, type RealCategory } from './useRealCategories'
 import type { RealTransaction } from './useRealTransactions'
 
 const LABEL_CLASSES = 'flex flex-col gap-1.5 text-sm font-semibold text-ink-muted'
@@ -245,7 +245,7 @@ function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTag
           {!categoryId && <option value="">Sin clasificar</option>}
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.name}
+              {categoryLabel(c)}
             </option>
           ))}
         </select>

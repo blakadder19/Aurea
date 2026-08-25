@@ -12,8 +12,8 @@ function chainable(initialData: unknown[]) {
   const builder: Record<string, unknown> = {}
   builder.select = () => builder
   builder.order = () => builder
-  builder.upsert = (rows: { name: string; category_group: string }[]) => {
-    data = rows.map((r, i) => ({ id: `seed-${i}`, name: r.name }))
+  builder.upsert = (rows: { name: string; category_group: string; icon?: string }[]) => {
+    data = rows.map((r, i) => ({ id: `seed-${i}`, name: r.name, icon: r.icon ?? null }))
     return builder
   }
   // oxlint-disable-next-line unicorn/no-thenable -- imita a propósito el query builder real de supabase-js.
@@ -41,7 +41,7 @@ vi.mock('../../lib/supabase/client', () => ({
 const activeSession = { user: { id: 'user-1' } } as unknown as Session
 
 const { useAuthStore } = await import('../../lib/supabase/useAuth')
-const { useRealCategories } = await import('./useRealCategories')
+const { useRealCategories, categoryLabel } = await import('./useRealCategories')
 
 describe('useRealCategories', () => {
   it('sin sesión, devuelve categories=null sin consultar Supabase', () => {
@@ -77,5 +77,16 @@ describe('useRealCategories', () => {
     expect(result.current.categories).toHaveLength(9)
     expect(result.current.categories?.map((c) => c.name)).toContain('Supermercado')
     expect(result.current.categories?.map((c) => c.name)).toContain('Ingresos')
+    expect(result.current.categories?.find((c) => c.name === 'Supermercado')?.icon).toBe('🛒')
+  })
+})
+
+describe('categoryLabel', () => {
+  it('antepone el icono cuando existe', () => {
+    expect(categoryLabel({ name: 'Supermercado', icon: '🛒' })).toBe('🛒 Supermercado')
+  })
+
+  it('usa solo el nombre cuando no hay icono', () => {
+    expect(categoryLabel({ name: 'Supermercado', icon: null })).toBe('Supermercado')
   })
 })

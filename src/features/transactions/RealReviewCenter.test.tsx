@@ -45,8 +45,8 @@ const transactions: RealTransaction[] = [
   },
 ]
 const categories: RealCategory[] = [
-  { id: 'cat-1', name: 'Supermercado' },
-  { id: 'cat-2', name: 'Ocio y suscripciones' },
+  { id: 'cat-1', name: 'Supermercado', icon: null },
+  { id: 'cat-2', name: 'Ocio y suscripciones', icon: null },
 ]
 
 function renderCenter(onSaveCategory = vi.fn().mockResolvedValue(null)) {

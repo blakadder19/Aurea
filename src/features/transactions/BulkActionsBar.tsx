@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { RealCategory } from './useRealCategories'
+import { categoryLabel, type RealCategory } from './useRealCategories'
 import { useTransactionsStore } from './store'
 
 interface BulkActionsBarProps {
@@ -47,7 +47,7 @@ export function BulkActionsBar({ categories, onBulkCategorize }: BulkActionsBarP
               </option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name}
+                  {categoryLabel(c)}
                 </option>
               ))}
             </select>

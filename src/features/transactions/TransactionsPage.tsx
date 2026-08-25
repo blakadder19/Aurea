@@ -15,7 +15,7 @@ import {
   updateTransactionNotesAndTags,
   useRealTransactions,
 } from './useRealTransactions'
-import { useRealCategories } from './useRealCategories'
+import { categoryLabel, useRealCategories } from './useRealCategories'
 import { ErrorState } from '../../components/states/ErrorState'
 import { EmptyState } from '../../components/states/EmptyState'
 import { LoadingRealData } from '../../components/states/LoadingRealData'
@@ -228,7 +228,7 @@ export function TransactionsPage() {
             <>
               <FilterBar
                 accounts={hasRealTransactions ? [...new Set(realTransactions!.map((t) => t.cuenta))] : undefined}
-                categories={hasRealTransactions ? realCategories!.map((c) => c.name) : undefined}
+                categories={hasRealTransactions ? realCategories!.map((c) => categoryLabel(c)) : undefined}
               />
               <BulkActionsBar categories={hasRealTransactions ? realCategories! : undefined} onBulkCategorize={hasRealTransactions ? handleBulkCategorize : undefined} />
               <TransactionsTable transactions={hasRealTransactions ? realTransactions! : undefined} />

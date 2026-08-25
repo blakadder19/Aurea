@@ -5,7 +5,7 @@ import { Money } from '../../components/Money'
 import { useTransactionsStore } from './store'
 import { displayLabelFor } from './TransactionsTable'
 import { suggestCategories } from './useAiCategorization'
-import type { RealCategory } from './useRealCategories'
+import { categoryLabel, type RealCategory } from './useRealCategories'
 import type { RealTransaction } from './useRealTransactions'
 
 interface RealReviewCenterProps {
@@ -23,7 +23,7 @@ interface RealReviewCenterProps {
 export function RealReviewCenter({ transactions, categories, onSaveCategory }: RealReviewCenterProps) {
   const openPanel = useTransactionsStore((s) => s.openPanel)
   const pending = transactions.filter((t) => !t.categoryId || t.needsReview)
-  const categoryById = new Map(categories.map((c) => [c.id, c.name]))
+  const categoryById = new Map(categories.map((c) => [c.id, categoryLabel(c)]))
 
   const [suggestions, setSuggestions] = useState<Record<string, string>>({})
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)

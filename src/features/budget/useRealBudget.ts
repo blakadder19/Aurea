@@ -5,7 +5,7 @@ import { computeCategoryPace, cycleEnd, cycleStart, daysElapsedInCycle, daysInCy
 import { formatDayMonth, formatMonthYearLong } from '../../lib/format'
 import { supabase } from '../../lib/supabase/client'
 import { useAuthStore } from '../../lib/supabase/useAuth'
-import type { RealCategory } from '../transactions/useRealCategories'
+import { categoryLabel, type RealCategory } from '../transactions/useRealCategories'
 import type { RealVerdict } from './MonthVerdictCard'
 
 export interface RealBudgetCategory {
@@ -124,7 +124,7 @@ export function useRealBudget(categories: RealCategory[] | null, budgetMonthStar
         const budgetedCents = budgetedByCategory.get(c.id) ?? 0
         const spentCents = spentByCategory.get(c.id) ?? 0
         const pace = computeCategoryPace(budgetedCents, spentCents, daysElapsed, totalDays)
-        return { categoryId: c.id, name: c.name, ...pace }
+        return { categoryId: c.id, name: categoryLabel(c), ...pace }
       })
 
       const totalBudgetedCents = realCategories.reduce((sum, c) => sum + c.budgetedCents, 0)

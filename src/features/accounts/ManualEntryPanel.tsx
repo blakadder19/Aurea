@@ -4,7 +4,7 @@ import { SectionLabel } from '../../components/SectionLabel'
 import { SidePanel } from '../../components/SidePanel'
 import { EmptyState } from '../../components/states/EmptyState'
 import type { Account, AccountFunction } from '../../data/accounts'
-import type { RealCategory } from '../transactions/useRealCategories'
+import { categoryLabel, type RealCategory } from '../transactions/useRealCategories'
 
 const LABEL_CLASSES = 'flex flex-col gap-1.5 text-sm font-semibold text-ink-muted'
 const INPUT_CLASSES = 'min-h-11 rounded-md border border-line px-3 py-[11px] text-base text-ink'
@@ -192,7 +192,7 @@ function AddManualMovementForm({ manualAccounts, categories, onAdd, onDone }: Ad
             <option value="">Sin clasificar</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name}
+                {categoryLabel(c)}
               </option>
             ))}
           </select>

@@ -3,7 +3,7 @@ import type { Transaction } from '../../data/transactions'
 import { formatIsoDayMonth } from '../../lib/format'
 import { supabase } from '../../lib/supabase/client'
 import { useAuthStore } from '../../lib/supabase/useAuth'
-import type { RealCategory } from './useRealCategories'
+import { categoryLabel, type RealCategory } from './useRealCategories'
 
 /** Forma compatible con `Transaction` (TransactionsTable/TransactionPanel no cambian) + los datos que necesita edición/revisión real. */
 export interface RealTransaction extends Transaction {
@@ -79,7 +79,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
           return [a.id as string, `${name} · ${institution}`]
         }),
       )
-      const categoryNameById = new Map((categories ?? []).map((c) => [c.id, c.name]))
+      const categoryNameById = new Map((categories ?? []).map((c) => [c.id, categoryLabel(c)]))
 
       const mapped: RealTransaction[] = txRows.map((row) => {
         const isoDate = (row.booking_date as string | null) ?? (row.value_date as string | null)

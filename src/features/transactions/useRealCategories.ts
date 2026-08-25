@@ -5,6 +5,7 @@ import { useAuthStore } from '../../lib/supabase/useAuth'
 export interface RealCategory {
   id: string
   name: string
+  icon: string | null
 }
 
 /**
@@ -13,22 +14,23 @@ export interface RealCategory {
  * (`filterCategories` en data/transactions.ts), no un catálogo ligado a
  * ningún usuario en concreto.
  */
-const DEFAULT_CATEGORIES: { name: string; group: string }[] = [
-  { name: 'Supermercado', group: 'alimentacion' },
-  { name: 'Restaurantes', group: 'alimentacion' },
-  { name: 'Hogar y facturas', group: 'vivienda' },
-  { name: 'Transporte', group: 'transporte' },
-  { name: 'Ocio y suscripciones', group: 'ocio' },
-  { name: 'Ropa y cuidado', group: 'compras' },
-  { name: 'Salud', group: 'salud' },
-  { name: 'Otros', group: 'compras' },
-  { name: 'Ingresos', group: 'ingresos' },
+const DEFAULT_CATEGORIES: { name: string; group: string; icon: string }[] = [
+  { name: 'Supermercado', group: 'alimentacion', icon: '🛒' },
+  { name: 'Restaurantes', group: 'alimentacion', icon: '🍽️' },
+  { name: 'Hogar y facturas', group: 'vivienda', icon: '🏠' },
+  { name: 'Transporte', group: 'transporte', icon: '🚗' },
+  { name: 'Ocio y suscripciones', group: 'ocio', icon: '🎬' },
+  { name: 'Ropa y cuidado', group: 'compras', icon: '👕' },
+  { name: 'Salud', group: 'salud', icon: '💊' },
+  { name: 'Otros', group: 'compras', icon: '📦' },
+  { name: 'Ingresos', group: 'ingresos', icon: '💰' },
 ]
 
 interface RealCategoriesResult {
   loading: boolean
   /** null mientras carga o si no hay sesión. */
   categories: RealCategory[] | null
+  refetch: () => void
 }
 
 /** Categorías del usuario autenticado; siembra el catálogo por defecto si aún no tiene ninguna. */
@@ -36,6 +38,7 @@ export function useRealCategories(): RealCategoriesResult {
   const session = useAuthStore((s) => s.session)
   const [loading, setLoading] = useState(true)
   const [categories, setCategories] = useState<RealCategory[] | null>(null)
+  const [version, setVersion] = useState(0)
 
   useEffect(() => {
     if (!supabase || !session) {
@@ -50,7 +53,7 @@ export function useRealCategories(): RealCategoriesResult {
 
     async function load() {
       if (!supabase) return
-      const { data, error } = await supabase.from('categories').select('id, name').order('name', { ascending: true })
+      const { data, error } = await supabase.from('categories').select('id, name, icon').order('name', { ascending: true })
       if (cancelled) return
       if (error) {
         console.error('useRealCategories: fallo al leer categories', error)
@@ -68,10 +71,10 @@ export function useRealCategories(): RealCategoriesResult {
       const { data: seeded, error: seedError } = await supabase
         .from('categories')
         .upsert(
-          DEFAULT_CATEGORIES.map((c) => ({ user_id: userId, name: c.name, category_group: c.group })),
+          DEFAULT_CATEGORIES.map((c) => ({ user_id: userId, name: c.name, category_group: c.group, icon: c.icon })),
           { onConflict: 'user_id,name' },
         )
-        .select('id, name')
+        .select('id, name, icon')
       if (cancelled) return
       if (seedError) {
         console.error('useRealCategories: fallo al sembrar categories', seedError)
@@ -88,7 +91,23 @@ export function useRealCategories(): RealCategoriesResult {
     return () => {
       cancelled = true
     }
-  }, [session])
+  }, [session, version])
 
-  return { loading, categories }
+  return { loading, categories, refetch: () => setVersion((v) => v + 1) }
+}
+
+/** "🛒 Supermercado" si tiene icono, si no solo el nombre. */
+export function categoryLabel(c: { name: string; icon: string | null }): string {
+  return c.icon ? `${c.icon} ${c.name}` : c.name
+}
+
+/** Guarda el icono/emoji de una categoría. */
+export async function updateCategoryIcon(id: string, icon: string): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  const { error } = await supabase.from('categories').update({ icon: icon.trim() || null }).eq('id', id)
+  if (error) {
+    console.error('updateCategoryIcon: fallo al guardar', error)
+    return 'No hemos podido guardar el icono. Inténtalo de nuevo.'
+  }
+  return null
 }
