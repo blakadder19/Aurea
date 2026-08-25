@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { Card } from '../../components/Card'
+import { useAuthStore } from '../../lib/supabase/useAuth'
 import { useAssistantStore } from './store'
 
-/** Campo de pregunta libre: declara sus límites en la demo en vez de fingir una respuesta abierta. */
+/** Campo de pregunta libre: declara sus límites en vez de fingir una respuesta abierta. */
 export function FreeformQuestion() {
   const [value, setValue] = useState('')
   const freeformSubmitted = useAssistantStore((s) => s.freeformSubmitted)
   const submitFreeform = useAssistantStore((s) => s.submitFreeform)
+  const isAuthenticated = useAuthStore((s) => s.session !== null)
 
   return (
     <Card padding="lg" className="flex flex-col gap-3">
@@ -33,8 +35,9 @@ export function FreeformQuestion() {
       </form>
       {freeformSubmitted && (
         <p className="text-base text-ink-muted text-pretty">
-          En esta demo, el asistente solo responde a las cuatro preguntas sugeridas arriba: aún no hay una respuesta
-          para preguntas escritas libremente.
+          {isAuthenticated
+            ? 'El asistente todavía solo responde a las preguntas sugeridas arriba: aún no hay una respuesta para preguntas escritas libremente.'
+            : 'En esta demo, el asistente solo responde a las cuatro preguntas sugeridas arriba: aún no hay una respuesta para preguntas escritas libremente.'}
         </p>
       )}
     </Card>

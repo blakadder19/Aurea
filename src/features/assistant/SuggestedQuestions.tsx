@@ -1,14 +1,20 @@
 import { SUGGESTED_QUESTIONS } from './answers'
 import { useAssistantStore } from './store'
 
+interface Question {
+  id: string
+  question: string
+}
+
 /** Preguntas sugeridas como botones grandes, texto completo, sin truncar. */
-export function SuggestedQuestions() {
+export function SuggestedQuestions({ questions }: { questions?: Question[] } = {}) {
   const selectedId = useAssistantStore((s) => s.selectedId)
   const askQuestion = useAssistantStore((s) => s.askQuestion)
+  const list = questions ?? SUGGESTED_QUESTIONS
 
   return (
     <div className="flex flex-wrap gap-3">
-      {SUGGESTED_QUESTIONS.map((q) => (
+      {list.map((q) => (
         <button
           key={q.id}
           type="button"

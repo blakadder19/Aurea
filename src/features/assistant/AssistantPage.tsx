@@ -3,6 +3,9 @@ import { buildAnswers } from './answers'
 import { FreeformQuestion } from './FreeformQuestion'
 import { SuggestedQuestions } from './SuggestedQuestions'
 import { useAssistantStore } from './store'
+import { useRealAnswers } from './useRealAnswers'
+import { LoadingRealData } from '../../components/states/LoadingRealData'
+import { useAuthStore } from '../../lib/supabase/useAuth'
 
 function Header() {
   return (
@@ -18,14 +21,32 @@ function Header() {
 /** Pantalla Asistente e insights: preguntas sugeridas con respuesta real, y campo de pregunta libre acotado. */
 export function AssistantPage() {
   const selectedId = useAssistantStore((s) => s.selectedId)
-  const answers = buildAnswers()
+  const session = useAuthStore((s) => s.session)
+  const isAuthenticated = session !== null
+
+  const { loading: loadingReal, answers: realAnswers } = useRealAnswers()
+
+  // Nunca mostrar las preguntas/respuestas de demo mientras las reales
+  // todavía se están calculando a partir de tus datos.
+  if (isAuthenticated && (loadingReal || realAnswers === null)) {
+    return (
+      <>
+        <Header />
+        <main className="flex max-w-[920px] flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
+          <LoadingRealData />
+        </main>
+      </>
+    )
+  }
+
+  const answers = isAuthenticated ? realAnswers! : buildAnswers()
   const selectedAnswer = answers.find((a) => a.id === selectedId) ?? null
 
   return (
     <>
       <Header />
       <main className="flex max-w-[920px] flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-8">
-        <SuggestedQuestions />
+        <SuggestedQuestions questions={isAuthenticated ? answers.map((a) => ({ id: a.id, question: a.question })) : undefined} />
         {selectedAnswer && <AnswerCard answer={selectedAnswer} />}
         <FreeformQuestion />
       </main>
