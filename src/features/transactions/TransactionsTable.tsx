@@ -46,8 +46,19 @@ function Row({ transaction }: { transaction: Transaction }) {
       <td className="border-b border-[#f0f3f1] py-3.5 pr-4 text-base whitespace-nowrap text-ink-muted">
         {transaction.fecha}
       </td>
-      <td className="max-w-[240px] truncate border-b border-[#f0f3f1] py-3.5 pr-4 text-base font-semibold text-ink" title={transaction.comercio}>
-        {transaction.comercio}
+      <td className="max-w-[240px] border-b border-[#f0f3f1] py-3.5 pr-4 text-base font-semibold text-ink">
+        <div className="truncate" title={transaction.comercio}>
+          {transaction.comercio}
+        </div>
+        {transaction.tags && transaction.tags.length > 0 && (
+          <div className="mt-1 flex flex-wrap gap-1">
+            {transaction.tags.map((tag) => (
+              <span key={tag} className="rounded-full bg-canvas px-2 py-0.5 text-[12px] font-medium text-ink-muted">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
       </td>
       <td className="max-w-[190px] truncate border-b border-[#f0f3f1] py-3.5 pr-4 text-base text-ink-muted" title={transaction.cuenta}>
         {transaction.cuenta}
@@ -96,6 +107,15 @@ function MobileCard({ transaction }: { transaction: Transaction }) {
         <div className="mt-0.5 truncate text-sm text-ink-muted">
           {transaction.fecha} · {transaction.categoria} · {transaction.cuenta}
         </div>
+        {transaction.tags && transaction.tags.length > 0 && (
+          <div className="mt-1 flex flex-wrap gap-1">
+            {transaction.tags.map((tag) => (
+              <span key={tag} className="rounded-full bg-canvas px-2 py-0.5 text-[12px] font-medium text-ink-muted">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
       <Money
         value={transaction.importe}

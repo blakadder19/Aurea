@@ -10,6 +10,8 @@ export interface Transaction {
   cuenta: string
   categoria: string
   importe: number
+  /** Solo en real: etiquetas libres que el usuario añade desde el panel de detalle. */
+  tags?: string[]
 }
 
 export const transactions: Transaction[] = [
