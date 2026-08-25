@@ -9,6 +9,7 @@ export interface RealConnection {
   status: 'connected' | 'disconnected'
   connectedAt: string
   lastSyncedAt: string | null
+  provider: string
 }
 
 interface RealConnectionsResult {
@@ -46,7 +47,7 @@ export function useRealConnections(): RealConnectionsResult {
       if (!supabase) return
       const { data, error } = await supabase
         .from('bank_connections')
-        .select('id, aspsp_name, aspsp_country, status, connected_at, last_synced_at')
+        .select('id, aspsp_name, aspsp_country, status, connected_at, last_synced_at, provider')
         .order('connected_at', { ascending: false })
       if (cancelled) return
       if (error || !data) {
@@ -64,6 +65,7 @@ export function useRealConnections(): RealConnectionsResult {
           status: row.status as 'connected' | 'disconnected',
           connectedAt: row.connected_at as string,
           lastSyncedAt: row.last_synced_at as string | null,
+          provider: row.provider as string,
         })),
       )
       setLoading(false)

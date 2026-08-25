@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Badge } from '../../components/Badge'
 import { Card } from '../../components/Card'
 import { formatIsoDateTime } from '../../lib/format'
-import { disconnectBank, startBankConnection } from './bankConnection'
+import { disconnectBank, startBankConnection, syncBankConnection } from './bankConnection'
 import { useRealConnections } from './useRealConnections'
 
 /** Tu conexión bancaria real (Enable Banking): estado, última sincronización, y conectar/desconectar. */
@@ -10,6 +10,7 @@ export function RealConnectionsCard() {
   const { loading, connections, refetch } = useRealConnections()
   const [pending, setPending] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [syncMessage, setSyncMessage] = useState<string | null>(null)
 
   async function handleConnect() {
     setError(null)
@@ -19,6 +20,28 @@ export function RealConnectionsCard() {
       setError(err)
       setPending(null)
     }
+  }
+
+  async function handleSync(id: string) {
+    setError(null)
+    setSyncMessage(null)
+    setPending(`sync-${id}`)
+    const { error: err, needsReconnect, transactionsNew } = await syncBankConnection()
+    setPending(null)
+    if (err) {
+      setError(err)
+      return
+    }
+    if (needsReconnect) {
+      setError('Tu banco pide volver a autorizar el acceso. Usa "Conectar otro banco" para renovarlo.')
+      return
+    }
+    setSyncMessage(
+      transactionsNew && transactionsNew > 0
+        ? `Sincronizado: ${transactionsNew} movimiento${transactionsNew === 1 ? '' : 's'} nuevo${transactionsNew === 1 ? '' : 's'}.`
+        : 'Sincronizado: no había movimientos nuevos.',
+    )
+    refetch()
   }
 
   async function handleDisconnect(id: string) {
@@ -33,7 +56,7 @@ export function RealConnectionsCard() {
     refetch()
   }
 
-  const active = (connections ?? []).filter((c) => c.status === 'connected')
+  const active = (connections ?? []).filter((c) => c.status === 'connected' && c.provider === 'enable_banking')
 
   return (
     <Card padding="lg" className="flex flex-col gap-4">
@@ -69,6 +92,14 @@ export function RealConnectionsCard() {
                 <Badge variant="success">Conectado</Badge>
                 <button
                   type="button"
+                  onClick={() => void handleSync(c.id)}
+                  disabled={pending === `sync-${c.id}`}
+                  className="min-h-10 rounded-md border border-line bg-surface px-3.5 text-[15px] font-semibold text-ink hover:bg-canvas disabled:opacity-60"
+                >
+                  {pending === `sync-${c.id}` ? 'Sincronizando…' : 'Sincronizar ahora'}
+                </button>
+                <button
+                  type="button"
                   onClick={() => void handleDisconnect(c.id)}
                   disabled={pending === c.id}
                   className="min-h-10 rounded-md border border-danger-line bg-surface px-3.5 text-[15px] font-semibold text-danger-text hover:bg-danger-bg disabled:opacity-60"
@@ -80,6 +111,7 @@ export function RealConnectionsCard() {
           ))}
         </div>
       )}
+      {syncMessage && <div className="text-[15px] text-green-text">{syncMessage}</div>}
       {error && <div className="text-[15px] text-danger-text">{error}</div>}
     </Card>
   )

@@ -9,6 +9,7 @@ function connection(overrides: Partial<RealConnection>): RealConnection {
     status: 'connected',
     connectedAt: '2026-08-01T10:00:00Z',
     lastSyncedAt: null,
+    provider: 'enable_banking',
     ...overrides,
   }
 }
