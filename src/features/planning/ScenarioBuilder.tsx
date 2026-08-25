@@ -79,8 +79,8 @@ export function ScenarioBuilder() {
       <SliderRow
         label="Ingresos mensuales"
         value={params.ingresos}
-        min={2000}
-        max={6000}
+        min={0}
+        max={Math.max(6000, Math.ceil(params.ingresos / 500) * 500)}
         step={10}
         valueLabel={formatEuros(params.ingresos)}
         onChange={set('ingresos')}
@@ -88,8 +88,8 @@ export function ScenarioBuilder() {
       <SliderRow
         label="Gastos mensuales"
         value={params.gastos}
-        min={1200}
-        max={3500}
+        min={0}
+        max={Math.max(3500, Math.ceil(params.gastos / 500) * 500)}
         step={10}
         valueLabel={formatEuros(params.gastos)}
         onChange={set('gastos')}

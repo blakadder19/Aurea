@@ -1,22 +1,28 @@
 import { Badge } from '../../components/Badge'
 import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
-import { AVG_DEBT_RATE, ASSUMED_CURRENT_AGE, STARTING_NET_WORTH } from '../../data/planning'
 import { monthsToTarget } from './domain'
 import { usePlanningStore } from './store'
 
-/** Bloque de independencia financiera: capital objetivo y edad estimada, con la tasa de retirada editable. */
+/** Bloque de independencia financiera: capital objetivo y edad (o años) estimada, con la tasa de retirada editable. */
 export function FinancialIndependence() {
   const params = usePlanningStore((s) => s.params)
   const withdrawalRate = usePlanningStore((s) => s.withdrawalRate)
   const setWithdrawalRate = usePlanningStore((s) => s.setWithdrawalRate)
+  const startingNetWorth = usePlanningStore((s) => s.startingNetWorth)
+  const avgDebtRate = usePlanningStore((s) => s.avgDebtRate)
+  const currentAge = usePlanningStore((s) => s.currentAge)
+  const today = usePlanningStore((s) => s.today)
 
   const capitalObjetivo = withdrawalRate > 0 ? (params.gastos * 12) / (withdrawalRate / 100) : Infinity
   const months = Number.isFinite(capitalObjetivo)
-    ? monthsToTarget(STARTING_NET_WORTH, params, capitalObjetivo, AVG_DEBT_RATE)
+    ? monthsToTarget(startingNetWorth, params, capitalObjetivo, avgDebtRate)
     : Infinity
   const yearsLeft = Number.isFinite(months) ? Math.ceil(months / 12) : null
-  const arrivalAge = yearsLeft !== null ? ASSUMED_CURRENT_AGE + yearsLeft : null
+  // Con edad conocida (demo) mostramos la edad de llegada; sin ella (real, no hay dato de
+  // edad en ningún sitio) mostramos el año, para no fabricar una edad que no sabemos.
+  const arrivalAge = yearsLeft !== null && currentAge !== null ? currentAge + yearsLeft : null
+  const arrivalYear = yearsLeft !== null ? today.getFullYear() + yearsLeft : null
 
   return (
     <Card tone="green-soft" padding="lg" className="flex flex-col gap-4">
@@ -47,8 +53,14 @@ export function FinancialIndependence() {
           )}
         </div>
         <div>
-          <div className="text-sm text-green-text">Edad estimada de llegada</div>
-          <div className="text-[26px] font-bold text-ink">{arrivalAge !== null ? `${arrivalAge} años` : 'Más de 100 años'}</div>
+          <div className="text-sm text-green-text">{currentAge !== null ? 'Edad estimada de llegada' : 'Llegarías en'}</div>
+          <div className="text-[26px] font-bold text-ink">
+            {yearsLeft === null
+              ? 'Más de 100 años'
+              : currentAge !== null
+                ? `${arrivalAge} años`
+                : `${yearsLeft} años (${arrivalYear})`}
+          </div>
         </div>
       </div>
 

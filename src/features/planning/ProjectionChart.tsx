@@ -1,8 +1,6 @@
 import { Line, LineChart, ResponsiveContainer } from 'recharts'
 import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
-import { AVG_DEBT_RATE, BASE_SCENARIO, STARTING_NET_WORTH } from '../../data/planning'
-import { CONTEXT_DATE } from '../../data/demo'
 import { buildProjectionSeries } from './domain'
 import { usePlanningStore } from './store'
 
@@ -10,16 +8,20 @@ import { usePlanningStore } from './store'
 export function ProjectionChart() {
   const params = usePlanningStore((s) => s.params)
   const horizonYears = usePlanningStore((s) => s.horizonYears)
+  const startingNetWorth = usePlanningStore((s) => s.startingNetWorth)
+  const avgDebtRate = usePlanningStore((s) => s.avgDebtRate)
+  const baseParams = usePlanningStore((s) => s.baseParams)
+  const today = usePlanningStore((s) => s.today)
 
-  const scenarioSeries = buildProjectionSeries(STARTING_NET_WORTH, params, horizonYears, AVG_DEBT_RATE)
-  const baseSeries = buildProjectionSeries(STARTING_NET_WORTH, BASE_SCENARIO, horizonYears, AVG_DEBT_RATE)
+  const scenarioSeries = buildProjectionSeries(startingNetWorth, params, horizonYears, avgDebtRate)
+  const baseSeries = buildProjectionSeries(startingNetWorth, baseParams, horizonYears, avgDebtRate)
   const chartData = scenarioSeries.map((point, i) => ({
     year: point.year,
     scenario: point.value,
     base: baseSeries[i].value,
   }))
 
-  const targetYear = CONTEXT_DATE.getFullYear() + horizonYears
+  const targetYear = today.getFullYear() + horizonYears
   const scenarioFinal = scenarioSeries[scenarioSeries.length - 1].value
   const baseFinal = baseSeries[baseSeries.length - 1].value
 

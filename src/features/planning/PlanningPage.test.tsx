@@ -3,7 +3,15 @@ import { BrowserRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it } from 'vitest'
 import { PlanningPage } from './PlanningPage'
 import { usePlanningStore } from './store'
-import { BASE_SCENARIO, DEFAULT_HORIZON, DEFAULT_WITHDRAWAL_RATE } from '../../data/planning'
+import {
+  ASSUMED_CURRENT_AGE,
+  AVG_DEBT_RATE,
+  BASE_SCENARIO,
+  DEFAULT_HORIZON,
+  DEFAULT_WITHDRAWAL_RATE,
+  STARTING_NET_WORTH,
+} from '../../data/planning'
+import { CONTEXT_DATE } from '../../data/demo'
 
 function renderPage() {
   return render(
@@ -14,7 +22,16 @@ function renderPage() {
 }
 
 function resetStore() {
-  usePlanningStore.setState({ params: { ...BASE_SCENARIO }, horizonYears: DEFAULT_HORIZON, withdrawalRate: DEFAULT_WITHDRAWAL_RATE })
+  usePlanningStore.setState({
+    params: { ...BASE_SCENARIO },
+    horizonYears: DEFAULT_HORIZON,
+    withdrawalRate: DEFAULT_WITHDRAWAL_RATE,
+    startingNetWorth: STARTING_NET_WORTH,
+    avgDebtRate: AVG_DEBT_RATE,
+    baseParams: { ...BASE_SCENARIO },
+    currentAge: ASSUMED_CURRENT_AGE,
+    today: CONTEXT_DATE,
+  })
 }
 
 describe('PlanningPage', () => {
