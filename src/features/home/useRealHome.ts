@@ -91,17 +91,17 @@ function toMovement(tx: RealTransaction): Movement {
  * ahí cada bloque de Inicio. Sin tabla propia: Inicio es un resumen de
  * datos que ya viven en otras pantallas, nunca una fuente nueva.
  */
-export function useRealHome(): RealHomeData | null {
+export function useRealHome(budgetMonthStart: number | null): RealHomeData | null {
   const { loading: loadingAccounts, accounts } = useRealAccounts()
   const { categories } = useRealCategories()
   const { loading: loadingTx, transactions } = useRealTransactions(categories)
-  const { loading: loadingBudget, budget } = useRealBudget(categories)
+  const { loading: loadingBudget, budget } = useRealBudget(categories, budgetMonthStart)
   const { loading: loadingRecurring, items: recurringItems, groups: recurringGroups } = useRealRecurring()
 
   const loading = loadingAccounts || loadingTx || loadingBudget || loadingRecurring
 
   return useMemo(() => {
-    if (accounts === null) return null
+    if (accounts === null || budgetMonthStart === null) return null
     const today = new Date()
 
     const eurAccounts = accounts.filter((a) => a.currency === undefined || a.currency === 'EUR')
@@ -228,5 +228,5 @@ export function useRealHome(): RealHomeData | null {
       monthIncome,
       monthExpense,
     }
-  }, [accounts, transactions, budget, recurringItems, recurringGroups, loading])
+  }, [accounts, transactions, budget, recurringItems, recurringGroups, loading, budgetMonthStart])
 }

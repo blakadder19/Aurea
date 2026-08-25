@@ -14,6 +14,7 @@ import { UndoBar } from '../../components/UndoBar'
 import { CONTEXT_DATE, alertsCount, syncedAt, undoBanner } from '../../data/demo'
 import { formatMonthYearLong, formatWeekdayDate } from '../../lib/format'
 import { useAuthStore } from '../../lib/supabase/useAuth'
+import { useRealSettings } from '../settings/useRealSettings'
 import { useHomeUIStore, type ViewMode } from '../../store/useHomeUIStore'
 
 const PERIODS = ['Mes actual', '3 meses', 'Año', 'Personalizado']
@@ -125,7 +126,9 @@ export function HomePage() {
   const isDetalle = useHomeUIStore((s) => s.mode === 'detalle')
   const session = useAuthStore((s) => s.session)
   const isAuthenticated = session !== null
-  const home = useRealHome()
+  const { loading: loadingSettings, settings: realSettings } = useRealSettings()
+  const budgetMonthStart = loadingSettings ? null : (realSettings?.budgetMonthStart ?? 1)
+  const home = useRealHome(budgetMonthStart)
 
   const hasReal = isAuthenticated && home !== null
   // Autenticado pero home aún no resolvió: NUNCA mostrar la demo de relleno

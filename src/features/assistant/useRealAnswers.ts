@@ -8,6 +8,7 @@ import { goalForecast, formatMonthYear } from '../goals/domain'
 import { useRealGoals } from '../goals/useRealGoals'
 import { useRealCategories } from '../transactions/useRealCategories'
 import { useRealHome } from '../home/useRealHome'
+import { useRealSettings } from '../settings/useRealSettings'
 import type { Answer } from './answers'
 
 const euros = (cents: number) => cents / 100
@@ -166,9 +167,11 @@ interface RealAnswersResult {
  * campo libre sigue sin responder nada, real o demo (ver FreeformQuestion).
  */
 export function useRealAnswers(): RealAnswersResult {
-  const home = useRealHome()
+  const { settings: realSettings } = useRealSettings()
+  const budgetMonthStart = realSettings?.budgetMonthStart ?? null
+  const home = useRealHome(budgetMonthStart)
   const { categories } = useRealCategories()
-  const { loading: loadingBudget, budget } = useRealBudget(categories)
+  const { loading: loadingBudget, budget } = useRealBudget(categories, budgetMonthStart)
   const { loading: loadingGoals, goals } = useRealGoals()
   const { loading: loadingAccounts, accounts } = useRealAccounts()
   const { loading: loadingDebts, debts } = useRealDebts(accounts)

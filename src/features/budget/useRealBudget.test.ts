@@ -54,21 +54,28 @@ const { useRealBudget } = await import('./useRealBudget')
 describe('useRealBudget', () => {
   it('sin sesión, devuelve budget=null sin consultar Supabase', () => {
     useAuthStore.setState({ session: null })
-    const { result } = renderHook(() => useRealBudget(categories))
+    const { result } = renderHook(() => useRealBudget(categories, 1))
     expect(result.current.loading).toBe(false)
     expect(result.current.budget).toBeNull()
   })
 
   it('mientras las categorías siguen cargando (null), se queda en loading', () => {
     useAuthStore.setState({ session: activeSession })
-    const { result } = renderHook(() => useRealBudget(null))
+    const { result } = renderHook(() => useRealBudget(null, 1))
+    expect(result.current.loading).toBe(true)
+    expect(result.current.budget).toBeNull()
+  })
+
+  it('mientras el inicio del mes presupuestario real todavía no se sabe (null), se queda en loading', () => {
+    useAuthStore.setState({ session: activeSession })
+    const { result } = renderHook(() => useRealBudget(categories, null))
     expect(result.current.loading).toBe(true)
     expect(result.current.budget).toBeNull()
   })
 
   it('con sesión, suma el gasto por categoría (solo importes negativos) y cruza con el presupuesto guardado', async () => {
     useAuthStore.setState({ session: activeSession })
-    const { result } = renderHook(() => useRealBudget(categories))
+    const { result } = renderHook(() => useRealBudget(categories, 1))
 
     await waitFor(() => expect(result.current.loading).toBe(false))
 

@@ -9,6 +9,7 @@ import { LoadingRealData } from '../../components/states/LoadingRealData'
 import { UndoBar } from '../../components/UndoBar'
 import { budgetSummary } from '../../data/budget'
 import { useAuthStore } from '../../lib/supabase/useAuth'
+import { useRealSettings } from '../settings/useRealSettings'
 
 const VIEWS: { value: BudgetView; label: string }[] = [
   { value: 'resumen', label: 'Resumen' },
@@ -88,15 +89,17 @@ export function BudgetPage() {
   const undoSave = useBudgetStore((s) => s.undoSave)
   const session = useAuthStore((s) => s.session)
 
+  const { settings: realSettings } = useRealSettings()
+  const budgetMonthStart = realSettings?.budgetMonthStart ?? null
   const { categories: realCategories } = useRealCategories()
-  const { loading: loadingReal, budget: realBudget, refetch } = useRealBudget(realCategories)
+  const { loading: loadingReal, budget: realBudget, refetch } = useRealBudget(realCategories, budgetMonthStart)
 
   const isAuthenticated = session !== null
   const hasRealBudget = isAuthenticated && !loadingReal && realBudget !== null
   const viewModel = hasRealBudget ? toBudgetViewModel(realBudget!) : null
 
   async function handleSaveCategoryBudget(categoryId: string, amountCents: number) {
-    return saveCategoryBudget(categoryId, amountCents)
+    return saveCategoryBudget(categoryId, amountCents, realSettings?.budgetMonthStart ?? 1)
   }
 
   // Nunca mostrar la demo de relleno mientras el presupuesto real todavía

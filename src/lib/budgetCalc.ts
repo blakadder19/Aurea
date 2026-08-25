@@ -47,3 +47,36 @@ export function forecastCents(spentCents: number, daysElapsed: number, totalDays
   if (daysElapsed <= 0) return spentCents
   return Math.max(spentCents, Math.round((spentCents / daysElapsed) * totalDays))
 }
+
+/** "2026-08-25", en fecha local (nunca UTC — evita que un cambio de zona horaria desplace el día). */
+export function isoDate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/**
+ * Ciclo de presupuesto real: el usuario puede elegir que "el mes" empiece
+ * un día distinto al 1 (p. ej. si cobra el 25). `startDay` viene siempre de
+ * BUDGET_MONTH_START_OPTIONS (1, 5, 15 o 25 — nunca más de 28), así que no
+ * hace falta recortar el día como en addMonths.
+ */
+export function cycleStart(today: Date, startDay: number): Date {
+  const monthOffset = today.getDate() >= startDay ? 0 : -1
+  return new Date(today.getFullYear(), today.getMonth() + monthOffset, startDay)
+}
+
+/** Primer día del siguiente ciclo (excluido del ciclo actual). */
+export function cycleEnd(start: Date): Date {
+  return new Date(start.getFullYear(), start.getMonth() + 1, start.getDate())
+}
+
+/** Longitud del ciclo en días — varía según los meses que abarque (28-31). */
+export function daysInCycle(start: Date): number {
+  return Math.round((cycleEnd(start).getTime() - start.getTime()) / 86_400_000)
+}
+
+/** Días transcurridos del ciclo, acotado a [1, días del ciclo]. */
+export function daysElapsedInCycle(today: Date, start: Date): number {
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  const elapsed = Math.round((startOfToday.getTime() - start.getTime()) / 86_400_000) + 1
+  return Math.min(Math.max(elapsed, 1), daysInCycle(start))
+}
