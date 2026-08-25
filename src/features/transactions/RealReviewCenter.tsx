@@ -28,6 +28,10 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory }: R
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
   const [suggestError, setSuggestError] = useState<string | null>(null)
   const [savingId, setSavingId] = useState<string | null>(null)
+  const [acceptingAll, setAcceptingAll] = useState(false)
+  const [acceptAllError, setAcceptAllError] = useState<string | null>(null)
+
+  const suggestionCount = Object.keys(suggestions).length
 
   async function handleSuggest() {
     setLoadingSuggestions(true)
@@ -56,6 +60,28 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory }: R
     })
   }
 
+  async function handleAcceptAll() {
+    const entries = Object.entries(suggestions)
+    if (entries.length === 0) return
+    setAcceptingAll(true)
+    setAcceptAllError(null)
+    const results = await Promise.all(
+      entries.map(([transactionId, categoryId]) => onSaveCategory(transactionId, categoryId).then((error) => ({ transactionId, error }))),
+    )
+    setAcceptingAll(false)
+    const failedIds = new Set(results.filter((r) => r.error).map((r) => r.transactionId))
+    if (failedIds.size > 0) {
+      setAcceptAllError(`No hemos podido guardar ${failedIds.size} de ${entries.length} sugerencias. Las demás sí se guardaron — inténtalo de nuevo con las que quedan.`)
+    }
+    setSuggestions((prev) => {
+      const next = { ...prev }
+      for (const [transactionId] of entries) {
+        if (!failedIds.has(transactionId)) delete next[transactionId]
+      }
+      return next
+    })
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -65,17 +91,30 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory }: R
             : `${pending.length} movimiento${pending.length === 1 ? '' : 's'} sin categorizar.`}
         </p>
         {pending.length > 0 && categories.length > 0 && (
-          <button
-            type="button"
-            onClick={() => void handleSuggest()}
-            disabled={loadingSuggestions}
-            className="min-h-11 rounded-md border border-brand bg-surface px-4 py-2.5 text-base font-semibold text-brand hover:bg-brand-soft disabled:opacity-60"
-          >
-            {loadingSuggestions ? 'Pensando…' : 'Sugerir categorías con IA'}
-          </button>
+          <div className="flex flex-wrap gap-2.5">
+            {suggestionCount > 0 && (
+              <button
+                type="button"
+                onClick={() => void handleAcceptAll()}
+                disabled={acceptingAll}
+                className="min-h-11 rounded-md border border-brand bg-brand px-4 py-2.5 text-base font-semibold text-surface hover:bg-brand-hover disabled:opacity-60"
+              >
+                {acceptingAll ? 'Guardando…' : `Aceptar todas (${suggestionCount})`}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => void handleSuggest()}
+              disabled={loadingSuggestions}
+              className="min-h-11 rounded-md border border-brand bg-surface px-4 py-2.5 text-base font-semibold text-brand hover:bg-brand-soft disabled:opacity-60"
+            >
+              {loadingSuggestions ? 'Pensando…' : 'Sugerir categorías con IA'}
+            </button>
+          </div>
         )}
       </div>
       {suggestError && <p className="text-sm text-danger-text">{suggestError}</p>}
+      {acceptAllError && <p className="text-sm text-danger-text">{acceptAllError}</p>}
 
       {pending.length === 0 ? (
         <Card padding="lg" className="py-12 text-center">
