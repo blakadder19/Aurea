@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { AnswerCard } from './AnswerCard'
 import { buildAnswers } from './answers'
 import { FreeformQuestion } from './FreeformQuestion'
@@ -21,8 +22,14 @@ function Header() {
 /** Pantalla Asistente e insights: preguntas sugeridas con respuesta real, y campo de pregunta libre acotado. */
 export function AssistantPage() {
   const selectedId = useAssistantStore((s) => s.selectedId)
+  const clearFreeformHistory = useAssistantStore((s) => s.clearFreeformHistory)
   const session = useAuthStore((s) => s.session)
   const isAuthenticated = session !== null
+
+  // Al cerrar sesión, la conversación libre no debe sobrevivir a la siguiente sesión que se abra en la misma pestaña.
+  useEffect(() => {
+    if (!isAuthenticated) clearFreeformHistory()
+  }, [isAuthenticated, clearFreeformHistory])
 
   const { loading: loadingReal, answers: realAnswers, snapshot } = useRealAnswers()
 

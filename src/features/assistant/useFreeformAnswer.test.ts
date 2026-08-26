@@ -45,6 +45,33 @@ describe('askFreeformQuestion', () => {
     vi.unstubAllGlobals()
   })
 
+  it('con historial previo, lo manda en el cuerpo de la petición', async () => {
+    useAuthStore.setState({ getAccessToken: vi.fn().mockResolvedValue('token-123') })
+    const fetchSpy = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ answer: 'Segunda respuesta.' }) })
+    vi.stubGlobal('fetch', fetchSpy)
+
+    const history = [{ question: '¿Primera pregunta?', answer: 'Primera respuesta.' }]
+    await askFreeformQuestion('¿Segunda pregunta?', snapshot, history)
+
+    const [, options] = fetchSpy.mock.calls[0]
+    const body = JSON.parse(options.body)
+    expect(body.history).toEqual(history)
+    vi.unstubAllGlobals()
+  })
+
+  it('sin historial, manda un array vacío (no lo omite)', async () => {
+    useAuthStore.setState({ getAccessToken: vi.fn().mockResolvedValue('token-123') })
+    const fetchSpy = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ answer: 'Respuesta.' }) })
+    vi.stubGlobal('fetch', fetchSpy)
+
+    await askFreeformQuestion('¿Cuánto tengo disponible?', snapshot)
+
+    const [, options] = fetchSpy.mock.calls[0]
+    const body = JSON.parse(options.body)
+    expect(body.history).toEqual([])
+    vi.unstubAllGlobals()
+  })
+
   it('si la Edge Function falla, devuelve un mensaje de error legible en vez de una respuesta fabricada', async () => {
     useAuthStore.setState({ getAccessToken: vi.fn().mockResolvedValue('token-123') })
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, json: async () => ({ error: 'anthropic_error' }) }))

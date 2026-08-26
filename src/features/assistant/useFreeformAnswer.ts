@@ -4,19 +4,30 @@ import type { FinancialSnapshot } from './useRealAnswers'
 
 const FUNCTIONS_BASE = isSupabaseConfigured ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1` : ''
 
+export interface FreeformTurn {
+  question: string
+  answer: string
+}
+
 /**
  * Pregunta libre sobre tus datos reales: llama a `ai-freeform-answer` con el
  * snapshot ya calculado (nunca lo recalcula el servidor por su cuenta, para
- * no tener dos implementaciones del mismo cálculo que puedan desincronizarse).
+ * no tener dos implementaciones del mismo cálculo que puedan desincronizarse)
+ * y las preguntas/respuestas anteriores de esta misma conversación, para que
+ * una pregunta de seguimiento ("¿y en Ocio?") tenga contexto de la anterior.
  */
-export async function askFreeformQuestion(question: string, snapshot: FinancialSnapshot): Promise<{ answer: string | null; error: string | null }> {
+export async function askFreeformQuestion(
+  question: string,
+  snapshot: FinancialSnapshot,
+  history: FreeformTurn[] = [],
+): Promise<{ answer: string | null; error: string | null }> {
   const token = await useAuthStore.getState().getAccessToken()
   if (!token) return { answer: null, error: 'Inicia sesión de nuevo.' }
 
   const res = await fetch(`${FUNCTIONS_BASE}/ai-freeform-answer`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question, snapshot }),
+    body: JSON.stringify({ question, snapshot, history }),
   })
   const data = (await res.json().catch(() => ({}))) as { answer?: string; error?: string }
 
