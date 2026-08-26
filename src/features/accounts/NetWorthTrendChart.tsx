@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { Card } from '../../components/Card'
 import { Skeleton } from '../../components/states/Skeleton'
-import { formatIsoDayMonth, formatMoneySigned } from '../../lib/format'
+import { formatIsoDayMonth, formatMoney, formatMoneySigned } from '../../lib/format'
 import type { NetWorthPoint } from './netWorthHistory'
 
 /** Mismo gráfico a tamaño completo, con ejes y tooltip por día — para ver el detalle que la tarjeta pequeña no puede mostrar. */
@@ -32,9 +32,9 @@ function ExpandedChartDialog({ open, onOpenChange, points }: { open: boolean; on
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-line)" vertical={false} />
                 <XAxis dataKey="dateISO" tickFormatter={formatIsoDayMonth} stroke="var(--color-ink-muted)" fontSize={12} minTickGap={32} />
-                <YAxis tickFormatter={(v: number) => formatMoneySigned(v, 0)} stroke="var(--color-ink-muted)" fontSize={12} width={80} />
+                <YAxis tickFormatter={(v: number) => formatMoney(v, 0)} stroke="var(--color-ink-muted)" fontSize={12} width={80} />
                 <Tooltip
-                  formatter={(value) => formatMoneySigned(Number(value), 0)}
+                  formatter={(value) => formatMoney(Number(value), 0)}
                   labelFormatter={(label) => formatIsoDayMonth(String(label))}
                   contentStyle={{ borderRadius: 8, borderColor: 'var(--color-line)' }}
                 />
