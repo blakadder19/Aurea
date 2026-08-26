@@ -2,8 +2,8 @@ import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { AppShell } from './AppShell'
 import { RouteFallback } from './RouteFallback'
-import { HomePage } from '../features/home/HomePage'
 
+const HomePage = lazy(() => import('../features/home/HomePage').then((m) => ({ default: m.HomePage })))
 const TransactionsPage = lazy(() => import('../features/transactions/TransactionsPage').then((m) => ({ default: m.TransactionsPage })))
 const BudgetPage = lazy(() => import('../features/budget/BudgetPage').then((m) => ({ default: m.BudgetPage })))
 const AccountsPage = lazy(() => import('../features/accounts/AccountsPage').then((m) => ({ default: m.AccountsPage })))
