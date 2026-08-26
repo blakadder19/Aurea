@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Account } from '../../data/accounts'
 import { fetchActiveDeclaredIncomeCents } from '../../lib/declaredIncome'
+import { computeAssetsLiabilities } from '../../lib/netWorth'
 import { supabase } from '../../lib/supabase/client'
 import { useAuthStore } from '../../lib/supabase/useAuth'
 import type { RealDebt } from '../debts/useRealDebts'
@@ -14,15 +15,7 @@ export interface RealPlanningInputs {
 
 /** Patrimonio neto real: mismo cálculo que Cuentas y patrimonio (EUR, ponderado por sharePercent). */
 export function computeStartingNetWorth(accounts: Account[]): number {
-  const { assets, liabilities } = accounts
-    .filter((a) => a.currency === undefined || a.currency === 'EUR')
-    .reduce(
-      (acc, a) => {
-        const share = a.balance * ((a.sharePercent ?? 100) / 100)
-        return share >= 0 ? { ...acc, assets: acc.assets + share } : { ...acc, liabilities: acc.liabilities - share }
-      },
-      { assets: 0, liabilities: 0 },
-    )
+  const { assets, liabilities } = computeAssetsLiabilities(accounts.filter((a) => a.currency === undefined || a.currency === 'EUR'))
   return assets - liabilities
 }
 

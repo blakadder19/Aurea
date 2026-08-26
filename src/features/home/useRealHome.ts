@@ -10,6 +10,7 @@ import { useRealRecurring } from '../recurring/useRealRecurring'
 import { buildRealTimeline } from './timelineCalc'
 import { findPossibleDuplicates, findUnusualAmounts } from '../../lib/anomalyCalc'
 import { useDeclaredIncomes } from '../../lib/declaredIncome'
+import { computeAssetsLiabilities } from '../../lib/netWorth'
 
 const FN_LABEL: Record<string, string> = {
   Ahorro: 'Ahorro',
@@ -113,8 +114,7 @@ export function useRealHome(budgetMonthStart: number | null): RealHomeData | nul
     const eligibleAccounts: EligibleAccount[] = spendAccounts.map((a) => ({ label: eligibleAccountLabel(a), amount: eurValue(a) }))
     const eligibleAccountsSum = eligibleAccounts.reduce((sum, a) => sum + a.amount, 0)
 
-    const assets = eurAccounts.reduce((sum, a) => sum + Math.max(0, eurValue(a)), 0)
-    const liabilities = eurAccounts.reduce((sum, a) => sum + Math.max(0, -eurValue(a)), 0)
+    const { assets, liabilities } = computeAssetsLiabilities(eurAccounts)
     const netWorth = assets - liabilities
 
     const outsideByFn = new Map<string, number>()
