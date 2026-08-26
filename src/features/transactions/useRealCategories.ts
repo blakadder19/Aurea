@@ -112,7 +112,13 @@ export async function updateCategoryIcon(id: string, icon: string): Promise<stri
   return null
 }
 
-/** Crea una categoría propia además del catálogo por defecto. Grupo genérico 'otros' — sin selector de grupo por ahora. */
+/**
+ * Crea una categoría propia además del catálogo por defecto. Grupo genérico
+ * 'compras' — mismo grupo que usa la categoría "Otros" sembrada por
+ * defecto — sin selector de grupo por ahora. `category_group` tiene un
+ * CHECK en la base de datos con un conjunto fijo de valores; 'compras' es
+ * el más neutro de los que ya admite.
+ */
 export async function createCategory(name: string, icon: string): Promise<string | null> {
   if (!supabase) return 'Supabase no está configurado.'
   if (!name.trim()) return 'Ponle un nombre a la categoría.'
@@ -124,7 +130,7 @@ export async function createCategory(name: string, icon: string): Promise<string
 
   const { error } = await supabase
     .from('categories')
-    .insert({ user_id: user.id, name: name.trim(), category_group: 'otros', icon: icon.trim() || null })
+    .insert({ user_id: user.id, name: name.trim(), category_group: 'compras', icon: icon.trim() || null })
   if (error) {
     console.error('createCategory: fallo al crear', error)
     if (error.code === '23505') return 'Ya tienes una categoría con ese nombre.'
