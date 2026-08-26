@@ -34,6 +34,7 @@ Deno.serve(
         .from('transactions')
         .select('id, description, amount_cents')
         .is('category_id', null)
+        .eq('is_internal_transfer', false)
         .order('booking_date', { ascending: false })
         .limit(MAX_TRANSACTIONS),
     ])
