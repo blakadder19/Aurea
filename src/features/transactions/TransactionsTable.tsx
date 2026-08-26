@@ -22,6 +22,11 @@ export function matchesSearch(t: Transaction, query: string): boolean {
   return false
 }
 
+/** Mismo criterio que Centro de revisión: sin categoría o marcado needsReview — no solo needsReview a secas. */
+function needsReview(t: Transaction): boolean {
+  return t.categoria === 'Sin clasificar' || Boolean(t.needsReview)
+}
+
 function toneFor(t: Transaction) {
   if (t.importe > 0) return 'green' as const
   if (t.categoria === 'Sin clasificar') return 'danger' as const
@@ -181,7 +186,7 @@ export function TransactionsTable({ transactions = demoTransactions }: { transac
       matchesSearch(t, query) &&
       (accountFilter === ALL_ACCOUNTS || t.cuenta === accountFilter) &&
       (categoryFilter === ALL_CATEGORIES || t.categoria === categoryFilter) &&
-      (statusFilter === ALL_STATUSES || Boolean(t.needsReview) === (statusFilter === STATUS_NEEDS_REVIEW)),
+      (statusFilter === ALL_STATUSES || needsReview(t) === (statusFilter === STATUS_NEEDS_REVIEW)),
   )
   const allFilteredSelected = filtered.length > 0 && filtered.every((t) => selectedIds.has(t.id))
 
