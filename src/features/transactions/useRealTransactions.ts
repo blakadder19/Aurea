@@ -3,6 +3,7 @@ import type { Transaction } from '../../data/transactions'
 import { formatIsoDayMonth } from '../../lib/format'
 import { supabase } from '../../lib/supabase/client'
 import { useAuthStore } from '../../lib/supabase/useAuth'
+import { useTransactionsRefreshBus } from './refreshBus'
 import { categoryLabel, type RealCategory } from './useRealCategories'
 
 /** Forma compatible con `Transaction` (TransactionsTable/TransactionPanel no cambian) + los datos que necesita edición/revisión real. */
@@ -38,7 +39,8 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
   const session = useAuthStore((s) => s.session)
   const [loading, setLoading] = useState(true)
   const [transactions, setTransactions] = useState<RealTransaction[] | null>(null)
-  const [version, setVersion] = useState(0)
+  const version = useTransactionsRefreshBus((s) => s.version)
+  const bump = useTransactionsRefreshBus((s) => s.bump)
 
   useEffect(() => {
     if (!supabase || !session || categories === null) {
@@ -115,7 +117,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
     }
   }, [session, categories, version])
 
-  return { loading, transactions, refetch: () => setVersion((v) => v + 1) }
+  return { loading, transactions, refetch: bump }
 }
 
 /** Escribe la categoría de un movimiento real. RLS asegura que solo puede tocar los suyos. */
