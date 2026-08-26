@@ -364,6 +364,11 @@ Auditoría de seguimiento sobre lo que quedó tras la fase de arriba, misma disc
   todos los pendientes con IA" como red de seguridad. El mensaje de "Aplicar
   esta categoría a movimientos parecidos" y el comentario de
   `createRuleFromTransaction` ya no dicen "no se aplicará a futuros".
+  Nota de despliegue: la herramienta MCP de Supabase falla al desplegar (o
+  redesplegar) una función cuyos imports usan `../_shared/xxx.ts` anidado —
+  hay que aplanar los ficheros compartidos como hermanos de `index.ts` (con
+  imports `./xxx.ts`) solo en el payload de despliegue, sin tocar la
+  estructura real del repo bajo `supabase/functions/_shared/`.
 
 ## Verificación
 
