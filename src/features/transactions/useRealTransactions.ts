@@ -26,9 +26,13 @@ interface RealTransactionsResult {
   /** null mientras carga o si no hay sesión — no confundir con "cero movimientos". */
   transactions: RealTransaction[] | null
   refetch: () => void
+  /** true si puede que haya movimientos más antiguos sin cargar todavía — ver loadMore. */
+  hasMore: boolean
+  /** Carga otra página de movimientos más antiguos (además de los ya cargados, no en su lugar). */
+  loadMore: () => void
 }
 
-const TRANSACTIONS_LIMIT = 300
+const PAGE_SIZE = 300
 
 /**
  * Movimientos reales del usuario autenticado: transactions + accounts +
@@ -39,6 +43,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
   const session = useAuthStore((s) => s.session)
   const [loading, setLoading] = useState(true)
   const [transactions, setTransactions] = useState<RealTransaction[] | null>(null)
+  const [loadedCount, setLoadedCount] = useState(PAGE_SIZE)
   const version = useTransactionsRefreshBus((s) => s.version)
   const bump = useTransactionsRefreshBus((s) => s.bump)
 
@@ -63,7 +68,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
             'id, account_id, booking_date, value_date, description, amount_cents, category_id, needs_review, user_note, tags, display_name, is_internal_transfer, receipt_path',
           )
           .order('booking_date', { ascending: false })
-          .limit(TRANSACTIONS_LIMIT),
+          .limit(loadedCount),
         supabase.from('accounts').select('id, name, display_name, product, connection_id'),
         supabase.from('bank_connections').select('id, aspsp_name'),
       ])
@@ -115,9 +120,10 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
     return () => {
       cancelled = true
     }
-  }, [session, categories, version])
+  }, [session, categories, version, loadedCount])
 
-  return { loading, transactions, refetch: bump }
+  const hasMore = transactions !== null && transactions.length === loadedCount
+  return { loading, transactions, refetch: bump, hasMore, loadMore: () => setLoadedCount((n) => n + PAGE_SIZE) }
 }
 
 /** Escribe la categoría de un movimiento real. RLS asegura que solo puede tocar los suyos. */

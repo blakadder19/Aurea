@@ -38,12 +38,14 @@ const VIEWS: { value: TransactionsView; label: (reviewCount: number) => string }
 function Header({
   isAuthenticated,
   realCount,
+  realHasMore,
   realReviewCount,
   realLastSynced,
   onAddManualMovement,
 }: {
   isAuthenticated: boolean
   realCount: number
+  realHasMore: boolean
   realReviewCount: number
   realLastSynced: string | null
   onAddManualMovement: () => void
@@ -59,7 +61,9 @@ function Header({
         <div>
           <h1 className="font-serif text-[32px] lg:text-[26px] font-semibold tracking-[-0.01em] text-ink">Movimientos</h1>
           <div className="mt-1 text-base text-ink-muted">
-            {isAuthenticated ? `${realCount} movimientos sincronizados` : `${totalMovementsThisMonth} movimientos en ${monthContextLabel}`}
+            {isAuthenticated
+              ? `${realCount} movimientos sincronizados${realHasMore ? ' (los más recientes — hay más antiguos)' : ''}`
+              : `${totalMovementsThisMonth} movimientos en ${monthContextLabel}`}
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -112,7 +116,7 @@ export function TransactionsPage() {
   const session = useAuthStore((s) => s.session)
 
   const { categories: realCategories } = useRealCategories()
-  const { loading: loadingReal, transactions: realTransactions, refetch } = useRealTransactions(realCategories)
+  const { loading: loadingReal, transactions: realTransactions, refetch, hasMore, loadMore } = useRealTransactions(realCategories)
   const { connections: realConnections } = useRealConnections()
   const { accounts: realAccounts, refetch: refetchAccounts } = useRealAccounts()
   const [manualPanelMode, setManualPanelMode] = useState<ManualEntryPanelMode>(null)
@@ -209,6 +213,7 @@ export function TransactionsPage() {
       <Header
         isAuthenticated={isAuthenticated}
         realCount={realTransactions?.length ?? 0}
+        realHasMore={hasMore}
         realReviewCount={realReviewCount}
         realLastSynced={latestSync(realConnections ?? [])}
         onAddManualMovement={() => setManualPanelMode('movement')}
@@ -243,6 +248,16 @@ export function TransactionsPage() {
                 onBulkAddTag={hasRealTransactions ? handleBulkAddTag : undefined}
               />
               <TransactionsTable transactions={hasRealTransactions ? realTransactions! : undefined} />
+              {isAuthenticated && hasMore && (
+                <button
+                  type="button"
+                  onClick={loadMore}
+                  disabled={loadingReal}
+                  className="min-h-11 w-fit self-center rounded-md border border-line bg-surface px-4 py-2.5 text-base font-semibold text-ink hover:bg-canvas disabled:opacity-60"
+                >
+                  {loadingReal ? 'Cargando…' : 'Cargar movimientos más antiguos'}
+                </button>
+              )}
               {!isAuthenticated && <UndoBar message={undoMessage ?? defaultUndoMessage} onUndo={dismissUndo} />}
             </>
           )
