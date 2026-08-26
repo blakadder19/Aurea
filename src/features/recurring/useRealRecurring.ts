@@ -152,11 +152,12 @@ export function useRealRecurring(): RealRecurringResult {
             if (increase !== null) {
               const prevEuros = ((g.prevAmountCents ?? 0) / 100).toFixed(2).replace('.', ',')
               const lastEuros = (g.lastAmountCents / 100).toFixed(2).replace('.', ',')
+              const increaseDateISO = g.occurrences[g.occurrences.length - 1]?.dateISO ?? g.nextChargeDateISO
               highlight = {
                 variant: 'warning',
                 icon: '▲',
                 badge: 'Sube de precio',
-                explanation: `${name} pasa de ${prevEuros} € a ${lastEuros} € el ${formatIsoDayMonth(g.nextChargeDateISO)}. ${(increase / 100).toFixed(2).replace('.', ',')} € más al mes.`,
+                explanation: `${name} pasó de ${prevEuros} € a ${lastEuros} € el ${formatIsoDayMonth(increaseDateISO)}. ${(increase / 100).toFixed(2).replace('.', ',')} € más al mes.`,
                 actions: [{ label: 'Aceptar el cambio', kind: 'resolve' }],
                 resolvedMessage: `Subida de precio de ${name} aceptada.`,
               }

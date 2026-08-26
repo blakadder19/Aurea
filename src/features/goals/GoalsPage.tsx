@@ -150,9 +150,9 @@ export function GoalsPage() {
       <main className="flex flex-1 flex-col gap-6 lg:gap-5 overflow-y-auto p-4 lg:p-6">
         {!isAuthenticated && <EmergencyFundCard />}
         {isAuthenticated && emergencyFund && <RealEmergencyFundCard fund={emergencyFund} />}
-        {isAuthenticated && loadingReal ? (
+        {isAuthenticated && (loadingReal || realGoals === null) ? (
           <LoadingRealData />
-        ) : isAuthenticated && !loadingReal && realGoals?.length === 0 ? (
+        ) : isAuthenticated && realGoals!.length === 0 ? (
           <EmptyState
             headline="Todavía no hay objetivos"
             body="Crea el primero para ver aquí tu progreso real frente al previsto."
