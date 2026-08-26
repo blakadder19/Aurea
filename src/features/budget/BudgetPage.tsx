@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { AdjustBudgetPanel } from './AdjustBudgetPanel'
+import { CategoriesCard } from './CategoriesCard'
 import { CategoryList } from './CategoryList'
 import { MonthVerdictCard } from './MonthVerdictCard'
 import { NonSpendCards } from './NonSpendCards'
@@ -122,7 +123,7 @@ export function BudgetPage() {
 
   const { settings: realSettings } = useRealSettings()
   const budgetMonthStart = realSettings?.budgetMonthStart ?? null
-  const { categories: realCategories } = useRealCategories()
+  const { categories: realCategories, refetch: refetchCategories } = useRealCategories()
   const [monthOffset, setMonthOffset] = useState(0)
   const { loading: loadingReal, budget: realBudget, refetch } = useRealBudget(realCategories, budgetMonthStart, monthOffset)
   const { accounts: realAccounts } = useRealAccounts()
@@ -168,6 +169,7 @@ export function BudgetPage() {
         <CategoryList categories={viewModel?.categories} />
         {!isAuthenticated && <NonSpendCards />}
         {isAuthenticated && realNonSpend && <RealNonSpendCards data={realNonSpend} />}
+        {isAuthenticated && <CategoriesCard categories={realCategories ?? []} onRefetch={refetchCategories} />}
         {savedMessage && <UndoBar message={savedMessage} onUndo={undoSave} />}
       </main>
       <AdjustBudgetPanel

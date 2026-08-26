@@ -141,8 +141,12 @@ function groupByCategory(categories: RealCategory[]): { group: string; label: st
   }))
 }
 
-/** Icono/emoji por categoría, alta y baja — se usa en selectores y etiquetas de categoría por toda la app. Agrupadas por tipo. */
-export function CategoryIconsCard({ categories, onRefetch }: { categories: RealCategory[]; onRefetch: () => void }) {
+/**
+ * Alta, baja e icono de tus categorías. Vive en Presupuesto (no en
+ * Ajustes) porque es donde de verdad se usan: repartir el mes por
+ * categorías es la tarea, y crear una categoría es parte de esa tarea.
+ */
+export function CategoriesCard({ categories, onRefetch }: { categories: RealCategory[]; onRefetch: () => void }) {
   const groups = groupByCategory(categories)
 
   return (
