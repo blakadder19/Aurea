@@ -50,11 +50,16 @@ export function useNetWorthHistory(
 
     async function load() {
       if (!supabase) return
-      const { data, error } = await supabase
-        .from('transactions')
-        .select('account_id, booking_date, value_date, amount_cents')
-        .in('account_id', accountIds)
-        .or(`booking_date.gte.${from},and(booking_date.is.null,value_date.gte.${from})`)
+      const [{ data, error }, { data: earliestRows }] = await Promise.all([
+        supabase
+          .from('transactions')
+          .select('account_id, booking_date, value_date, amount_cents')
+          .in('account_id', accountIds)
+          .or(`booking_date.gte.${from},and(booking_date.is.null,value_date.gte.${from})`),
+        // Independiente de la ventana elegida: el movimiento más antiguo que
+        // de verdad tenemos, para no fabricar una línea plana antes de él.
+        supabase.from('transactions').select('booking_date, value_date').in('account_id', accountIds).order('booking_date', { ascending: true }).limit(1),
+      ])
       if (cancelled) return
       if (error) {
         console.error('useNetWorthHistory: fallo al leer transactions', error)
@@ -71,8 +76,10 @@ export function useNetWorthHistory(
       const shareByAccount = new Map(eligibleAccounts.map((a) => [a.id, a.sharePercent ?? 100]))
       const today = new Date()
       const toDateIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+      const earliestRow = earliestRows?.[0]
+      const earliestKnownDateIso = earliestRow ? ((earliestRow.booking_date as string | null) ?? (earliestRow.value_date as string | null)) : null
 
-      setPoints(reconstructNetWorthSeries(netWorth, transactions, shareByAccount, from, toDateIso))
+      setPoints(reconstructNetWorthSeries(netWorth, transactions, shareByAccount, from, toDateIso, earliestKnownDateIso))
       setLoading(false)
     }
 

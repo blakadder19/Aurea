@@ -76,4 +76,20 @@ describe('reconstructNetWorthSeries', () => {
     )
     expect(series[0].netWorth).toBe(400)
   })
+
+  it('si el movimiento más antiguo conocido es posterior al inicio pedido, recorta el arranque en vez de fabricar una línea plana', () => {
+    const series = reconstructNetWorthSeries(1000, [], new Map(), '2026-08-01', '2026-08-05', '2026-08-03')
+    expect(series[0].dateISO).toBe('2026-08-03')
+    expect(series.map((p) => p.dateISO)).not.toContain('2026-08-01')
+  })
+
+  it('si el movimiento más antiguo conocido es anterior o igual al inicio pedido, no recorta nada', () => {
+    const series = reconstructNetWorthSeries(1000, [], new Map(), '2026-08-01', '2026-08-03', '2026-07-01')
+    expect(series[0].dateISO).toBe('2026-08-01')
+  })
+
+  it('sin earliestKnownDateIso (parámetro omitido), se comporta igual que antes', () => {
+    const series = reconstructNetWorthSeries(1000, [], new Map(), '2026-08-01', '2026-08-03')
+    expect(series[0].dateISO).toBe('2026-08-01')
+  })
 })

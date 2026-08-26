@@ -50,10 +50,11 @@ function enumerateDatesIso(fromIso: string, toIso: string): string[] {
  * de hoy y las transacciones desde entonces: patrimonio(fecha) = patrimonio
  * de hoy − Σ transacciones posteriores a esa fecha, ponderadas por el % de
  * titularidad de cada cuenta (igual que el patrimonio actual). Nunca
- * inventa datos anteriores al histórico real de movimientos disponible —
- * si `fromDateIso` cae antes del movimiento más antiguo, esos puntos
- * iniciales asumen que el patrimonio ya era el mismo (no se puede saber
- * más atrás, y es más honesto que fabricar una tendencia).
+ * inventa datos anteriores al histórico real disponible: si
+ * `earliestKnownDateIso` (el movimiento más antiguo que de verdad tenemos,
+ * sin acotar a `fromDateIso`) es posterior a `fromDateIso`, la serie se
+ * recorta para no dibujar una línea plana fabricada en el tramo sin datos
+ * — mejor no mostrar esos días que fingir que el patrimonio no cambió.
  */
 export function reconstructNetWorthSeries(
   currentNetWorth: number,
@@ -61,8 +62,10 @@ export function reconstructNetWorthSeries(
   shareByAccount: Map<string, number>,
   fromDateIso: string,
   toDateIso: string,
+  earliestKnownDateIso?: string | null,
 ): NetWorthPoint[] {
-  const dates = enumerateDatesIso(fromDateIso, toDateIso)
+  const effectiveFromIso = earliestKnownDateIso && earliestKnownDateIso > fromDateIso ? earliestKnownDateIso : fromDateIso
+  const dates = enumerateDatesIso(effectiveFromIso, toDateIso)
   return dates.map((dateISO) => {
     const deltaCents = transactions
       .filter((tx) => tx.dateISO > dateISO)
