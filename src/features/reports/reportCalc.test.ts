@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildMonthlyReport } from './reportCalc'
+import { buildMonthlyReport, buildMonthlyTrend } from './reportCalc'
 
 describe('buildMonthlyReport', () => {
   it('calcula el neto y la tasa de ahorro cuando hubo ingresos', () => {
@@ -51,5 +51,22 @@ describe('buildMonthlyReport', () => {
     const report = buildMonthlyReport('julio de 2026', 0, 10000, [], 0)
     expect(report.expenseDeltaCents).toBe(10000)
     expect(report.expenseDeltaPct).toBeNull()
+  })
+})
+
+describe('buildMonthlyTrend', () => {
+  it('calcula el neto de cada mes sin alterar ingresos ni gastos', () => {
+    const points = buildMonthlyTrend([
+      { monthLabel: 'jun 26', incomeCents: 200000, expenseCents: 150000 },
+      { monthLabel: 'jul 26', incomeCents: 180000, expenseCents: 190000 },
+    ])
+    expect(points).toEqual([
+      { monthLabel: 'jun 26', incomeCents: 200000, expenseCents: 150000, netCents: 50000 },
+      { monthLabel: 'jul 26', incomeCents: 180000, expenseCents: 190000, netCents: -10000 },
+    ])
+  })
+
+  it('con una lista vacía, devuelve una lista vacía (nunca inventa meses)', () => {
+    expect(buildMonthlyTrend([])).toEqual([])
   })
 })

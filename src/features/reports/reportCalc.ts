@@ -56,3 +56,22 @@ export function buildMonthlyReport(
 
   return { monthLabel, incomeCents, expenseCents, netCents, savingsRatePct, categories, previousExpenseCents, expenseDeltaCents, expenseDeltaPct }
 }
+
+export interface MonthlyTrendPoint {
+  /** "ago 26" — mes corto + año de 2 cifras, para eje X sin ambigüedad entre años. */
+  monthLabel: string
+  incomeCents: number
+  expenseCents: number
+  netCents: number
+}
+
+interface MonthlyTrendInput {
+  monthLabel: string
+  incomeCents: number
+  expenseCents: number
+}
+
+/** De varios meses (cerrados o no, ya vienen agregados) a los puntos que pinta MonthlyTrendChart — nunca inventa un mes sin datos, solo lo muestra en 0. */
+export function buildMonthlyTrend(months: MonthlyTrendInput[]): MonthlyTrendPoint[] {
+  return months.map((m) => ({ ...m, netCents: m.incomeCents - m.expenseCents }))
+}

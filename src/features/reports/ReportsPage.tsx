@@ -8,7 +8,9 @@ import { demoMonthlyReport } from '../../data/reports'
 import { categoryColorClass } from '../../lib/categoryColor'
 import { formatMoneySigned, formatPercentSigned } from '../../lib/format'
 import { useAuthStore } from '../../lib/supabase/useAuth'
+import { MonthlyTrendChart } from './MonthlyTrendChart'
 import type { MonthlyReport } from './reportCalc'
+import { useMonthlyTrend } from './useMonthlyTrend'
 import { useRealMonthlyReport } from './useRealMonthlyReport'
 
 const euros = (cents: number) => cents / 100
@@ -120,6 +122,7 @@ export function ReportsPage() {
   const isAuthenticated = session !== null
   const [monthsAgo, setMonthsAgo] = useState(1)
   const { loading, report: realReport } = useRealMonthlyReport(monthsAgo)
+  const { loading: loadingTrend, points: trendPoints } = useMonthlyTrend()
 
   const report = isAuthenticated ? realReport : demoMonthlyReport
 
@@ -127,6 +130,7 @@ export function ReportsPage() {
     <>
       <Header isAuthenticated={isAuthenticated} monthsAgo={monthsAgo} onMonthsAgoChange={setMonthsAgo} />
       <main className="flex flex-1 flex-col gap-6 lg:gap-5 overflow-y-auto p-4 lg:p-6">
+        {isAuthenticated && <MonthlyTrendChart points={trendPoints} loading={loadingTrend} />}
         {isAuthenticated && loading ? (
           <LoadingRealData />
         ) : report === null ? (
