@@ -3,13 +3,16 @@ import { AdjustBudgetPanel } from './AdjustBudgetPanel'
 import { CategoryList } from './CategoryList'
 import { MonthVerdictCard } from './MonthVerdictCard'
 import { NonSpendCards } from './NonSpendCards'
+import { RealNonSpendCards } from './RealNonSpendCards'
 import { useBudgetStore, type BudgetView } from './store'
 import { fetchPreviousCycleBudget, saveCategoryBudget, toBudgetViewModel, useRealBudget } from './useRealBudget'
+import { useRealNonSpend } from './useRealNonSpend'
 import { useRealCategories } from '../transactions/useRealCategories'
 import { LoadingRealData } from '../../components/states/LoadingRealData'
 import { UndoBar } from '../../components/UndoBar'
 import { budgetSummary } from '../../data/budget'
 import { useAuthStore } from '../../lib/supabase/useAuth'
+import { useRealAccounts } from '../accounts/useRealAccounts'
 import { useRealSettings } from '../settings/useRealSettings'
 
 const VIEWS: { value: BudgetView; label: string }[] = [
@@ -122,6 +125,8 @@ export function BudgetPage() {
   const { categories: realCategories } = useRealCategories()
   const [monthOffset, setMonthOffset] = useState(0)
   const { loading: loadingReal, budget: realBudget, refetch } = useRealBudget(realCategories, budgetMonthStart, monthOffset)
+  const { accounts: realAccounts } = useRealAccounts()
+  const { data: realNonSpend } = useRealNonSpend(realAccounts, budgetMonthStart, monthOffset)
 
   const isAuthenticated = session !== null
   const hasRealBudget = isAuthenticated && !loadingReal && realBudget !== null
@@ -162,6 +167,7 @@ export function BudgetPage() {
         <MonthVerdictCard real={viewModel?.verdict} />
         <CategoryList categories={viewModel?.categories} />
         {!isAuthenticated && <NonSpendCards />}
+        {isAuthenticated && realNonSpend && <RealNonSpendCards data={realNonSpend} />}
         {savedMessage && <UndoBar message={savedMessage} onUndo={undoSave} />}
       </main>
       <AdjustBudgetPanel
