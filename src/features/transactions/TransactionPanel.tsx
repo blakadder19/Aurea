@@ -202,6 +202,8 @@ interface RealFieldsProps {
   onDeleteManual?: (id: string, accountId: string) => Promise<string | null>
   onSaveDisplayName?: (id: string, displayName: string) => Promise<string | null>
   onSaveInternalTransfer?: (id: string, isInternalTransfer: boolean) => Promise<string | null>
+  /** Dividir/quitar división cambia hasSplits y la categoría mostrada en Movimientos/Centro de revisión — hace falta refrescar para que se note fuera de este panel. */
+  onSplitsChanged?: () => void
 }
 
 /** Solo tiene sentido para movimientos manuales: los sincronizados con el banco siempre reflejan lo que dice el banco. */
@@ -245,7 +247,20 @@ function ManualFields({
 }
 
 /** Categoría/Etiquetas/Notas reales: cada cambio persiste de verdad en Supabase, bajo RLS. */
-function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTags, onCreateRule, onClose, manualAccountIds, onUpdateManual, onDeleteManual, onSaveDisplayName, onSaveInternalTransfer }: RealFieldsProps) {
+function RealFields({
+  transaction,
+  categories,
+  onSaveCategory,
+  onSaveNotesAndTags,
+  onCreateRule,
+  onClose,
+  manualAccountIds,
+  onUpdateManual,
+  onDeleteManual,
+  onSaveDisplayName,
+  onSaveInternalTransfer,
+  onSplitsChanged,
+}: RealFieldsProps) {
   const [categoryId, setCategoryId] = useState(transaction.categoryId ?? '')
   const [tagsInput, setTagsInput] = useState(transaction.tags.join(', '))
   const [noteInput, setNoteInput] = useState(transaction.userNote)
@@ -466,6 +481,7 @@ function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTag
           onSaved={(newSplits) => {
             setSplits(newSplits)
             setEditingSplit(false)
+            onSplitsChanged?.()
           }}
           onCancel={() => setEditingSplit(false)}
         />

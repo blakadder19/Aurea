@@ -206,6 +206,7 @@ export function TransactionsPage() {
         onDeleteManual: handleDeleteManual,
         onSaveDisplayName: handleSaveDisplayName,
         onSaveInternalTransfer: handleSaveInternalTransfer,
+        onSplitsChanged: refetch,
       }
     : undefined
 
