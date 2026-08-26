@@ -65,13 +65,14 @@ function IconInput({ category, onSaved, onDeleted }: { category: RealCategory; o
 function AddCategoryForm({ onCreated }: { onCreated: () => void }) {
   const [name, setName] = useState('')
   const [icon, setIcon] = useState('')
+  const [group, setGroup] = useState(CATEGORY_GROUP_ORDER[0])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit() {
     setSaving(true)
     setError(null)
-    const err = await createCategory(name, icon)
+    const err = await createCategory(name, icon, group)
     setSaving(false)
     if (err) setError(err)
     else {
@@ -83,7 +84,7 @@ function AddCategoryForm({ onCreated }: { onCreated: () => void }) {
 
   return (
     <div className="flex flex-col gap-2 border-t border-line pt-3">
-      <div className="flex items-center gap-2.5">
+      <div className="flex flex-wrap items-center gap-2.5">
         <input
           value={icon}
           onChange={(e) => setIcon(e.target.value)}
@@ -101,6 +102,19 @@ function AddCategoryForm({ onCreated }: { onCreated: () => void }) {
           aria-label="Nombre de la nueva categoría"
           className="min-h-11 flex-1 rounded-md border border-line px-3.5 py-2.5 text-base text-ink"
         />
+        <select
+          value={group}
+          onChange={(e) => setGroup(e.target.value)}
+          disabled={saving}
+          aria-label="Grupo de la nueva categoría"
+          className="min-h-11 rounded-md border border-line bg-surface px-3 text-base text-ink"
+        >
+          {CATEGORY_GROUP_ORDER.map((g) => (
+            <option key={g} value={g}>
+              {categoryGroupLabel(g)}
+            </option>
+          ))}
+        </select>
         <button
           type="button"
           disabled={saving || !name.trim()}
