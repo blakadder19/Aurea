@@ -63,7 +63,7 @@ export function useRealRecurring(): RealRecurringResult {
     async function load() {
       if (!supabase) return
 
-      const [{ data: txRows, error: txError }, { data: accountRows }, { data: categoryRows }, { data: dismissalRows }] =
+      const [{ data: txRows, error: txError }, { data: accountRows }, { data: categoryRows }, { data: dismissalRows }, { data: manualRows }] =
         await Promise.all([
           supabase
             .from('transactions')
@@ -74,6 +74,7 @@ export function useRealRecurring(): RealRecurringResult {
           supabase.from('accounts').select('id, name, display_name, connection_id'),
           supabase.from('categories').select('id, category_group'),
           supabase.from('recurring_dismissals').select('id, dedupe_key, scope').eq('active', true),
+          supabase.from('manual_recurring_items').select('id, name, amount_cents, frequency, next_charge_date').eq('active', true),
         ])
       if (cancelled) return
       if (txError || !txRows) {
@@ -186,8 +187,25 @@ export function useRealRecurring(): RealRecurringResult {
         })
         .sort((a, b) => a.name.localeCompare(b.name))
 
+      const manualItems: RecurringItem[] = (manualRows ?? []).map((r) => {
+        const nextDate = r.next_charge_date as string | null
+        return {
+          id: r.id as string,
+          name: r.name as string,
+          shortName: shorten(r.name as string),
+          account: 'Manual',
+          nextChargeLabel: nextDate ? formatIsoDayMonth(nextDate) : 'Sin fecha definida',
+          nextChargeDay: null,
+          frequency: (r.frequency as string | null) ?? 'Mensual',
+          amount: (r.amount_cents as number) / 100,
+          category: 'otros',
+          history: [],
+          isManual: true,
+        }
+      })
+
       setGroups(detected.filter((g) => !itemDismissed.has(g.dedupeKey)))
-      setItems(mapped)
+      setItems([...mapped, ...manualItems].sort((a, b) => a.name.localeCompare(b.name)))
       setLoading(false)
     }
 
@@ -240,4 +258,51 @@ export async function undoDismiss(dismissalId: string): Promise<void> {
   if (!supabase) return
   const { error } = await supabase.from('recurring_dismissals').update({ active: false }).eq('id', dismissalId)
   if (error) console.error('undoDismiss: fallo al deshacer', error)
+}
+
+/**
+ * Da de alta un recurrente a mano — para cargos que Áurea no puede ver
+ * (pago en efectivo, otra entidad) o que todavía no han cobrado ninguna
+ * vez. Solo cadencia mensual, igual que la detección automática.
+ */
+export async function createManualRecurringItem(name: string, amountCents: number, nextChargeDateIso: string | null): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  if (!name.trim()) return 'Ponle un nombre al recurrente.'
+  if (!Number.isInteger(amountCents) || amountCents <= 0) return 'El importe debe ser mayor que 0.'
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return 'Inicia sesión de nuevo.'
+
+  const { error } = await supabase.from('manual_recurring_items').insert({
+    user_id: user.id,
+    name: name.trim(),
+    amount_cents: amountCents,
+    frequency: 'Mensual',
+    next_charge_date: nextChargeDateIso,
+  })
+  if (error) {
+    console.error('createManualRecurringItem: fallo al crear', error)
+    return 'No hemos podido crear el recurrente. Inténtalo de nuevo.'
+  }
+  return null
+}
+
+/** Desactiva un recurrente manual (pausar/cancelar). Reversible: ver reactivateManualRecurringItem. */
+export async function deactivateManualRecurringItem(id: string): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  const { error } = await supabase.from('manual_recurring_items').update({ active: false }).eq('id', id)
+  if (error) {
+    console.error('deactivateManualRecurringItem: fallo al desactivar', error)
+    return 'No hemos podido borrar el recurrente. Inténtalo de nuevo.'
+  }
+  return null
+}
+
+/** Deshace una desactivación. */
+export async function reactivateManualRecurringItem(id: string): Promise<void> {
+  if (!supabase) return
+  const { error } = await supabase.from('manual_recurring_items').update({ active: true }).eq('id', id)
+  if (error) console.error('reactivateManualRecurringItem: fallo al deshacer', error)
 }

@@ -42,6 +42,8 @@ export interface RecurringItem {
   category: RecurringCategory
   highlight?: RecurringHighlight
   history: HistoryEntry[]
+  /** Dado de alta a mano por el usuario, no detectado de movimientos — habilita editar/borrar. */
+  isManual?: boolean
 }
 
 export const recurringItems: RecurringItem[] = [

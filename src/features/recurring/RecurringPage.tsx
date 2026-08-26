@@ -1,9 +1,18 @@
 import { useState } from 'react'
+import { AddManualRecurringPanel } from './AddManualRecurringPanel'
 import { RecurringCalendar } from './RecurringCalendar'
 import { RecurringList } from './RecurringList'
 import { SubscriptionDetailPanel } from './SubscriptionDetailPanel'
 import { useRecurringStore, type RecurringView } from './store'
-import { dismissHighlight, dismissItem, undoDismiss, useRealRecurring } from './useRealRecurring'
+import {
+  createManualRecurringItem,
+  deactivateManualRecurringItem,
+  dismissHighlight,
+  dismissItem,
+  reactivateManualRecurringItem,
+  undoDismiss,
+  useRealRecurring,
+} from './useRealRecurring'
 import { EmptyState } from '../../components/states/EmptyState'
 import { LoadingRealData } from '../../components/states/LoadingRealData'
 import { UndoBar } from '../../components/UndoBar'
@@ -16,7 +25,7 @@ const VIEWS: { value: RecurringView; label: string }[] = [
   { value: 'calendario', label: 'Calendario' },
 ]
 
-function Header({ isAuthenticated, items }: { isAuthenticated: boolean; items: RecurringItem[] }) {
+function Header({ isAuthenticated, items, onAdd }: { isAuthenticated: boolean; items: RecurringItem[]; onAdd: () => void }) {
   const view = useRecurringStore((s) => s.view)
   const setView = useRecurringStore((s) => s.setView)
 
@@ -36,14 +45,13 @@ function Header({ isAuthenticated, items }: { isAuthenticated: boolean; items: R
               : `${formatMoney(monthlyTotal, 2)} recurrentes al mes · ${formatMoney(annualTotal, 2)} al año`}
           </div>
         </div>
-        {!isAuthenticated && (
-          <button
-            type="button"
-            className="min-h-11 rounded-md border border-brand bg-brand px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-brand-hover"
-          >
-            Añadir recurrente
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={isAuthenticated ? onAdd : undefined}
+          className="min-h-11 rounded-md border border-brand bg-brand px-[18px] py-2.5 text-base font-semibold text-surface hover:bg-brand-hover"
+        >
+          Añadir recurrente
+        </button>
       </div>
 
       <div className="flex flex-wrap items-center gap-2.5">
@@ -79,7 +87,8 @@ export function RecurringPage() {
   const isAuthenticated = session !== null
 
   const { loading: loadingReal, items: realItems, groups, refetch } = useRealRecurring()
-  const [pendingUndo, setPendingUndo] = useState<{ dismissalId: string; message: string } | null>(null)
+  const [pendingUndo, setPendingUndo] = useState<{ dismissalId: string; message: string; isManual?: boolean } | null>(null)
+  const [addPanelOpen, setAddPanelOpen] = useState(false)
 
   const hasLoadedReal = isAuthenticated && !loadingReal && realItems !== null
   // Autenticado pero todavía cargando: nunca caer a la lista de demo, ni
@@ -95,6 +104,13 @@ export function RecurringPage() {
   }
 
   async function handleResolveItem(item: RecurringItem, message: string) {
+    if (item.isManual) {
+      const error = await deactivateManualRecurringItem(item.id)
+      if (error) return
+      setPendingUndo({ dismissalId: item.id, message, isManual: true })
+      refetch()
+      return
+    }
     const { dismissalId, error } = await dismissItem(item.id)
     if (error || !dismissalId) return
     setPendingUndo({ dismissalId, message })
@@ -103,14 +119,19 @@ export function RecurringPage() {
 
   async function handleUndo() {
     if (!pendingUndo) return
-    await undoDismiss(pendingUndo.dismissalId)
+    if (pendingUndo.isManual) await reactivateManualRecurringItem(pendingUndo.dismissalId)
+    else await undoDismiss(pendingUndo.dismissalId)
     setPendingUndo(null)
     refetch()
   }
 
+  async function handleCreateManual(name: string, amountCents: number, nextChargeDateIso: string | null) {
+    return createManualRecurringItem(name, amountCents, nextChargeDateIso)
+  }
+
   return (
     <>
-      <Header isAuthenticated={isAuthenticated} items={items} />
+      <Header isAuthenticated={isAuthenticated} items={items} onAdd={() => setAddPanelOpen(true)} />
       <main className="flex flex-1 flex-col gap-6 lg:gap-5 overflow-y-auto p-4 lg:p-6">
         {isLoadingAuth ? (
           <LoadingRealData />
@@ -132,6 +153,15 @@ export function RecurringPage() {
       <SubscriptionDetailPanel
         items={hasLoadedReal ? realItems! : undefined}
         onResolve={hasLoadedReal ? handleResolveItem : undefined}
+      />
+      <AddManualRecurringPanel
+        open={addPanelOpen}
+        onClose={() => setAddPanelOpen(false)}
+        onCreate={handleCreateManual}
+        onDone={() => {
+          refetch()
+          setAddPanelOpen(false)
+        }}
       />
     </>
   )
