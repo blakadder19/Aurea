@@ -4,7 +4,7 @@ import { Money } from '../../components/Money'
 import type { ScenarioParams } from './domain'
 import { projectedNetWorth } from './domain'
 import { usePlanningStore } from './store'
-import { savePlanningScenario, useRealPlanningScenarios } from './useRealPlanningScenarios'
+import { deletePlanningScenario, savePlanningScenario, useRealPlanningScenarios } from './useRealPlanningScenarios'
 import { useAuthStore } from '../../lib/supabase/useAuth'
 
 const LABEL_COLOR: Record<string, string> = {
@@ -46,6 +46,7 @@ export function SavedScenarios() {
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null)
 
   async function handleSave() {
     setSaving(true)
@@ -57,6 +58,14 @@ export function SavedScenarios() {
       setName('')
       refetch()
     }
+  }
+
+  async function handleDelete(id: string) {
+    setError(null)
+    const err = await deletePlanningScenario(id)
+    setConfirmingDeleteId(null)
+    if (err) setError(err)
+    else refetch()
   }
 
   return (
@@ -88,16 +97,34 @@ export function SavedScenarios() {
               {customScenarios.map((scenario) => {
                 const value = projectedNetWorth(startingNetWorth, scenario.params, horizonYears * 12, avgDebtRate)
                 return (
-                  <button
-                    key={scenario.id}
-                    type="button"
-                    onClick={() => loadScenario(scenario.params)}
-                    className="flex flex-col gap-2 rounded-[14px] border border-line p-[18px] text-left hover:border-brand"
-                  >
-                    <div className="text-[15px] font-bold text-ink">{scenario.name}</div>
-                    <Money value={value} decimals={0} className="text-[22px] font-bold" />
-                    <div className="text-sm text-ink-muted">Tu configuración guardada · toca para cargarla</div>
-                  </button>
+                  <div key={scenario.id} className="flex flex-col gap-2 rounded-[14px] border border-line p-[18px]">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="text-[15px] font-bold text-ink">{scenario.name}</div>
+                      {confirmingDeleteId === scenario.id ? (
+                        <div className="flex shrink-0 gap-1.5 text-sm">
+                          <button type="button" onClick={() => void handleDelete(scenario.id)} className="font-semibold text-danger-text underline hover:no-underline">
+                            Sí, borrar
+                          </button>
+                          <button type="button" onClick={() => setConfirmingDeleteId(null)} className="text-ink-muted underline hover:no-underline">
+                            Cancelar
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmingDeleteId(scenario.id)}
+                          aria-label={`Borrar escenario ${scenario.name}`}
+                          className="shrink-0 text-ink-muted hover:text-danger-text"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                    <button type="button" onClick={() => loadScenario(scenario.params)} className="flex flex-col gap-2 text-left">
+                      <Money value={value} decimals={0} className="text-[22px] font-bold" />
+                      <div className="text-sm text-ink-muted">Tu configuración guardada · toca para cargarla</div>
+                    </button>
+                  </div>
                 )
               })}
             </div>

@@ -75,3 +75,14 @@ export async function savePlanningScenario(name: string, params: ScenarioParams)
   }
   return null
 }
+
+/** Borra un escenario guardado. No hay deshacer — es una configuración de sliders, no un dato financiero. */
+export async function deletePlanningScenario(id: string): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  const { error } = await supabase.from('planning_scenarios').delete().eq('id', id)
+  if (error) {
+    console.error('deletePlanningScenario: fallo al borrar', error)
+    return 'No hemos podido borrar el escenario. Inténtalo de nuevo.'
+  }
+  return null
+}
