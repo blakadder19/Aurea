@@ -5,7 +5,7 @@ import { GoalCard } from './GoalCard'
 import { RealEmergencyFundCard } from './RealEmergencyFundCard'
 import { RealGoalPanel, type RealGoalPanelMode } from './RealGoalPanel'
 import { useGoalsStore } from './store'
-import { contributeToGoal, createGoal, toGoalCardProps, useRealGoals } from './useRealGoals'
+import { archiveGoal, contributeToGoal, createGoal, toGoalCardProps, unarchiveGoal, updateGoal, useRealGoals, type RealGoal } from './useRealGoals'
 import { useRealEmergencyFund } from './useRealEmergencyFund'
 import { EmptyState } from '../../components/states/EmptyState'
 import { LoadingRealData } from '../../components/states/LoadingRealData'
@@ -67,6 +67,8 @@ export function GoalsPage() {
   const undoLastContribution = useGoalsStore((s) => s.undoLastContribution)
   const session = useAuthStore((s) => s.session)
   const [panelMode, setPanelMode] = useState<RealGoalPanelMode>(null)
+  const [editingGoal, setEditingGoal] = useState<RealGoal | null>(null)
+  const [pendingArchive, setPendingArchive] = useState<{ id: string; message: string } | null>(null)
 
   const { loading: loadingReal, goals: realGoals, refetch } = useRealGoals()
   const { accounts: realAccounts } = useRealAccounts()
@@ -82,6 +84,29 @@ export function GoalsPage() {
 
   async function handleContribute(goalId: string, currentSavedCents: number, amountCents: number) {
     return contributeToGoal(goalId, currentSavedCents, amountCents)
+  }
+
+  async function handleUpdate(id: string, name: string, targetCents: number, monthlyContributionCents: number) {
+    return updateGoal(id, name, targetCents, monthlyContributionCents)
+  }
+
+  function openEdit(goal: RealGoal) {
+    setEditingGoal(goal)
+    setPanelMode('edit')
+  }
+
+  async function handleArchive(goal: RealGoal) {
+    const error = await archiveGoal(goal.id)
+    if (error) return
+    setPendingArchive({ id: goal.id, message: `${goal.name} archivado.` })
+    refetch()
+  }
+
+  async function handleUndoArchive() {
+    if (!pendingArchive) return
+    await unarchiveGoal(pendingArchive.id)
+    setPendingArchive(null)
+    refetch()
   }
 
   const count = isAuthenticated ? (realGoals?.length ?? 0) : demoGoals.length + 1
@@ -109,19 +134,30 @@ export function GoalsPage() {
         ) : (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {hasRealGoals
-              ? realGoals!.map((g) => <GoalCard key={g.id} goal={toGoalCardProps(g)} asOf={today} />)
+              ? realGoals!.map((g) => (
+                  <GoalCard
+                    key={g.id}
+                    goal={toGoalCardProps(g)}
+                    asOf={today}
+                    onEdit={() => openEdit(g)}
+                    onArchive={() => handleArchive(g)}
+                  />
+                ))
               : demoGoals.map((g) => <GoalCard key={g.id} goal={g} />)}
           </div>
         )}
         {!isAuthenticated && undoMessage && <UndoBar message={undoMessage} onUndo={undoLastContribution} />}
+        {isAuthenticated && pendingArchive && <UndoBar message={pendingArchive.message} onUndo={handleUndoArchive} />}
       </main>
       {isAuthenticated ? (
         <RealGoalPanel
           mode={panelMode}
           goals={realGoals ?? []}
+          editingGoal={editingGoal}
           onClose={() => setPanelMode(null)}
           onCreate={handleCreate}
           onContribute={handleContribute}
+          onUpdate={handleUpdate}
           onDone={() => {
             refetch()
             setPanelMode(null)

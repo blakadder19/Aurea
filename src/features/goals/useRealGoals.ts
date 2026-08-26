@@ -96,6 +96,42 @@ export async function createGoal(name: string, targetCents: number, monthlyContr
   return null
 }
 
+/** Actualiza nombre, importe objetivo y aportación mensual de un objetivo existente. */
+export async function updateGoal(id: string, name: string, targetCents: number, monthlyContributionCents: number): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  if (!name.trim()) return 'Ponle un nombre al objetivo.'
+  if (!Number.isInteger(targetCents) || targetCents <= 0) return 'El objetivo debe ser un importe mayor que 0.'
+  if (!Number.isInteger(monthlyContributionCents) || monthlyContributionCents < 0) return 'La aportación mensual no puede ser negativa.'
+
+  const { error } = await supabase
+    .from('goals')
+    .update({ name: name.trim(), target_cents: targetCents, monthly_contribution_cents: monthlyContributionCents })
+    .eq('id', id)
+  if (error) {
+    console.error('updateGoal: fallo al actualizar', error)
+    return 'No hemos podido guardar los cambios. Inténtalo de nuevo.'
+  }
+  return null
+}
+
+/** Archiva un objetivo (deja de contar en el seguimiento). Reversible: ver unarchiveGoal. */
+export async function archiveGoal(id: string): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  const { error } = await supabase.from('goals').update({ archived: true }).eq('id', id)
+  if (error) {
+    console.error('archiveGoal: fallo al archivar', error)
+    return 'No hemos podido archivar el objetivo. Inténtalo de nuevo.'
+  }
+  return null
+}
+
+/** Deshace un archivado. */
+export async function unarchiveGoal(id: string): Promise<void> {
+  if (!supabase) return
+  const { error } = await supabase.from('goals').update({ archived: false }).eq('id', id)
+  if (error) console.error('unarchiveGoal: fallo al deshacer', error)
+}
+
 /** Registra una aportación: suma amountCents al ahorrado del objetivo. */
 export async function contributeToGoal(goalId: string, currentSavedCents: number, amountCents: number): Promise<string | null> {
   if (!supabase) return 'Supabase no está configurado.'

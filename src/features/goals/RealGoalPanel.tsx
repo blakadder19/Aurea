@@ -66,6 +66,66 @@ function CreateGoalForm({ onCreate, onDone }: CreateFormProps) {
   )
 }
 
+interface EditFormProps {
+  goal: RealGoal
+  onUpdate: (id: string, name: string, targetCents: number, monthlyContributionCents: number) => Promise<string | null>
+  onDone: () => void
+}
+
+function EditGoalForm({ goal, onUpdate, onDone }: EditFormProps) {
+  const [name, setName] = useState(goal.name)
+  const [target, setTarget] = useState(String(goal.targetCents / 100))
+  const [monthly, setMonthly] = useState(String(goal.monthlyContributionCents / 100))
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit() {
+    setSaving(true)
+    setError(null)
+    const err = await onUpdate(goal.id, name, Math.round(Number(target) * 100), Math.round(Number(monthly || '0') * 100))
+    setSaving(false)
+    if (err) setError(err)
+    else onDone()
+  }
+
+  return (
+    <>
+      <div className="flex items-start justify-between">
+        <div>
+          <SectionLabel>Editar objetivo</SectionLabel>
+          <Dialog.Title className="mt-1 font-serif text-[26px] font-semibold text-ink">Editar objetivo</Dialog.Title>
+        </div>
+        <Dialog.Close asChild>
+          <button type="button" aria-label="Cerrar panel" className="flex h-11 w-11 items-center justify-center rounded-md border border-line bg-surface text-lg text-ink">
+            ✕
+          </button>
+        </Dialog.Close>
+      </div>
+      <label className={LABEL_CLASSES}>
+        Nombre
+        <input value={name} disabled={saving} onChange={(e) => setName(e.target.value)} className={INPUT_CLASSES} />
+      </label>
+      <label className={LABEL_CLASSES}>
+        Importe objetivo
+        <input type="number" min={0} step={10} value={target} disabled={saving} onChange={(e) => setTarget(e.target.value)} className={INPUT_CLASSES} />
+      </label>
+      <label className={LABEL_CLASSES}>
+        Aportación mensual estimada (opcional)
+        <input type="number" min={0} step={10} value={monthly} disabled={saving} onChange={(e) => setMonthly(e.target.value)} className={INPUT_CLASSES} />
+      </label>
+      {error && <p className="text-sm text-danger-text">{error}</p>}
+      <button
+        type="button"
+        disabled={saving}
+        onClick={() => void handleSubmit()}
+        className="mt-2 min-h-11 rounded-md border border-brand bg-brand px-4 py-3 text-base font-bold text-surface hover:bg-brand-hover"
+      >
+        Guardar cambios
+      </button>
+    </>
+  )
+}
+
 interface ContributeFormProps {
   goals: RealGoal[]
   onContribute: (goalId: string, currentSavedCents: number, amountCents: number) => Promise<string | null>
@@ -129,23 +189,26 @@ function ContributeForm({ goals, onContribute, onDone }: ContributeFormProps) {
   )
 }
 
-export type RealGoalPanelMode = 'create' | 'contribute' | null
+export type RealGoalPanelMode = 'create' | 'contribute' | 'edit' | null
 
 interface RealGoalPanelProps {
   mode: RealGoalPanelMode
   goals: RealGoal[]
+  editingGoal?: RealGoal | null
   onClose: () => void
   onCreate: (name: string, targetCents: number, monthlyContributionCents: number) => Promise<string | null>
   onContribute: (goalId: string, currentSavedCents: number, amountCents: number) => Promise<string | null>
+  onUpdate: (id: string, name: string, targetCents: number, monthlyContributionCents: number) => Promise<string | null>
   onDone: () => void
 }
 
-/** Panel real: crear un objetivo nuevo o registrar una aportación a uno existente. */
-export function RealGoalPanel({ mode, goals, onClose, onCreate, onContribute, onDone }: RealGoalPanelProps) {
+/** Panel real: crear, editar o registrar una aportación a un objetivo. */
+export function RealGoalPanel({ mode, goals, editingGoal, onClose, onCreate, onContribute, onUpdate, onDone }: RealGoalPanelProps) {
   return (
     <SidePanel open={mode !== null} onOpenChange={(next) => !next && onClose()}>
       {mode === 'create' && <CreateGoalForm onCreate={onCreate} onDone={onDone} />}
       {mode === 'contribute' && <ContributeForm goals={goals} onContribute={onContribute} onDone={onDone} />}
+      {mode === 'edit' && editingGoal && <EditGoalForm goal={editingGoal} onUpdate={onUpdate} onDone={onDone} />}
     </SidePanel>
   )
 }

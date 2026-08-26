@@ -11,8 +11,15 @@ import { useGoalsStore } from './store'
 const FILL_BY_STATUS = { success: 'bg-green', danger: 'bg-danger' } as const
 const RING_BY_STATUS = { success: 'stroke-green', danger: 'stroke-danger' } as const
 
+interface GoalCardProps {
+  goal: Goal
+  asOf?: Date
+  onEdit?: () => void
+  onArchive?: () => void
+}
+
 /** Una tarjeta de objetivo con badge de estado, progreso y fecha estimada. */
-export function GoalCard({ goal, asOf = CONTEXT_DATE }: { goal: Goal; asOf?: Date }) {
+export function GoalCard({ goal, asOf = CONTEXT_DATE, onEdit, onArchive }: GoalCardProps) {
   const extra = useGoalsStore((s) => s.extraSaved[goal.id] ?? 0)
   const saved = goal.saved + extra
 
@@ -29,7 +36,23 @@ export function GoalCard({ goal, asOf = CONTEXT_DATE }: { goal: Goal; asOf?: Dat
             strokeWidth={7}
             ariaLabel={`${Math.round(progressPct)}% del objetivo`}
           />
-          <h2 className="font-serif text-[22px] lg:text-[19px] font-semibold text-ink">{goal.name}</h2>
+          <div>
+            <h2 className="font-serif text-[22px] lg:text-[19px] font-semibold text-ink">{goal.name}</h2>
+            {(onEdit || onArchive) && (
+              <div className="mt-0.5 flex gap-3 text-sm">
+                {onEdit && (
+                  <button type="button" onClick={onEdit} className="text-brand underline hover:no-underline">
+                    Editar
+                  </button>
+                )}
+                {onArchive && (
+                  <button type="button" onClick={onArchive} className="text-ink-muted underline hover:no-underline">
+                    Archivar
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
         <Badge variant={goal.status}>{goal.statusLabel}</Badge>
       </div>
