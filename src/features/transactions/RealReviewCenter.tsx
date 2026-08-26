@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Badge } from '../../components/Badge'
 import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
@@ -6,7 +6,7 @@ import { useTransactionsStore } from './store'
 import { displayLabelFor } from './TransactionsTable'
 import { suggestCategories } from './useAiCategorization'
 import { categoryLabel, type RealCategory } from './useRealCategories'
-import { bulkApplyCategorySuggestions, type RealTransaction } from './useRealTransactions'
+import { bulkApplyCategorySuggestions, isTransactionPending, type RealTransaction } from './useRealTransactions'
 
 /** Techo de seguridad: 40 rondas × 30 movimientos = hasta 1200 clasificados en una sola pasada. */
 const MAX_AUTO_ROUNDS = 40
@@ -26,7 +26,7 @@ interface RealReviewCenterProps {
  */
 export function RealReviewCenter({ transactions, categories, onSaveCategory, onBulkClassified }: RealReviewCenterProps) {
   const openPanel = useTransactionsStore((s) => s.openPanel)
-  const pending = transactions.filter((t) => !t.categoryId || t.needsReview)
+  const pending = transactions.filter(isTransactionPending)
   const categoryById = new Map(categories.map((c) => [c.id, categoryLabel(c)]))
 
   const [suggestions, setSuggestions] = useState<Record<string, string>>({})
@@ -38,8 +38,11 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory, onB
   const [autoRunning, setAutoRunning] = useState(false)
   const [autoClassified, setAutoClassified] = useState(0)
   const [autoSummary, setAutoSummary] = useState<string | null>(null)
+  const cancelRequested = useRef(false)
 
   const suggestionCount = Object.keys(suggestions).length
+  // Las tres acciones escriben categorías sobre los mismos movimientos — que nunca corran a la vez.
+  const busy = loadingSuggestions || acceptingAll || autoRunning
 
   /**
    * En vez de obligar a pulsar "Sugerir" tanda a tanda (la Edge Function
@@ -54,9 +57,15 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory, onB
     setAutoSummary(null)
     setSuggestError(null)
     setAutoClassified(0)
+    cancelRequested.current = false
 
     let classified = 0
+    let cancelled = false
     for (let round = 0; round < MAX_AUTO_ROUNDS; round++) {
+      if (cancelRequested.current) {
+        cancelled = true
+        break
+      }
       const { suggestions: result, error } = await suggestCategories()
       if (error) {
         setSuggestError(error)
@@ -78,10 +87,16 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory, onB
     setAutoRunning(false)
     setAutoSummary(
       classified > 0
-        ? `Clasificados ${classified} movimiento${classified === 1 ? '' : 's'}. Revisa cuando quieras los que no tengan sugerencia clara.`
-        : 'No hemos encontrado ninguna sugerencia con confianza suficiente.',
+        ? `Clasificados ${classified} movimiento${classified === 1 ? '' : 's'}${cancelled ? ' antes de cancelar' : ''}. Revisa cuando quieras los que no tengan sugerencia clara.`
+        : cancelled
+          ? 'Cancelado antes de clasificar nada.'
+          : 'No hemos encontrado ninguna sugerencia con confianza suficiente.',
     )
     if (classified > 0) onBulkClassified()
+  }
+
+  function handleCancelClassifyAll() {
+    cancelRequested.current = true
   }
 
   async function handleSuggest() {
@@ -147,7 +162,7 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory, onB
               <button
                 type="button"
                 onClick={() => void handleAcceptAll()}
-                disabled={acceptingAll}
+                disabled={busy}
                 className="min-h-11 rounded-md border border-brand bg-brand px-4 py-2.5 text-base font-semibold text-surface hover:bg-brand-hover disabled:opacity-60"
               >
                 {acceptingAll ? 'Guardando…' : `Aceptar todas (${suggestionCount})`}
@@ -156,20 +171,34 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory, onB
             <button
               type="button"
               onClick={() => void handleSuggest()}
-              disabled={loadingSuggestions || autoRunning}
+              disabled={busy}
               className="min-h-11 rounded-md border border-brand bg-surface px-4 py-2.5 text-base font-semibold text-brand hover:bg-brand-soft disabled:opacity-60"
             >
               {loadingSuggestions ? 'Pensando…' : 'Sugerir categorías con IA'}
             </button>
-            {pending.length > 5 && (
+            {pending.length > 5 && !autoRunning && (
               <button
                 type="button"
                 onClick={() => void handleClassifyAll()}
-                disabled={autoRunning}
+                disabled={busy}
                 className="min-h-11 rounded-md border border-brand bg-brand px-4 py-2.5 text-base font-semibold text-surface hover:bg-brand-hover disabled:opacity-60"
               >
-                {autoRunning ? `Clasificando… (${autoClassified})` : 'Clasificar todos los pendientes con IA'}
+                Clasificar todos los pendientes con IA
               </button>
+            )}
+            {autoRunning && (
+              <>
+                <span className="flex min-h-11 items-center rounded-md border border-brand bg-brand px-4 text-base font-semibold text-surface">
+                  Clasificando… ({autoClassified})
+                </span>
+                <button
+                  type="button"
+                  onClick={handleCancelClassifyAll}
+                  className="min-h-11 rounded-md border border-line px-4 py-2.5 text-base font-semibold text-ink hover:bg-canvas"
+                >
+                  Cancelar
+                </button>
+              </>
             )}
           </div>
         )}

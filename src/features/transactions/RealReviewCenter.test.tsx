@@ -33,6 +33,7 @@ const transactions: RealTransaction[] = [
     dateISO: '2026-08-25',
     isInternalTransfer: false,
     receiptPath: null,
+    hasSplits: false,
   },
   {
     id: 'tx-2',
@@ -49,6 +50,7 @@ const transactions: RealTransaction[] = [
     dateISO: '2026-08-25',
     isInternalTransfer: false,
     receiptPath: null,
+    hasSplits: false,
   },
 ]
 const categories: RealCategory[] = [
@@ -173,5 +175,43 @@ describe('RealReviewCenter', () => {
     expect(suggestCategories).toHaveBeenCalledTimes(2)
     expect(bulkApplyCategorySuggestions).toHaveBeenCalledTimes(1)
     expect(onBulkClassified).toHaveBeenCalledTimes(1)
+  })
+
+  it('"Cancelar" detiene el bucle antes de la siguiente ronda, sin perder lo ya clasificado', async () => {
+    let resolveRound1: (v: { suggestions: { transactionId: string; categoryId: string }[]; error: null }) => void = () => {}
+    const round1Promise = new Promise<{ suggestions: { transactionId: string; categoryId: string }[]; error: null }>((resolve) => {
+      resolveRound1 = resolve
+    })
+    vi.mocked(suggestCategories).mockReset().mockReturnValueOnce(round1Promise)
+    vi.mocked(bulkApplyCategorySuggestions)
+      .mockReset()
+      .mockResolvedValue({ appliedCount: manyTransactions.length, error: null })
+    renderCenter(undefined, undefined, manyTransactions)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clasificar todos los pendientes con IA' }))
+    await screen.findByRole('button', { name: 'Cancelar' })
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+    resolveRound1({ suggestions: manyTransactions.map((t) => ({ transactionId: t.id, categoryId: 'cat-1' })), error: null })
+
+    await waitFor(() => expect(screen.getByText(/Clasificados 6 movimientos antes de cancelar/)).toBeInTheDocument())
+    expect(suggestCategories).toHaveBeenCalledTimes(1)
+  })
+
+  it('mientras "Clasificar todos" corre, "Sugerir" y "Aceptar todas" quedan deshabilitados para no pisarse', async () => {
+    let resolveRound1: (v: { suggestions: { transactionId: string; categoryId: string }[]; error: null }) => void = () => {}
+    const round1Promise = new Promise<{ suggestions: { transactionId: string; categoryId: string }[]; error: null }>((resolve) => {
+      resolveRound1 = resolve
+    })
+    vi.mocked(suggestCategories).mockReset().mockReturnValueOnce(round1Promise)
+    vi.mocked(bulkApplyCategorySuggestions).mockReset().mockResolvedValue({ appliedCount: 0, error: null })
+    renderCenter(undefined, undefined, manyTransactions)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clasificar todos los pendientes con IA' }))
+    await screen.findByRole('button', { name: 'Cancelar' })
+
+    expect(screen.getByRole('button', { name: 'Sugerir categorías con IA' })).toBeDisabled()
+
+    resolveRound1({ suggestions: [], error: null })
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Cancelar' })).not.toBeInTheDocument())
   })
 })

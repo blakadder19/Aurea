@@ -10,6 +10,7 @@ import {
   bulkAddTag,
   bulkUpdateTransactionCategory,
   createRuleFromTransaction,
+  isTransactionPending,
   updateTransactionCategory,
   updateTransactionDisplayName,
   updateTransactionInternalTransfer,
@@ -123,7 +124,7 @@ export function TransactionsPage() {
 
   const isAuthenticated = session !== null
   const hasRealTransactions = isAuthenticated && !loadingReal && realTransactions !== null && realTransactions.length > 0
-  const realReviewCount = realTransactions?.filter((t) => !t.categoryId || t.needsReview).length ?? 0
+  const realReviewCount = realTransactions?.filter(isTransactionPending).length ?? 0
 
   // La selección por defecto de la demo (AMZN/Zara) no tiene sentido en real:
   // esos ids nunca corresponden a un movimiento real, pero seguirían contando
@@ -241,6 +242,7 @@ export function TransactionsPage() {
               <FilterBar
                 accounts={hasRealTransactions ? [...new Set(realTransactions!.map((t) => t.cuenta))] : undefined}
                 categories={hasRealTransactions ? realCategories!.map((c) => categoryLabel(c)) : undefined}
+                isReal={hasRealTransactions}
               />
               <BulkActionsBar
                 categories={hasRealTransactions ? realCategories! : undefined}

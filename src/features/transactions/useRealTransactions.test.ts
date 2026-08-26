@@ -71,7 +71,7 @@ vi.mock('../../lib/supabase/client', () => ({
 const activeSession = { user: { id: 'user-1' } } as unknown as Session
 
 const { useAuthStore } = await import('../../lib/supabase/useAuth')
-const { useRealTransactions } = await import('./useRealTransactions')
+const { useRealTransactions, isTransactionPending } = await import('./useRealTransactions')
 
 describe('useRealTransactions', () => {
   it('sin sesión, devuelve transactions=null sin consultar Supabase', () => {
@@ -111,6 +111,7 @@ describe('useRealTransactions', () => {
         dateISO: '2026-08-19',
         isInternalTransfer: false,
         receiptPath: null,
+        hasSplits: false,
       },
       {
         id: 'tx-2',
@@ -128,7 +129,47 @@ describe('useRealTransactions', () => {
         dateISO: '2026-08-18',
         isInternalTransfer: false,
         receiptPath: null,
+        hasSplits: false,
       },
     ])
+  })
+
+  it('un movimiento con filas en transaction_splits sale como hasSplits y con categoria "Varias categorías"', async () => {
+    fixtures.transaction_splits = [{ transaction_id: 'tx-1' }]
+    useAuthStore.setState({ session: activeSession })
+    const { result } = renderHook(() => useRealTransactions(categories))
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    const split = result.current.transactions?.find((t) => t.id === 'tx-1')
+    expect(split?.hasSplits).toBe(true)
+    expect(split?.categoria).toBe('Varias categorías')
+
+    const notSplit = result.current.transactions?.find((t) => t.id === 'tx-2')
+    expect(notSplit?.hasSplits).toBe(false)
+
+    delete fixtures.transaction_splits
+  })
+})
+
+describe('isTransactionPending', () => {
+  it('sin categoría, está pendiente', () => {
+    expect(isTransactionPending({ categoryId: null, needsReview: false, hasSplits: false, isInternalTransfer: false })).toBe(true)
+  })
+
+  it('marcado needsReview, está pendiente aunque ya tenga categoría', () => {
+    expect(isTransactionPending({ categoryId: 'cat-1', needsReview: true, hasSplits: false, isInternalTransfer: false })).toBe(true)
+  })
+
+  it('dividido en varias categorías, nunca está pendiente aunque no tenga categoryId propio', () => {
+    expect(isTransactionPending({ categoryId: null, needsReview: false, hasSplits: true, isInternalTransfer: false })).toBe(false)
+  })
+
+  it('transferencia interna sin categoría, nunca está pendiente', () => {
+    expect(isTransactionPending({ categoryId: null, needsReview: false, hasSplits: false, isInternalTransfer: true })).toBe(false)
+  })
+
+  it('con categoría, sin needsReview, no dividido ni transferencia: no está pendiente', () => {
+    expect(isTransactionPending({ categoryId: 'cat-1', needsReview: false, hasSplits: false, isInternalTransfer: false })).toBe(false)
   })
 })

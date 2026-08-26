@@ -19,6 +19,27 @@ export interface RealTransaction extends Transaction {
   isInternalTransfer: boolean
   /** Ruta en el bucket privado `receipts`, o null si no tiene foto adjunta. */
   receiptPath: string | null
+  /** Dividido en varias categorías (transaction_splits) — su categoryId propio ya no representa el gasto real, ver el desglose. */
+  hasSplits: boolean
+}
+
+/**
+ * Un movimiento dividido ya está clasificado (en varias categorías a la
+ * vez) aunque su categoryId propio sea null — nunca cuenta como pendiente.
+ * Una transferencia entre tus propias cuentas tampoco: no es gasto ni
+ * ingreso real, así que pedirle una categoría de gasto no tiene sentido.
+ * Mismo criterio en Centro de revisión, el contador del menú, el filtro
+ * "Estado" de Movimientos y las sugerencias de IA, para no repetir
+ * `!categoryId || needsReview` en cada sitio con el riesgo de que alguno
+ * se quede desactualizado.
+ */
+export function isTransactionPending(t: {
+  categoryId: string | null
+  needsReview: boolean
+  hasSplits: boolean
+  isInternalTransfer: boolean
+}): boolean {
+  return !t.hasSplits && !t.isInternalTransfer && (!t.categoryId || t.needsReview)
 }
 
 interface RealTransactionsResult {
@@ -61,7 +82,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
 
     async function load() {
       if (!supabase) return
-      const [{ data: txRows, error: txError }, { data: accountRows }, { data: connectionRows }] = await Promise.all([
+      const [{ data: txRows, error: txError }, { data: accountRows }, { data: connectionRows }, { data: splitRows }] = await Promise.all([
         supabase
           .from('transactions')
           .select(
@@ -71,6 +92,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
           .limit(loadedCount),
         supabase.from('accounts').select('id, name, display_name, product, connection_id'),
         supabase.from('bank_connections').select('id, aspsp_name'),
+        supabase.from('transaction_splits').select('transaction_id'),
       ])
       if (cancelled) return
       if (txError || !txRows) {
@@ -79,6 +101,8 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
         setLoading(false)
         return
       }
+
+      const splitTransactionIds = new Set((splitRows ?? []).map((s) => s.transaction_id as string))
 
       const institutionByConnection = new Map((connectionRows ?? []).map((c) => [c.id, c.aspsp_name as string]))
       const accountLabelById = new Map(
@@ -93,12 +117,13 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
       const mapped: RealTransaction[] = txRows.map((row) => {
         const isoDate = (row.booking_date as string | null) ?? (row.value_date as string | null)
         const categoryId = row.category_id as string | null
+        const hasSplits = splitTransactionIds.has(row.id as string)
         return {
           id: row.id as string,
           fecha: isoDate ? formatIsoDayMonth(isoDate) : '',
           comercio: (row.description as string | null) || 'Movimiento',
           cuenta: accountLabelById.get(row.account_id as string) ?? 'Cuenta',
-          categoria: categoryId ? (categoryNameById.get(categoryId) ?? 'Sin clasificar') : 'Sin clasificar',
+          categoria: hasSplits ? 'Varias categorías' : categoryId ? (categoryNameById.get(categoryId) ?? 'Sin clasificar') : 'Sin clasificar',
           importe: (row.amount_cents as number) / 100,
           categoryId,
           accountId: row.account_id as string,
@@ -109,6 +134,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
           dateISO: isoDate,
           isInternalTransfer: Boolean(row.is_internal_transfer),
           receiptPath: (row.receipt_path as string | null) ?? null,
+          hasSplits,
         }
       })
 

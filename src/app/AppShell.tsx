@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom'
 import { currentUser } from '../data/demo'
 import { useTransactionsStore } from '../features/transactions/store'
 import { useRealCategories } from '../features/transactions/useRealCategories'
-import { useRealTransactions } from '../features/transactions/useRealTransactions'
+import { isTransactionPending, useRealTransactions } from '../features/transactions/useRealTransactions'
 import { isSupabaseConfigured } from '../lib/supabase/client'
 import { useAuthStore } from '../lib/supabase/useAuth'
 import { usePrivacyStore } from '../store/usePrivacyStore'
@@ -81,9 +81,7 @@ function Sidebar() {
   const { categories: realCategories } = useRealCategories()
   const { transactions: realTransactions } = useRealTransactions(realCategories)
   const reviewCount =
-    session !== null && realTransactions !== null
-      ? realTransactions.filter((t) => !t.categoryId || t.needsReview).length
-      : demoReviewCount
+    session !== null && realTransactions !== null ? realTransactions.filter(isTransactionPending).length : demoReviewCount
   const identity = useIdentity()
 
   return (
