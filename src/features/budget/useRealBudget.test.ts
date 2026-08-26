@@ -29,8 +29,8 @@ const fixtures: Record<string, unknown[]> = {
 }
 
 const categories: RealCategory[] = [
-  { id: 'cat-1', name: 'Supermercado', icon: null },
-  { id: 'cat-2', name: 'Transporte', icon: null },
+  { id: 'cat-1', name: 'Supermercado', icon: null, categoryGroup: 'alimentacion' },
+  { id: 'cat-2', name: 'Transporte', icon: null, categoryGroup: 'transporte' },
 ]
 
 const mockFrom = vi.fn((table: string) => chainable(fixtures[table] ?? []))

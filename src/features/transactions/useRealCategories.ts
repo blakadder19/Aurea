@@ -6,6 +6,29 @@ export interface RealCategory {
   id: string
   name: string
   icon: string | null
+  /** Uno de los valores fijos del CHECK de la tabla — agrupa la categoría en Presupuesto y Ajustes. */
+  categoryGroup: string
+}
+
+/** Etiqueta en español de cada `category_group` — mismo conjunto fijo que el CHECK de la tabla `categories`. */
+export const CATEGORY_GROUP_LABEL: Record<string, string> = {
+  ingresos: 'Ingresos',
+  vivienda: 'Vivienda',
+  alimentacion: 'Alimentación',
+  transporte: 'Transporte',
+  ocio: 'Ocio',
+  suscripciones: 'Suscripciones',
+  salud: 'Salud',
+  compras: 'Compras',
+  finanzas: 'Finanzas',
+  transferencias: 'Transferencias',
+}
+
+/** Orden fijo en el que se muestran los grupos allá donde se agrupan categorías. */
+export const CATEGORY_GROUP_ORDER = Object.keys(CATEGORY_GROUP_LABEL)
+
+export function categoryGroupLabel(group: string): string {
+  return CATEGORY_GROUP_LABEL[group] ?? group
 }
 
 /**
@@ -25,6 +48,10 @@ const DEFAULT_CATEGORIES: { name: string; group: string; icon: string }[] = [
   { name: 'Otros', group: 'compras', icon: '📦' },
   { name: 'Ingresos', group: 'ingresos', icon: '💰' },
 ]
+
+function toRealCategory(row: { id: string; name: string; icon: string | null; category_group: string }): RealCategory {
+  return { id: row.id, name: row.name, icon: row.icon, categoryGroup: row.category_group }
+}
 
 interface RealCategoriesResult {
   loading: boolean
@@ -53,7 +80,10 @@ export function useRealCategories(): RealCategoriesResult {
 
     async function load() {
       if (!supabase) return
-      const { data, error } = await supabase.from('categories').select('id, name, icon').order('name', { ascending: true })
+      const { data, error } = await supabase
+        .from('categories')
+        .select('id, name, icon, category_group')
+        .order('name', { ascending: true })
       if (cancelled) return
       if (error) {
         console.error('useRealCategories: fallo al leer categories', error)
@@ -63,7 +93,7 @@ export function useRealCategories(): RealCategoriesResult {
       }
 
       if ((data ?? []).length > 0) {
-        setCategories(data as RealCategory[])
+        setCategories(data.map(toRealCategory))
         setLoading(false)
         return
       }
@@ -74,7 +104,7 @@ export function useRealCategories(): RealCategoriesResult {
           DEFAULT_CATEGORIES.map((c) => ({ user_id: userId, name: c.name, category_group: c.group, icon: c.icon })),
           { onConflict: 'user_id,name' },
         )
-        .select('id, name, icon')
+        .select('id, name, icon, category_group')
       if (cancelled) return
       if (seedError) {
         console.error('useRealCategories: fallo al sembrar categories', seedError)
@@ -83,7 +113,7 @@ export function useRealCategories(): RealCategoriesResult {
         return
       }
 
-      setCategories((seeded as RealCategory[]).sort((a, b) => a.name.localeCompare(b.name, 'es')))
+      setCategories((seeded ?? []).map(toRealCategory).sort((a, b) => a.name.localeCompare(b.name, 'es')))
       setLoading(false)
     }
 

@@ -52,8 +52,8 @@ const transactions: RealTransaction[] = [
   },
 ]
 const categories: RealCategory[] = [
-  { id: 'cat-1', name: 'Supermercado', icon: null },
-  { id: 'cat-2', name: 'Ocio y suscripciones', icon: null },
+  { id: 'cat-1', name: 'Supermercado', icon: null, categoryGroup: 'alimentacion' },
+  { id: 'cat-2', name: 'Ocio y suscripciones', icon: null, categoryGroup: 'ocio' },
 ]
 
 const manyTransactions: RealTransaction[] = Array.from({ length: 6 }, (_, i) => ({

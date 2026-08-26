@@ -53,7 +53,7 @@ const fixtures: Record<string, unknown[]> = {
   bank_connections: [{ id: 'conn-1', aspsp_name: 'Openbank' }],
 }
 
-const categories: RealCategory[] = [{ id: 'cat-1', name: 'Supermercado', icon: null }]
+const categories: RealCategory[] = [{ id: 'cat-1', name: 'Supermercado', icon: null, categoryGroup: 'alimentacion' }]
 
 const mockFrom = vi.fn((table: string) => chainable(fixtures[table] ?? []))
 

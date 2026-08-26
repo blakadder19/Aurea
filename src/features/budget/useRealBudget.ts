@@ -11,6 +11,7 @@ import type { RealVerdict } from './MonthVerdictCard'
 export interface RealBudgetCategory {
   categoryId: string
   name: string
+  categoryGroup: string
   budgetedCents: number
   spentCents: number
   remainingCents: number
@@ -139,7 +140,7 @@ export function useRealBudget(categories: RealCategory[] | null, budgetMonthStar
         const budgetedCents = budgetedByCategory.get(c.id) ?? 0
         const spentCents = spentByCategory.get(c.id) ?? 0
         const pace = computeCategoryPace(budgetedCents, spentCents, daysElapsed, totalDays)
-        return { categoryId: c.id, name: categoryLabel(c), ...pace }
+        return { categoryId: c.id, name: categoryLabel(c), categoryGroup: c.categoryGroup, ...pace }
       })
 
       const totalBudgetedCents = realCategories.reduce((sum, c) => sum + c.budgetedCents, 0)
@@ -264,6 +265,7 @@ export function toBudgetViewModel(real: RealBudgetSummary): { verdict: RealVerdi
     categories: real.categories.map((c) => ({
       id: c.categoryId,
       name: c.name,
+      group: c.categoryGroup,
       budgeted: euros(c.budgetedCents),
       spent: euros(c.spentCents),
       status: c.status,

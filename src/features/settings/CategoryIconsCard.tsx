@@ -1,6 +1,13 @@
 import { useState } from 'react'
 import { Card } from '../../components/Card'
-import { createCategory, deleteCategory, updateCategoryIcon, type RealCategory } from '../transactions/useRealCategories'
+import {
+  CATEGORY_GROUP_ORDER,
+  categoryGroupLabel,
+  createCategory,
+  deleteCategory,
+  updateCategoryIcon,
+  type RealCategory,
+} from '../transactions/useRealCategories'
 
 function IconInput({ category, onSaved, onDeleted }: { category: RealCategory; onSaved: () => void; onDeleted: () => void }) {
   const [value, setValue] = useState(category.icon ?? '')
@@ -108,18 +115,39 @@ function AddCategoryForm({ onCreated }: { onCreated: () => void }) {
   )
 }
 
-/** Icono/emoji por categoría, alta y baja — se usa en selectores y etiquetas de categoría por toda la app. */
+function groupByCategory(categories: RealCategory[]): { group: string; label: string; categories: RealCategory[] }[] {
+  const byGroup = new Map<string, RealCategory[]>()
+  for (const c of categories) {
+    byGroup.set(c.categoryGroup, [...(byGroup.get(c.categoryGroup) ?? []), c])
+  }
+  return CATEGORY_GROUP_ORDER.filter((g) => byGroup.has(g)).map((g) => ({
+    group: g,
+    label: categoryGroupLabel(g),
+    categories: byGroup.get(g)!,
+  }))
+}
+
+/** Icono/emoji por categoría, alta y baja — se usa en selectores y etiquetas de categoría por toda la app. Agrupadas por tipo. */
 export function CategoryIconsCard({ categories, onRefetch }: { categories: RealCategory[]; onRefetch: () => void }) {
+  const groups = groupByCategory(categories)
+
   return (
     <Card padding="lg" className="flex flex-col gap-3">
       <div>
         <h2 className="font-serif text-[22px] lg:text-[19px] font-semibold text-ink">Categorías</h2>
         <p className="text-[15px] text-ink-muted">Ponle un emoji a cada categoría, añade una nueva o borra las que no uses.</p>
       </div>
-      {categories.length > 0 && (
-        <div className="flex flex-col">
-          {categories.map((c) => (
-            <IconInput key={c.id} category={c} onSaved={onRefetch} onDeleted={onRefetch} />
+      {groups.length > 0 && (
+        <div className="flex flex-col gap-4">
+          {groups.map(({ group, label, categories: groupCategories }) => (
+            <div key={group}>
+              <h3 className="mb-1 text-[13px] font-semibold tracking-[0.06em] text-ink-muted uppercase">{label}</h3>
+              <div className="flex flex-col">
+                {groupCategories.map((c) => (
+                  <IconInput key={c.id} category={c} onSaved={onRefetch} onDeleted={onRefetch} />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}

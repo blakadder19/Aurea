@@ -24,6 +24,8 @@ export interface BudgetCategory {
   spent: number
   status: CategoryStatus
   detail: string
+  /** Solo en real — `category_group` de la categoría. La demo no agrupa. */
+  group?: string
 }
 
 export const budgetCategories: BudgetCategory[] = [
