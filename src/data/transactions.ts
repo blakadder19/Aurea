@@ -16,6 +16,8 @@ export interface Transaction {
   userNote?: string
   /** Solo en real: nombre personal que sustituye a `comercio` al mostrarlo, sin tocar el dato del banco. */
   displayName?: string | null
+  /** Solo en real: si la IA lo marcó para revisar categoría — alimenta también el Centro de revisión. */
+  needsReview?: boolean
 }
 
 export const transactions: Transaction[] = [

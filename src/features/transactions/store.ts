@@ -5,6 +5,9 @@ export type TransactionsView = 'tabla' | 'revision'
 
 export const ALL_ACCOUNTS = 'Todas las cuentas'
 export const ALL_CATEGORIES = 'Todas las categorías'
+export const ALL_STATUSES = 'Cualquier estado'
+export const STATUS_NEEDS_REVIEW = 'Requiere revisión'
+export const STATUS_CONFIRMED = 'Confirmado'
 
 interface TransactionsUIState {
   view: TransactionsView
@@ -17,6 +20,8 @@ interface TransactionsUIState {
   setAccountFilter: (account: string) => void
   categoryFilter: string
   setCategoryFilter: (category: string) => void
+  statusFilter: string
+  setStatusFilter: (status: string) => void
 
   selectedIds: Set<string>
   toggleSelected: (id: string) => void
@@ -46,6 +51,8 @@ export const useTransactionsStore = create<TransactionsUIState>((set) => ({
   setAccountFilter: (accountFilter) => set({ accountFilter }),
   categoryFilter: ALL_CATEGORIES,
   setCategoryFilter: (categoryFilter) => set({ categoryFilter }),
+  statusFilter: ALL_STATUSES,
+  setStatusFilter: (statusFilter) => set({ statusFilter }),
 
   selectedIds: new Set(defaultSelectedIds),
   toggleSelected: (id) =>

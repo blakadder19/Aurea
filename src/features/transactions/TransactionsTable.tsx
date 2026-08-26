@@ -4,7 +4,7 @@ import { NoSearchResults } from '../../components/states/NoSearchResults'
 import { transactions as demoTransactions, type Transaction } from '../../data/transactions'
 import { categoryColorClass } from '../../lib/categoryColor'
 import { formatMoney } from '../../lib/format'
-import { ALL_ACCOUNTS, ALL_CATEGORIES, useTransactionsStore } from './store'
+import { ALL_ACCOUNTS, ALL_CATEGORIES, ALL_STATUSES, STATUS_NEEDS_REVIEW, useTransactionsStore } from './store'
 
 /** Lo que se muestra como comercio: el nombre personal si lo has puesto, si no lo que dice el banco. */
 export function displayLabelFor(t: Transaction): string {
@@ -169,6 +169,8 @@ export function TransactionsTable({ transactions = demoTransactions }: { transac
   const setAccountFilter = useTransactionsStore((s) => s.setAccountFilter)
   const categoryFilter = useTransactionsStore((s) => s.categoryFilter)
   const setCategoryFilter = useTransactionsStore((s) => s.setCategoryFilter)
+  const statusFilter = useTransactionsStore((s) => s.statusFilter)
+  const setStatusFilter = useTransactionsStore((s) => s.setStatusFilter)
   const selectedIds = useTransactionsStore((s) => s.selectedIds)
   const setSelectedIds = useTransactionsStore((s) => s.setSelectedIds)
   const clearSelection = useTransactionsStore((s) => s.clearSelection)
@@ -178,7 +180,8 @@ export function TransactionsTable({ transactions = demoTransactions }: { transac
     (t) =>
       matchesSearch(t, query) &&
       (accountFilter === ALL_ACCOUNTS || t.cuenta === accountFilter) &&
-      (categoryFilter === ALL_CATEGORIES || t.categoria === categoryFilter),
+      (categoryFilter === ALL_CATEGORIES || t.categoria === categoryFilter) &&
+      (statusFilter === ALL_STATUSES || Boolean(t.needsReview) === (statusFilter === STATUS_NEEDS_REVIEW)),
   )
   const allFilteredSelected = filtered.length > 0 && filtered.every((t) => selectedIds.has(t.id))
 
@@ -191,6 +194,7 @@ export function TransactionsTable({ transactions = demoTransactions }: { transac
             setSearchQuery('')
             setAccountFilter(ALL_ACCOUNTS)
             setCategoryFilter(ALL_CATEGORIES)
+            setStatusFilter(ALL_STATUSES)
           }}
         />
       </div>

@@ -1,15 +1,15 @@
 import { useState } from 'react'
 import { filterAccounts, filterCategories } from '../../data/transactions'
-import { ALL_ACCOUNTS, ALL_CATEGORIES, useTransactionsStore } from './store'
+import { ALL_ACCOUNTS, ALL_CATEGORIES, ALL_STATUSES, STATUS_CONFIRMED, STATUS_NEEDS_REVIEW, useTransactionsStore } from './store'
 
 const SELECT_CLASSES =
   'min-h-11 rounded-md border border-line bg-surface px-3 py-2.5 text-[15px] text-ink'
 
 /**
- * Buscador + filtros de Cuenta y Categoría (filtran de verdad, en demo y en
- * real). Fecha y Estado siguen siendo cosméticos: no hay un equivalente
- * real claro todavía (un movimiento sincronizado del banco no tiene un
- * "estado" binario, y "Este mes" no encaja con la ventana de sincronización).
+ * Buscador + filtros de Cuenta, Categoría y Estado (filtran de verdad, en
+ * demo y en real — "Requiere revisión" usa el mismo `needsReview` que ya
+ * alimenta el Centro de revisión). Fecha sigue siendo cosmético: "Este mes"
+ * no encaja con la ventana de sincronización real todavía.
  */
 export function FilterBar({
   accounts = filterAccounts,
@@ -24,9 +24,10 @@ export function FilterBar({
   const setAccount = useTransactionsStore((s) => s.setAccountFilter)
   const category = useTransactionsStore((s) => s.categoryFilter)
   const setCategory = useTransactionsStore((s) => s.setCategoryFilter)
+  const status = useTransactionsStore((s) => s.statusFilter)
+  const setStatus = useTransactionsStore((s) => s.setStatusFilter)
 
   const [date, setDate] = useState('Este mes')
-  const [status, setStatus] = useState('Cualquier estado')
 
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-lg border border-line bg-surface p-4 px-5">
@@ -73,9 +74,9 @@ export function FilterBar({
         onChange={(e) => setStatus(e.target.value)}
         className={SELECT_CLASSES}
       >
-        <option>Cualquier estado</option>
-        <option>Confirmado</option>
-        <option>Requiere revisión</option>
+        <option>{ALL_STATUSES}</option>
+        <option>{STATUS_CONFIRMED}</option>
+        <option>{STATUS_NEEDS_REVIEW}</option>
       </select>
     </div>
   )
