@@ -2,13 +2,16 @@ import { useState } from 'react'
 import { AllocatePanel } from './AllocatePanel'
 import { EmergencyFundCard } from './EmergencyFundCard'
 import { GoalCard } from './GoalCard'
+import { RealEmergencyFundCard } from './RealEmergencyFundCard'
 import { RealGoalPanel, type RealGoalPanelMode } from './RealGoalPanel'
 import { useGoalsStore } from './store'
 import { contributeToGoal, createGoal, toGoalCardProps, useRealGoals } from './useRealGoals'
+import { useRealEmergencyFund } from './useRealEmergencyFund'
 import { EmptyState } from '../../components/states/EmptyState'
 import { LoadingRealData } from '../../components/states/LoadingRealData'
 import { UndoBar } from '../../components/UndoBar'
 import { goals as demoGoals } from '../../data/goals'
+import { useRealAccounts } from '../accounts/useRealAccounts'
 import { useAuthStore } from '../../lib/supabase/useAuth'
 
 function Header({
@@ -66,6 +69,8 @@ export function GoalsPage() {
   const [panelMode, setPanelMode] = useState<RealGoalPanelMode>(null)
 
   const { loading: loadingReal, goals: realGoals, refetch } = useRealGoals()
+  const { accounts: realAccounts } = useRealAccounts()
+  const { data: emergencyFund } = useRealEmergencyFund(realAccounts)
 
   const isAuthenticated = session !== null
   const hasRealGoals = isAuthenticated && !loadingReal && realGoals !== null && realGoals.length > 0
@@ -92,6 +97,7 @@ export function GoalsPage() {
       />
       <main className="flex flex-1 flex-col gap-6 lg:gap-5 overflow-y-auto p-4 lg:p-6">
         {!isAuthenticated && <EmergencyFundCard />}
+        {isAuthenticated && emergencyFund && <RealEmergencyFundCard fund={emergencyFund} />}
         {isAuthenticated && loadingReal ? (
           <LoadingRealData />
         ) : isAuthenticated && !loadingReal && realGoals?.length === 0 ? (
