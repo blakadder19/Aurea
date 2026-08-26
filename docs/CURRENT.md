@@ -324,6 +324,30 @@ Fuera de alcance en esta fase, decidido de antemano: compartir cuenta con pareja
 avisos por email/push, modo oscuro, command palette — ver también
 `## Fuera de alcance explícito` más arriba para los matices que dejó cada punto.
 
+## Segunda pasada de huecos reales
+
+Auditoría de seguimiento sobre lo que quedó tras la fase de arriba, misma disciplina:
+
+- **Deshacer una aportación a un objetivo** (`revertGoalContribution` en
+  `useRealGoals.ts`): antes solo archivar un objetivo tenía deshacer.
+- **Filtro de Estado en Movimientos conectado a `needsReview`**: el `useState` local
+  de `FilterBar.tsx` no tenía consumidor; ahora vive en el store compartido y
+  `TransactionsTable.tsx` filtra de verdad por "Requiere revisión"/"Confirmado".
+- **Borrar un escenario de Planificación guardado** (`deletePlanningScenario`):
+  completa el CRUD que quedó a medias (crear + cargar, sin borrar).
+- **Desglose real "por clase de activo" y "por institución"** en Cuentas
+  (`RealDetailBreakdowns.tsx`): clase de activo sale de `accounts.account_function`
+  (sin "Inmuebles", que no se rastrea); institución agrupa el saldo ponderado por
+  `share_percent`, igual que los KPIs de cabecera.
+- **"Lo que no es consumo" real en Presupuesto** (`useRealNonSpend.ts`,
+  `RealNonSpendCards.tsx`): Ahorro/Inversión suman entradas de dinero del ciclo en
+  cuentas con esa función (simplificación: no distingue el origen del dinero);
+  Transferencias sí es exacto, reutiliza `is_internal_transfer`.
+- **"Crear regla para «X»" ya no promete un motor de reglas continuo**: el texto del
+  botón y del mensaje de éxito ahora describen lo que el código siempre hizo
+  (aplicación puntual, no afecta a movimientos futuros) — sin cambio de
+  comportamiento, solo de honestidad en la copy.
+
 ## Verificación
 
 Cada cambio (de la demo original, la fase de datos reales y la fase de IA) cierra con
