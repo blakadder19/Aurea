@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Account } from '../../data/accounts'
+import { fetchActiveDeclaredIncomeCents } from '../../lib/declaredIncome'
 import { supabase } from '../../lib/supabase/client'
 import { useAuthStore } from '../../lib/supabase/useAuth'
 import type { RealDebt } from '../debts/useRealDebts'
@@ -82,10 +83,10 @@ export function useRealPlanning(accounts: Account[] | null, debts: RealDebt[] | 
 
     async function load() {
       if (!supabase) return
-      const { data, error } = await supabase
-        .from('transactions')
-        .select('amount_cents, credit_debit, booking_date, value_date')
-        .limit(3000)
+      const [{ data, error }, declaredIncomeCents] = await Promise.all([
+        supabase.from('transactions').select('amount_cents, credit_debit, booking_date, value_date').limit(3000),
+        fetchActiveDeclaredIncomeCents(),
+      ])
       if (cancelled) return
       if (error) console.error('useRealPlanning: fallo al leer transactions', error)
 
@@ -99,7 +100,7 @@ export function useRealPlanning(accounts: Account[] | null, debts: RealDebt[] | 
       setInputs({
         startingNetWorth: computeStartingNetWorth(accounts ?? []),
         avgDebtRate: computeAvgDebtRate(debts ?? []),
-        avgMonthlyIngresos: ingresos,
+        avgMonthlyIngresos: ingresos + declaredIncomeCents / 100,
         avgMonthlyGastos: gastos,
       })
       setLoading(false)

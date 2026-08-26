@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { fetchActiveDeclaredIncomeCents } from '../../lib/declaredIncome'
 import { formatMonthYearLong } from '../../lib/format'
 import { supabase } from '../../lib/supabase/client'
 import { useAuthStore } from '../../lib/supabase/useAuth'
@@ -48,16 +49,17 @@ export function useRealMonthlyReport(monthsAgo: number): RealMonthlyReportResult
       const { start, fromIso, toIso } = monthBounds(monthsAgo, now)
       const prev = monthBounds(monthsAgo + 1, now)
 
-      const [{ data: categories }, { data: txRows }, { data: prevTxRows }] = await Promise.all([
+      const [{ data: categories }, { data: txRows }, { data: prevTxRows }, declaredIncomeCents] = await Promise.all([
         supabase.from('categories').select('id, name'),
         supabase.from('transactions').select('category_id, amount_cents').eq('is_internal_transfer', false).or(dateFilter(fromIso, toIso)),
         supabase.from('transactions').select('amount_cents').eq('is_internal_transfer', false).or(dateFilter(prev.fromIso, prev.toIso)),
+        fetchActiveDeclaredIncomeCents(),
       ])
       if (cancelled) return
 
       const nameByCategory = new Map((categories ?? []).map((c) => [c.id as string, c.name as string]))
       const spendByCategory = new Map<string, number>()
-      let incomeCents = 0
+      let incomeCents = declaredIncomeCents
       let expenseCents = 0
       for (const tx of txRows ?? []) {
         const amount = tx.amount_cents as number

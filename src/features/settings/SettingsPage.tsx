@@ -1,8 +1,10 @@
+import { useDeclaredIncomes } from '../../lib/declaredIncome'
 import { useAuthStore } from '../../lib/supabase/useAuth'
 import { useRealAccounts } from '../accounts/useRealAccounts'
 import { useRealCategories } from '../transactions/useRealCategories'
 import { CategoryIconsCard } from './CategoryIconsCard'
 import { ConnectionsList } from './ConnectionsList'
+import { DeclaredIncomesCard } from './DeclaredIncomesCard'
 import { ImportCsvPanel } from './ImportCsvPanel'
 import { RealConnectionsCard } from './RealConnectionsCard'
 import { RealImportCsvPanel } from './RealImportCsvPanel'
@@ -40,6 +42,7 @@ export function SettingsPage() {
   const isAuthenticated = session !== null
   const { accounts: realAccounts, refetch } = useRealAccounts()
   const { categories: realCategories, refetch: refetchCategories } = useRealCategories()
+  const { incomes: declaredIncomes, refetch: refetchDeclaredIncomes } = useDeclaredIncomes()
 
   return (
     <>
@@ -52,6 +55,7 @@ export function SettingsPage() {
         )}
         {importOpen && !isAuthenticated && <ImportCsvPanel />}
         {isAuthenticated && <CategoryIconsCard categories={realCategories ?? []} onRefetch={refetchCategories} />}
+        {isAuthenticated && <DeclaredIncomesCard incomes={declaredIncomes ?? []} onRefetch={refetchDeclaredIncomes} />}
         <SettingsBasics />
       </main>
     </>

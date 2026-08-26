@@ -9,6 +9,7 @@ import { useRealTransactions, type RealTransaction } from '../transactions/useRe
 import { useRealRecurring } from '../recurring/useRealRecurring'
 import { buildRealTimeline } from './timelineCalc'
 import { findPossibleDuplicates, findUnusualAmounts } from '../../lib/anomalyCalc'
+import { useDeclaredIncomes } from '../../lib/declaredIncome'
 
 const FN_LABEL: Record<string, string> = {
   Ahorro: 'Ahorro',
@@ -98,11 +99,13 @@ export function useRealHome(budgetMonthStart: number | null): RealHomeData | nul
   const { loading: loadingTx, transactions } = useRealTransactions(categories)
   const { loading: loadingBudget, budget } = useRealBudget(categories, budgetMonthStart)
   const { loading: loadingRecurring, items: recurringItems, groups: recurringGroups } = useRealRecurring()
+  const { loading: loadingDeclaredIncomes, incomes: declaredIncomes } = useDeclaredIncomes()
 
-  const loading = loadingAccounts || loadingTx || loadingBudget || loadingRecurring
+  const loading = loadingAccounts || loadingTx || loadingBudget || loadingRecurring || loadingDeclaredIncomes
 
   return useMemo(() => {
     if (accounts === null || budgetMonthStart === null) return null
+    const declaredIncomeCents = (declaredIncomes ?? []).filter((i) => i.active).reduce((sum, i) => sum + i.amountCents, 0)
     const today = new Date()
 
     const eurAccounts = accounts.filter((a) => a.currency === undefined || a.currency === 'EUR')
@@ -224,7 +227,7 @@ export function useRealHome(budgetMonthStart: number | null): RealHomeData | nul
 
     const monthPrefix = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
     const thisMonthTx = nonTransferTx.filter((t) => t.dateISO?.startsWith(monthPrefix))
-    const monthIncome = thisMonthTx.filter((t) => t.importe > 0).reduce((sum, t) => sum + t.importe, 0)
+    const monthIncome = thisMonthTx.filter((t) => t.importe > 0).reduce((sum, t) => sum + t.importe, 0) + declaredIncomeCents / 100
     const monthExpense = thisMonthTx.filter((t) => t.importe < 0).reduce((sum, t) => sum - t.importe, 0)
     const savingsRatePct = computeSavingsRate(monthIncome, monthExpense)
 
@@ -256,5 +259,5 @@ export function useRealHome(budgetMonthStart: number | null): RealHomeData | nul
       monthIncome,
       monthExpense,
     }
-  }, [accounts, transactions, budget, recurringItems, recurringGroups, loading, budgetMonthStart])
+  }, [accounts, transactions, budget, recurringItems, recurringGroups, declaredIncomes, loading, budgetMonthStart])
 }

@@ -21,7 +21,7 @@ function makeSupabaseMock({
 
   function chainable(data: unknown[]) {
     const builder: Record<string, unknown> = {}
-    for (const method of ['select', 'or', 'eq']) {
+    for (const method of ['select', 'or', 'eq', 'order']) {
       builder[method] = () => builder
     }
     // oxlint-disable-next-line unicorn/no-thenable -- imita a propósito el query builder real de supabase-js.
