@@ -65,12 +65,14 @@ export function useRealRecurring(): RealRecurringResult {
 
       const [{ data: txRows, error: txError }, { data: accountRows }, { data: categoryRows }, { data: dismissalRows }, { data: manualRows }] =
         await Promise.all([
+          // Tope generoso, no un recorte real: a más de 10.000 gastos (~6 años al ritmo actual)
+          // habría que paginar de verdad, igual que ya hace Movimientos.
           supabase
             .from('transactions')
             .select('account_id, description, amount_cents, booking_date, value_date, category_id')
             .eq('credit_debit', 'DBIT')
             .order('booking_date', { ascending: true })
-            .limit(2000),
+            .limit(10000),
           supabase.from('accounts').select('id, name, display_name, connection_id'),
           supabase.from('categories').select('id, category_group'),
           supabase.from('recurring_dismissals').select('id, dedupe_key, scope').eq('active', true),

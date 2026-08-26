@@ -53,10 +53,12 @@ export function useRealEmergencyFund(accounts: Account[] | null): RealEmergencyF
 
     async function load() {
       if (!supabase) return
+      // Tope generoso, no un recorte real: a más de 10.000 movimientos (~6 años al ritmo actual)
+      // habría que paginar de verdad, igual que ya hace Movimientos.
       const { data: rows, error } = await supabase
         .from('transactions')
         .select('amount_cents, credit_debit, booking_date, value_date')
-        .limit(3000)
+        .limit(10000)
       if (cancelled) return
       if (error) console.error('useRealEmergencyFund: fallo al leer transactions', error)
 

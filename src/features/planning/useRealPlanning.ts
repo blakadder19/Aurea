@@ -83,8 +83,10 @@ export function useRealPlanning(accounts: Account[] | null, debts: RealDebt[] | 
 
     async function load() {
       if (!supabase) return
+      // Tope generoso, no un recorte real: a más de 10.000 movimientos (~6 años al ritmo actual)
+      // habría que paginar de verdad, igual que ya hace Movimientos.
       const [{ data, error }, declaredIncomeCents] = await Promise.all([
-        supabase.from('transactions').select('amount_cents, credit_debit, booking_date, value_date').limit(3000),
+        supabase.from('transactions').select('amount_cents, credit_debit, booking_date, value_date').limit(10000),
         fetchActiveDeclaredIncomeCents(),
       ])
       if (cancelled) return
