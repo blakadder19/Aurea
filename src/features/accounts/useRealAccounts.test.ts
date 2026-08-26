@@ -108,4 +108,18 @@ describe('useRealAccounts', () => {
 
     expect(result.current.accounts?.[0].balance).toBe(2222)
   })
+
+  it('una cuenta "Para gastar" marcada como excluida no cuenta en Disponible hoy', async () => {
+    fixtures.accounts = [
+      { id: 'acc-1', name: 'Conjunta', product: null, connection_id: 'conn-1', account_function: 'gastar', currency: 'EUR', excluded_from_available: true },
+    ]
+    fixtures.balances = [{ account_id: 'acc-1', amount_cents: 100000 }]
+    fixtures.transactions = []
+    useAuthStore.setState({ session: activeSession })
+    const { result } = renderHook(() => useRealAccounts())
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    expect(result.current.accounts?.[0].countsInAvailableToday).toBe(false)
+  })
 })

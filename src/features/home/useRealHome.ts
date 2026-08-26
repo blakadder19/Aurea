@@ -110,7 +110,7 @@ export function useRealHome(budgetMonthStart: number | null): RealHomeData | nul
     const today = new Date()
 
     const eurAccounts = accounts.filter((a) => a.currency === undefined || a.currency === 'EUR')
-    const spendAccounts = eurAccounts.filter((a) => a.fn === 'Para gastar')
+    const spendAccounts = eurAccounts.filter((a) => a.countsInAvailableToday)
     const eligibleAccounts: EligibleAccount[] = spendAccounts.map((a) => ({ label: eligibleAccountLabel(a), amount: eurValue(a) }))
     const eligibleAccountsSum = eligibleAccounts.reduce((sum, a) => sum + a.amount, 0)
 

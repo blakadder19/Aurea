@@ -25,6 +25,7 @@ function PanelContent({
   onDeleteManual,
   onRename,
   onDisconnect,
+  onChangeExcluded,
 }: {
   account: Account
   /** true en real (con o sin banco ya sincronizado), false/undefined en demo. */
@@ -36,6 +37,7 @@ function PanelContent({
   onDeleteManual?: (accountId: string) => Promise<string | null>
   onRename?: (accountId: string, displayName: string) => Promise<string | null>
   onDisconnect?: () => Promise<string | null>
+  onChangeExcluded?: (accountId: string, excluded: boolean) => Promise<string | null>
 }) {
   const [savingFn, setSavingFn] = useState(false)
   const [fnError, setFnError] = useState<string | null>(null)
@@ -52,6 +54,8 @@ function PanelContent({
   const [confirmingDisconnect, setConfirmingDisconnect] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
   const [disconnectError, setDisconnectError] = useState<string | null>(null)
+  const [savingExcluded, setSavingExcluded] = useState(false)
+  const [excludedError, setExcludedError] = useState<string | null>(null)
 
   async function handleSaveName() {
     if (!onRename) return
@@ -93,6 +97,15 @@ function PanelContent({
     const error = await onChangeSharePercent(account.id, percent)
     if (error) setShareError(error)
     setSavingShare(false)
+  }
+
+  async function handleChangeExcluded(excluded: boolean) {
+    if (!onChangeExcluded) return
+    setSavingExcluded(true)
+    setExcludedError(null)
+    const error = await onChangeExcluded(account.id, excluded)
+    setSavingExcluded(false)
+    if (error) setExcludedError(error)
   }
 
   async function handleDisconnect() {
@@ -213,12 +226,36 @@ function PanelContent({
           <span>Divisa</span>
           <span className="font-semibold text-ink">{account.foreign?.currency ?? account.currency ?? 'EUR'}</span>
         </div>
-        <div className="flex justify-between text-[15px] text-ink-muted">
-          <span>Cuenta en Disponible hoy</span>
-          <span className={`font-semibold ${account.countsInAvailableToday ? 'text-green-text' : 'text-ink'}`}>
-            {account.countsInAvailableToday ? 'Sí' : 'No'}
-          </span>
-        </div>
+        {onChangeExcluded && account.fn === 'Para gastar' ? (
+          <div className="flex items-center justify-between text-[15px] text-ink-muted">
+            <span>Cuenta en Disponible hoy</span>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={account.countsInAvailableToday}
+                disabled={savingExcluded}
+                onChange={(e) => void handleChangeExcluded(!e.target.checked)}
+                className="h-5 w-5 accent-brand"
+              />
+              <span className={`font-semibold ${account.countsInAvailableToday ? 'text-green-text' : 'text-ink'}`}>
+                {account.countsInAvailableToday ? 'Sí' : 'No'}
+              </span>
+            </label>
+          </div>
+        ) : (
+          <div className="flex justify-between text-[15px] text-ink-muted">
+            <span>Cuenta en Disponible hoy</span>
+            <span className={`font-semibold ${account.countsInAvailableToday ? 'text-green-text' : 'text-ink'}`}>
+              {account.countsInAvailableToday ? 'Sí' : 'No'}
+            </span>
+          </div>
+        )}
+        {excludedError && <p className="text-right text-sm text-danger-text">{excludedError}</p>}
+        {onChangeExcluded && account.fn === 'Para gastar' && account.countsInAvailableToday === false && (
+          <p className="text-[13px] text-ink-muted">
+            Excluida a mano — no cuenta al disponible hoy aunque sea "Para gastar".
+          </p>
+        )}
         {onChangeSharePercent && looksJoint(account.name) && (
           <div className="flex items-center justify-between text-[15px] text-ink-muted">
             <span>% que cuenta como tuyo</span>
@@ -386,6 +423,7 @@ export function AccountDetailPanel({
   onDeleteManual,
   onRename,
   onDisconnect,
+  onChangeExcluded,
 }: {
   accounts?: Account[]
   isReal?: boolean
@@ -395,6 +433,7 @@ export function AccountDetailPanel({
   onDeleteManual?: (accountId: string) => Promise<string | null>
   onRename?: (accountId: string, displayName: string) => Promise<string | null>
   onDisconnect?: () => Promise<string | null>
+  onChangeExcluded?: (accountId: string, excluded: boolean) => Promise<string | null>
 }) {
   const accountId = useAccountsStore((s) => s.panelAccountId)
   const closePanel = useAccountsStore((s) => s.closePanel)
@@ -426,6 +465,7 @@ export function AccountDetailPanel({
           onDeleteManual={onDeleteManual}
           onRename={onRename}
           onDisconnect={onDisconnect}
+          onChangeExcluded={onChangeExcluded}
         />
       )}
     </SidePanel>

@@ -9,7 +9,13 @@ import { RealDetailBreakdowns } from './RealDetailBreakdowns'
 import { periodStartIso, type NetWorthPeriod } from './netWorthHistory'
 import { useNetWorthHistory } from './useNetWorthHistory'
 import { addManualTransaction, createManualAccount, deleteManualAccount } from './useManualEntries'
-import { updateAccountDisplayName, updateAccountFunction, updateAccountSharePercent, useRealAccounts } from './useRealAccounts'
+import {
+  updateAccountDisplayName,
+  updateAccountExcluded,
+  updateAccountFunction,
+  updateAccountSharePercent,
+  useRealAccounts,
+} from './useRealAccounts'
 import type { AccountFunction } from '../../data/accounts'
 import { accountShareValue, computeAssetsLiabilities } from '../../lib/netWorth'
 import { disconnectBank, startBankConnection } from '../settings/bankConnection'
@@ -168,6 +174,12 @@ export function AccountsPage() {
     return error
   }
 
+  async function handleChangeExcluded(accountId: string, excluded: boolean) {
+    const error = await updateAccountExcluded(accountId, excluded)
+    if (!error) refetch()
+    return error
+  }
+
   async function handleDeleteManualAccount(accountId: string) {
     const error = await deleteManualAccount(accountId)
     if (!error) refetch()
@@ -260,6 +272,7 @@ export function AccountsPage() {
         onDeleteManual={hasRealAccounts ? handleDeleteManualAccount : undefined}
         onRename={hasRealAccounts ? handleRenameAccount : undefined}
         onDisconnect={hasRealAccounts ? handleDisconnectBank : undefined}
+        onChangeExcluded={hasRealAccounts ? handleChangeExcluded : undefined}
       />
       <ManualEntryPanel
         mode={manualPanelMode}

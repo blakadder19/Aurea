@@ -67,6 +67,21 @@ export async function updateAccountSharePercent(accountId: string, percent: numb
   return null
 }
 
+/**
+ * Excluye (o vuelve a incluir) una cuenta "Para gastar" del cálculo de
+ * disponible hoy, sin tocar su función — para cuentas como una conjunta
+ * que el usuario no usa realmente para su gasto del día a día.
+ */
+export async function updateAccountExcluded(accountId: string, excluded: boolean): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  const { error } = await supabase.from('accounts').update({ excluded_from_available: excluded }).eq('id', accountId)
+  if (error) {
+    console.error('updateAccountExcluded: fallo al guardar', error)
+    return 'No hemos podido guardar el cambio. Inténtalo de nuevo.'
+  }
+  return null
+}
+
 interface RealAccountsResult {
   loading: boolean
   /** null mientras carga o si no hay sesión — no confundir con "cero cuentas". */
@@ -102,7 +117,9 @@ export function useRealAccounts(): RealAccountsResult {
       const [{ data: accountRows, error: accountsError }, { data: connectionRows }] = await Promise.all([
         supabase
           .from('accounts')
-          .select('id, name, display_name, product, connection_id, account_function, share_percent, currency, principal_balance_type')
+          .select(
+            'id, name, display_name, product, connection_id, account_function, share_percent, currency, principal_balance_type, excluded_from_available',
+          )
           .neq('account_function', 'excluida')
           .order('created_at', { ascending: true }),
         supabase.from('bank_connections').select('id, aspsp_name, provider'),
@@ -177,7 +194,7 @@ export function useRealAccounts(): RealAccountsResult {
           balance: balanceCentsFor(row.id as string) / 100,
           sharePercent: (row.share_percent as number | null) ?? 100,
           currency: row.currency as string,
-          countsInAvailableToday: fn === 'Para gastar',
+          countsInAvailableToday: fn === 'Para gastar' && !row.excluded_from_available,
           recentMovements: movementsByAccount.get(row.id as string) ?? [],
           isManual: manualConnectionIds.has(row.connection_id as string),
         }
