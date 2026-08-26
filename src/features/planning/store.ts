@@ -22,6 +22,8 @@ interface PlanningState {
   setWithdrawalRate: (rate: number) => void
   /** Sustituye el punto de partida por datos reales del usuario (patrimonio, deuda, ingresos/gastos medios). */
   hydrateReal: (input: { startingNetWorth: number; avgDebtRate: number; ingresos: number; gastos: number }) => void
+  /** Carga de golpe todos los parámetros de un escenario guardado en el constructor. */
+  loadScenario: (params: ScenarioParams) => void
 }
 
 export const usePlanningStore = create<PlanningState>((set) => ({
@@ -41,4 +43,5 @@ export const usePlanningStore = create<PlanningState>((set) => ({
       const baseParams: ScenarioParams = { ...BASE_SCENARIO, ingresos, gastos, aportacion: 0 }
       return { startingNetWorth, avgDebtRate, baseParams, params: { ...baseParams }, currentAge: null, today: new Date() }
     }),
+  loadScenario: (params) => set({ params: { ...params } }),
 }))
