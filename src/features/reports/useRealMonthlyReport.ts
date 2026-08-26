@@ -51,7 +51,11 @@ export function useRealMonthlyReport(monthsAgo: number): RealMonthlyReportResult
 
       const [{ data: categories }, { data: txRows }, { data: prevTxRows }, declaredIncomeCents] = await Promise.all([
         supabase.from('categories').select('id, name'),
-        supabase.from('transactions').select('category_id, amount_cents').eq('is_internal_transfer', false).or(dateFilter(fromIso, toIso)),
+        supabase
+          .from('transaction_category_amounts')
+          .select('category_id, amount_cents')
+          .eq('is_internal_transfer', false)
+          .or(dateFilter(fromIso, toIso)),
         supabase.from('transactions').select('amount_cents').eq('is_internal_transfer', false).or(dateFilter(prev.fromIso, prev.toIso)),
         fetchActiveDeclaredIncomeCents(),
       ])

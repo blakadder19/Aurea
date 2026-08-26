@@ -1,5 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Money } from '../../components/Money'
 import { SectionLabel } from '../../components/SectionLabel'
 import { SidePanel } from '../../components/SidePanel'
@@ -9,6 +9,7 @@ import { displayLabelFor } from './TransactionsTable'
 import { useTransactionsStore } from './store'
 import { categoryLabel, type RealCategory } from './useRealCategories'
 import type { RealTransaction } from './useRealTransactions'
+import { fetchTransactionSplits, saveTransactionSplits, type TransactionSplit } from './useTransactionSplits'
 
 const LABEL_CLASSES = 'flex flex-col gap-1.5 text-sm font-semibold text-ink-muted'
 const INPUT_CLASSES = 'min-h-11 rounded-md border border-line px-3 py-[11px] text-base text-ink'
@@ -52,6 +53,139 @@ function DemoFields({ transaction, onSave }: { transaction: Transaction; onSave:
         Guardar cambios
       </button>
     </>
+  )
+}
+
+interface SplitRow {
+  categoryId: string
+  amountEuros: string
+}
+
+interface SplitEditorProps {
+  transaction: RealTransaction
+  categories: RealCategory[]
+  initialSplits: TransactionSplit[]
+  onSaved: (splits: TransactionSplit[]) => void
+  onCancel: () => void
+}
+
+/** Editor de "Dividir en varias categorías": filas de categoría + importe que deben sumar el total del movimiento. */
+function SplitEditor({ transaction, categories, initialSplits, onSaved, onCancel }: SplitEditorProps) {
+  const sign = transaction.importe < 0 ? -1 : 1
+  const totalAbs = Math.abs(transaction.importe)
+  const [rows, setRows] = useState<SplitRow[]>(() =>
+    initialSplits.length > 0
+      ? initialSplits.map((s) => ({ categoryId: s.categoryId, amountEuros: (Math.abs(s.amountCents) / 100).toString() }))
+      : [
+          { categoryId: categories[0]?.id ?? '', amountEuros: '' },
+          { categoryId: categories[0]?.id ?? '', amountEuros: '' },
+        ],
+  )
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const sumEuros = rows.reduce((s, r) => s + (Number(r.amountEuros) || 0), 0)
+  const remaining = Math.round((totalAbs - sumEuros) * 100) / 100
+
+  function updateRow(index: number, patch: Partial<SplitRow>) {
+    setRows((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)))
+  }
+
+  function addRow() {
+    setRows((prev) => [...prev, { categoryId: categories[0]?.id ?? '', amountEuros: '' }])
+  }
+
+  function removeRow(index: number) {
+    setRows((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  async function handleSave() {
+    setSaving(true)
+    setError(null)
+    const splits: TransactionSplit[] = rows
+      .filter((r) => r.categoryId && Number(r.amountEuros) > 0)
+      .map((r) => ({ categoryId: r.categoryId, amountCents: Math.round(Number(r.amountEuros) * 100) * sign }))
+    const err = await saveTransactionSplits(transaction.id, splits)
+    setSaving(false)
+    if (err) setError(err)
+    else onSaved(splits)
+  }
+
+  async function handleRemoveSplit() {
+    setSaving(true)
+    setError(null)
+    const err = await saveTransactionSplits(transaction.id, [])
+    setSaving(false)
+    if (err) setError(err)
+    else onSaved([])
+  }
+
+  return (
+    <div className="flex flex-col gap-2.5 rounded-[14px] border border-line p-4">
+      <SectionLabel>Dividir en varias categorías</SectionLabel>
+      {rows.map((row, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <select
+            value={row.categoryId}
+            disabled={saving}
+            onChange={(e) => updateRow(i, { categoryId: e.target.value })}
+            className={`flex-1 ${INPUT_CLASSES}`}
+          >
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {categoryLabel(c)}
+              </option>
+            ))}
+          </select>
+          <input
+            type="number"
+            min={0}
+            step={0.01}
+            value={row.amountEuros}
+            disabled={saving}
+            onChange={(e) => updateRow(i, { amountEuros: e.target.value })}
+            placeholder="0,00"
+            className={`w-24 ${INPUT_CLASSES}`}
+          />
+          <button
+            type="button"
+            disabled={saving || rows.length <= 2}
+            onClick={() => removeRow(i)}
+            aria-label="Quitar categoría"
+            className="flex h-8 w-8 items-center justify-center rounded-md text-ink-muted hover:text-danger-text disabled:opacity-30"
+          >
+            ✕
+          </button>
+        </div>
+      ))}
+      <button type="button" disabled={saving} onClick={addRow} className="self-start text-sm font-semibold text-brand underline hover:no-underline">
+        + Añadir categoría
+      </button>
+      <div className={`text-sm ${remaining === 0 ? 'text-green-text' : 'text-ink-muted'}`}>
+        {remaining === 0
+          ? `Suma ${totalAbs.toLocaleString('es-ES', { minimumFractionDigits: 2 })} € — cuadra con el movimiento.`
+          : `Faltan ${remaining.toLocaleString('es-ES', { minimumFractionDigits: 2 })} € para llegar a ${totalAbs.toLocaleString('es-ES', { minimumFractionDigits: 2 })} €.`}
+      </div>
+      {error && <p className="text-sm text-danger-text">{error}</p>}
+      <div className="flex gap-2.5">
+        <button
+          type="button"
+          disabled={saving || remaining !== 0}
+          onClick={() => void handleSave()}
+          className="min-h-11 rounded-md border border-brand bg-brand px-4 py-2.5 text-base font-semibold text-surface hover:bg-brand-hover disabled:opacity-60"
+        >
+          Guardar división
+        </button>
+        <button type="button" disabled={saving} onClick={onCancel} className="min-h-11 rounded-md border border-line px-4 py-2.5 text-base font-semibold text-ink">
+          Cancelar
+        </button>
+        {initialSplits.length > 0 && (
+          <button type="button" disabled={saving} onClick={() => void handleRemoveSplit()} className="min-h-11 rounded-md px-4 py-2.5 text-base font-semibold text-danger-text">
+            Quitar división
+          </button>
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -124,6 +258,18 @@ function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTag
   const [error, setError] = useState<string | null>(null)
   const [ruleMessage, setRuleMessage] = useState<string | null>(null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [splits, setSplits] = useState<TransactionSplit[]>([])
+  const [editingSplit, setEditingSplit] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchTransactionSplits(transaction.id).then((s) => {
+      if (!cancelled) setSplits(s)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [transaction.id])
 
   async function handleSave() {
     setSaving(true)
@@ -133,7 +279,7 @@ function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTag
       .map((t) => t.trim())
       .filter(Boolean)
     const errors = await Promise.all([
-      categoryId !== (transaction.categoryId ?? '') ? onSaveCategory(transaction.id, categoryId) : null,
+      splits.length === 0 && categoryId !== (transaction.categoryId ?? '') ? onSaveCategory(transaction.id, categoryId) : null,
       onSaveNotesAndTags(transaction.id, noteInput, tags),
       isManual && onUpdateManual
         ? onUpdateManual(transaction.id, transaction.accountId, manualDescription, Math.round(Number(manualAmount || '0') * 100), manualDateIso)
@@ -238,7 +384,7 @@ function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTag
         Categoría
         <select
           value={categoryId}
-          disabled={saving}
+          disabled={saving || splits.length > 0}
           onChange={(e) => setCategoryId(e.target.value)}
           className={INPUT_CLASSES}
         >
@@ -249,6 +395,7 @@ function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTag
             </option>
           ))}
         </select>
+        {splits.length > 0 && <span className="text-sm text-ink-muted">Dividido en {splits.length} categorías — quita la división para elegir una sola.</span>}
       </label>
       <label className={LABEL_CLASSES}>
         Etiquetas
@@ -270,6 +417,38 @@ function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTag
           className={`resize-y ${INPUT_CLASSES}`}
         />
       </label>
+      {editingSplit ? (
+        <SplitEditor
+          transaction={transaction}
+          categories={categories}
+          initialSplits={splits}
+          onSaved={(newSplits) => {
+            setSplits(newSplits)
+            setEditingSplit(false)
+          }}
+          onCancel={() => setEditingSplit(false)}
+        />
+      ) : splits.length > 0 ? (
+        <div className="flex flex-col gap-2 rounded-[14px] border border-line p-4">
+          <SectionLabel>Dividido en {splits.length} categorías</SectionLabel>
+          {splits.map((s, i) => {
+            const cat = categories.find((c) => c.id === s.categoryId)
+            return (
+              <div key={i} className="flex justify-between text-[15px] text-ink">
+                <span>{cat ? categoryLabel(cat) : 'Sin clasificar'}</span>
+                <Money value={Math.abs(s.amountCents) / 100} className="font-semibold" />
+              </div>
+            )
+          })}
+          <button type="button" onClick={() => setEditingSplit(true)} className="self-start text-sm font-semibold text-brand underline hover:no-underline">
+            Editar división
+          </button>
+        </div>
+      ) : (
+        <button type="button" onClick={() => setEditingSplit(true)} className={SECONDARY_BUTTON}>
+          Dividir en varias categorías
+        </button>
+      )}
       {categoryId && (
         <button type="button" disabled={saving} onClick={() => void handleCreateRule()} className={SECONDARY_BUTTON}>
           Crear regla para «{transaction.comercio}»

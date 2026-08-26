@@ -3,10 +3,9 @@ import { describe, expect, it, vi } from 'vitest'
 import type { Session } from '@supabase/supabase-js'
 
 /**
- * Query builder falso. `transactions` se consulta dos veces por render (mes
- * actual, luego mes anterior) — la mock devuelve `currentMonthRows` la
- * primera vez y `previousMonthRows` la segunda, en el mismo orden en que el
- * hook las pide dentro del Promise.all.
+ * Query builder falso. El mes actual se lee de `transaction_category_amounts`
+ * (la vista consciente de divisiones); el mes anterior, de `transactions`
+ * directo (solo necesita el total, no la categoría).
  */
 function makeSupabaseMock({
   categories,
@@ -17,8 +16,6 @@ function makeSupabaseMock({
   currentMonthRows: unknown[]
   previousMonthRows: unknown[] | null
 }) {
-  let transactionsCallCount = 0
-
   function chainable(data: unknown[]) {
     const builder: Record<string, unknown> = {}
     for (const method of ['select', 'or', 'eq', 'order']) {
@@ -31,10 +28,8 @@ function makeSupabaseMock({
 
   const mockFrom = vi.fn((table: string) => {
     if (table === 'categories') return chainable(categories)
-    if (table === 'transactions') {
-      transactionsCallCount += 1
-      return chainable(transactionsCallCount === 1 ? currentMonthRows : (previousMonthRows ?? []))
-    }
+    if (table === 'transaction_category_amounts') return chainable(currentMonthRows)
+    if (table === 'transactions') return chainable(previousMonthRows ?? [])
     return chainable([])
   })
 

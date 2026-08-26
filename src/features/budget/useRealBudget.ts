@@ -112,7 +112,7 @@ export function useRealBudget(categories: RealCategory[] | null, budgetMonthStar
       const [{ data: budgetRows, error: budgetError }, { data: txRows, error: txError }] = await Promise.all([
         supabase.from('budgets').select('category_id, amount_cents').eq('month', monthKeyForCycle(start)),
         supabase
-          .from('transactions')
+          .from('transaction_category_amounts')
           .select('category_id, amount_cents')
           .not('category_id', 'is', null)
           .eq('is_internal_transfer', false)

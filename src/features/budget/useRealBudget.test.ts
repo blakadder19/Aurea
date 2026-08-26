@@ -20,7 +20,7 @@ function chainable(data: unknown[]) {
 
 const fixtures: Record<string, unknown[]> = {
   budgets: [{ category_id: 'cat-1', amount_cents: 40000 }],
-  transactions: [
+  transaction_category_amounts: [
     { category_id: 'cat-1', amount_cents: -31200 },
     { category_id: 'cat-1', amount_cents: -10000 },
     { category_id: 'cat-2', amount_cents: -5000 },
