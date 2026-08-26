@@ -111,3 +111,43 @@ export async function updateCategoryIcon(id: string, icon: string): Promise<stri
   }
   return null
 }
+
+/** Crea una categoría propia además del catálogo por defecto. Grupo genérico 'otros' — sin selector de grupo por ahora. */
+export async function createCategory(name: string, icon: string): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  if (!name.trim()) return 'Ponle un nombre a la categoría.'
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return 'Inicia sesión de nuevo.'
+
+  const { error } = await supabase
+    .from('categories')
+    .insert({ user_id: user.id, name: name.trim(), category_group: 'otros', icon: icon.trim() || null })
+  if (error) {
+    console.error('createCategory: fallo al crear', error)
+    if (error.code === '23505') return 'Ya tienes una categoría con ese nombre.'
+    return 'No hemos podido crear la categoría. Inténtalo de nuevo.'
+  }
+  return null
+}
+
+/**
+ * Borra una categoría propia. Sin ON DELETE CASCADE en transactions/budgets/
+ * rules.category_id a propósito — si tiene movimientos, presupuestos o
+ * reglas asociadas, el propio DELETE falla por la FK (23503) y se traduce
+ * aquí a un mensaje legible en vez de dejar pasar el error crudo.
+ */
+export async function deleteCategory(id: string): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  const { error } = await supabase.from('categories').delete().eq('id', id)
+  if (error) {
+    if (error.code === '23503') {
+      return 'No puedes borrar esta categoría porque tiene movimientos, presupuestos o reglas asociadas. Cámbialos primero a otra categoría.'
+    }
+    console.error('deleteCategory: fallo al borrar', error)
+    return 'No hemos podido borrar la categoría. Inténtalo de nuevo.'
+  }
+  return null
+}
