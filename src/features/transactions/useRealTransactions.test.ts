@@ -110,6 +110,7 @@ describe('useRealTransactions', () => {
         displayName: null,
         dateISO: '2026-08-19',
         isInternalTransfer: false,
+        receiptPath: null,
       },
       {
         id: 'tx-2',
@@ -126,6 +127,7 @@ describe('useRealTransactions', () => {
         displayName: 'Compra de Amazon',
         dateISO: '2026-08-18',
         isInternalTransfer: false,
+        receiptPath: null,
       },
     ])
   })

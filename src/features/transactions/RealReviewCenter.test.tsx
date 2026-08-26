@@ -27,6 +27,7 @@ const transactions: RealTransaction[] = [
     tags: [],
     dateISO: '2026-08-25',
     isInternalTransfer: false,
+    receiptPath: null,
   },
   {
     id: 'tx-2',
@@ -42,6 +43,7 @@ const transactions: RealTransaction[] = [
     tags: [],
     dateISO: '2026-08-25',
     isInternalTransfer: false,
+    receiptPath: null,
   },
 ]
 const categories: RealCategory[] = [

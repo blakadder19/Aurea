@@ -9,6 +9,7 @@ import { displayLabelFor } from './TransactionsTable'
 import { useTransactionsStore } from './store'
 import { categoryLabel, type RealCategory } from './useRealCategories'
 import type { RealTransaction } from './useRealTransactions'
+import { fetchReceiptSignedUrl, removeTransactionReceipt, uploadTransactionReceipt } from './useTransactionReceipt'
 import { fetchTransactionSplits, saveTransactionSplits, type TransactionSplit } from './useTransactionSplits'
 
 const LABEL_CLASSES = 'flex flex-col gap-1.5 text-sm font-semibold text-ink-muted'
@@ -260,6 +261,10 @@ function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTag
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [splits, setSplits] = useState<TransactionSplit[]>([])
   const [editingSplit, setEditingSplit] = useState(false)
+  const [receiptPath, setReceiptPath] = useState(transaction.receiptPath)
+  const [receiptPreviewUrl, setReceiptPreviewUrl] = useState<string | null>(null)
+  const [uploadingReceipt, setUploadingReceipt] = useState(false)
+  const [receiptError, setReceiptError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -270,6 +275,39 @@ function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTag
       cancelled = true
     }
   }, [transaction.id])
+
+  useEffect(() => {
+    if (!receiptPath) {
+      setReceiptPreviewUrl(null)
+      return
+    }
+    let cancelled = false
+    fetchReceiptSignedUrl(receiptPath).then((url) => {
+      if (!cancelled) setReceiptPreviewUrl(url)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [receiptPath])
+
+  async function handleUploadReceipt(file: File) {
+    setUploadingReceipt(true)
+    setReceiptError(null)
+    const { path, error: err } = await uploadTransactionReceipt(transaction.id, file)
+    setUploadingReceipt(false)
+    if (err) setReceiptError(err)
+    else setReceiptPath(path)
+  }
+
+  async function handleRemoveReceipt() {
+    if (!receiptPath) return
+    setUploadingReceipt(true)
+    setReceiptError(null)
+    const err = await removeTransactionReceipt(transaction.id, receiptPath)
+    setUploadingReceipt(false)
+    if (err) setReceiptError(err)
+    else setReceiptPath(null)
+  }
 
   async function handleSave() {
     setSaving(true)
@@ -449,6 +487,34 @@ function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTag
           Dividir en varias categorías
         </button>
       )}
+      {receiptPath ? (
+        <div className="flex items-center gap-3">
+          {receiptPreviewUrl && (
+            <a href={receiptPreviewUrl} target="_blank" rel="noreferrer" className="text-sm font-semibold text-brand underline hover:no-underline">
+              Ver recibo
+            </a>
+          )}
+          <button type="button" disabled={uploadingReceipt} onClick={() => void handleRemoveReceipt()} className="text-sm font-semibold text-danger-text underline hover:no-underline">
+            Quitar recibo
+          </button>
+        </div>
+      ) : (
+        <label className={`${SECONDARY_BUTTON} inline-flex cursor-pointer items-center ${uploadingReceipt ? 'opacity-60' : ''}`}>
+          {uploadingReceipt ? 'Subiendo…' : 'Adjuntar recibo'}
+          <input
+            type="file"
+            accept="image/*"
+            disabled={uploadingReceipt}
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) void handleUploadReceipt(file)
+              e.target.value = ''
+            }}
+          />
+        </label>
+      )}
+      {receiptError && <p className="text-sm text-danger-text">{receiptError}</p>}
       {categoryId && (
         <button type="button" disabled={saving} onClick={() => void handleCreateRule()} className={SECONDARY_BUTTON}>
           Crear regla para «{transaction.comercio}»

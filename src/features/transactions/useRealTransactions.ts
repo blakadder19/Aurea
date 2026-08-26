@@ -16,6 +16,8 @@ export interface RealTransaction extends Transaction {
   dateISO: string | null
   /** Dinero moviéndose entre tus propias cuentas: no es un gasto ni un ingreso real, se excluye de esos cálculos. */
   isInternalTransfer: boolean
+  /** Ruta en el bucket privado `receipts`, o null si no tiene foto adjunta. */
+  receiptPath: string | null
 }
 
 interface RealTransactionsResult {
@@ -56,7 +58,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
         supabase
           .from('transactions')
           .select(
-            'id, account_id, booking_date, value_date, description, amount_cents, category_id, needs_review, user_note, tags, display_name, is_internal_transfer',
+            'id, account_id, booking_date, value_date, description, amount_cents, category_id, needs_review, user_note, tags, display_name, is_internal_transfer, receipt_path',
           )
           .order('booking_date', { ascending: false })
           .limit(TRANSACTIONS_LIMIT),
@@ -99,6 +101,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
           displayName: row.display_name as string | null,
           dateISO: isoDate,
           isInternalTransfer: Boolean(row.is_internal_transfer),
+          receiptPath: (row.receipt_path as string | null) ?? null,
         }
       })
 
