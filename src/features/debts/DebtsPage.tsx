@@ -5,7 +5,7 @@ import { ExtraPaymentPanel } from './ExtraPaymentPanel'
 import { RealStrategyComparisonCard } from './RealStrategyComparisonCard'
 import { StrategyComparisonCard } from './StrategyComparisonCard'
 import { useDebtsStore } from './store'
-import { saveDebtDetails, toDebtTableRow, useRealDebts } from './useRealDebts'
+import { saveDebtDetails, saveExtraPaymentReminder, toDebtTableRow, useRealDebts } from './useRealDebts'
 import { useRealAccounts } from '../accounts/useRealAccounts'
 import { EmptyState } from '../../components/states/EmptyState'
 import { LoadingRealData } from '../../components/states/LoadingRealData'
@@ -74,6 +74,12 @@ export function DebtsPage() {
     return saveDebtDetails(accountId, annualRateBps, monthlyPaymentCents, nextPaymentDate)
   }
 
+  async function handleSaveReminder(accountId: string, note: string) {
+    const error = await saveExtraPaymentReminder(accountId, note)
+    if (!error) refetch()
+    return error
+  }
+
   return (
     <>
       <Header
@@ -104,7 +110,11 @@ export function DebtsPage() {
           </>
         )}
       </main>
-      <ExtraPaymentPanel debts={hasRealDebts ? realDebts!.map(toDebtTableRow) : undefined} asOf={hasRealDebts ? today : undefined} />
+      <ExtraPaymentPanel
+        debts={hasRealDebts ? realDebts!.map(toDebtTableRow) : undefined}
+        asOf={hasRealDebts ? today : undefined}
+        onSaveReminder={hasRealDebts ? handleSaveReminder : undefined}
+      />
       <EditDebtDetailPanel
         debt={editingDebt}
         onClose={() => setEditingAccountId(null)}

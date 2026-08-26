@@ -75,6 +75,7 @@ export function DebtsTable({
                       Editar detalle
                     </button>
                   )}
+                  {d.reminder && <div className="mt-0.5 text-[13px] font-normal whitespace-normal text-ink-muted">📌 {d.reminder}</div>}
                 </td>
                 <td className={`${TD} font-bold text-danger-text`}>
                   <Money value={-d.balance} />
@@ -119,6 +120,7 @@ export function DebtsTable({
               {d.annualRate === 0 ? '0 %' : `${(d.annualRate * 100).toLocaleString('es-ES', { minimumFractionDigits: 2 })} %`} ·{' '}
               {d.paymentLabel} · próximo pago {d.nextPaymentLabel} · fin previsto {payoffLabelFor(d, asOf)}
             </div>
+            {d.reminder && <div className="text-sm text-ink-muted">📌 {d.reminder}</div>}
           </div>
         ))}
       </div>

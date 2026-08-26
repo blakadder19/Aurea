@@ -63,6 +63,7 @@ describe('useRealDebts', () => {
         annualRateBps: 285,
         monthlyPaymentCents: 61240,
         nextPaymentDate: '2026-09-01',
+        extraPaymentReminder: null,
       },
     ])
   })

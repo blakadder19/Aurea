@@ -13,6 +13,7 @@ export interface RealDebt {
   annualRateBps: number
   monthlyPaymentCents: number | null
   nextPaymentDate: string | null
+  extraPaymentReminder: string | null
 }
 
 interface RealDebtsResult {
@@ -56,7 +57,7 @@ export function useRealDebts(accounts: Account[] | null): RealDebtsResult {
 
       const { data, error } = await supabase
         .from('debt_details')
-        .select('account_id, annual_rate_bps, monthly_payment_cents, next_payment_date')
+        .select('account_id, annual_rate_bps, monthly_payment_cents, next_payment_date, extra_payment_reminder')
         .in(
           'account_id',
           debtAccounts.map((a) => a.id),
@@ -79,6 +80,7 @@ export function useRealDebts(accounts: Account[] | null): RealDebtsResult {
             annualRateBps: (detail?.annual_rate_bps as number | undefined) ?? 0,
             monthlyPaymentCents: (detail?.monthly_payment_cents as number | null | undefined) ?? null,
             nextPaymentDate: (detail?.next_payment_date as string | null | undefined) ?? null,
+            extraPaymentReminder: (detail?.extra_payment_reminder as string | null | undefined) ?? null,
           }
         }),
       )
@@ -129,6 +131,30 @@ export async function saveDebtDetails(
   return null
 }
 
+/**
+ * Guarda la intención de un pago extraordinario como nota visible en la
+ * deuda — Áurea no ejecuta pagos reales, así que en vez de fingir que
+ * "programa" el pago, solo persiste el recordatorio. Upsert de columnas
+ * parciales: no toca tipo/cuota/próximo pago si ya existía la fila.
+ */
+export async function saveExtraPaymentReminder(accountId: string, note: string): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return 'Inicia sesión de nuevo para guardar el recordatorio.'
+
+  const { error } = await supabase
+    .from('debt_details')
+    .upsert({ user_id: user.id, account_id: accountId, extra_payment_reminder: note }, { onConflict: 'user_id,account_id' })
+  if (error) {
+    console.error('saveExtraPaymentReminder: fallo al guardar', error)
+    return 'No hemos podido guardar el recordatorio. Inténtalo de nuevo.'
+  }
+  return null
+}
+
 const eurosDecimal = (cents: number) => cents / 100
 
 function formatNextPayment(iso: string | null): string {
@@ -155,5 +181,6 @@ export function toDebtTableRow(d: RealDebt): Debt {
         ? `${monthlyPayment.toLocaleString('es-ES', { minimumFractionDigits: 2 })} €/mes`
         : 'Saldo completo',
     nextPaymentLabel: formatNextPayment(d.nextPaymentDate),
+    reminder: d.extraPaymentReminder,
   }
 }

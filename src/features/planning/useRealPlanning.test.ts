@@ -41,6 +41,7 @@ describe('computeAvgDebtRate', () => {
     annualRateBps: 0,
     monthlyPaymentCents: null,
     nextPaymentDate: null,
+    extraPaymentReminder: null,
     ...overrides,
   })
 

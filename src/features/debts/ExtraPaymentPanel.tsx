@@ -8,10 +8,19 @@ import { debts as demoDebts, type Debt } from '../../data/debts'
 import { formatDuration, formatMonthYearShort, simulateExtraPayment } from './domain'
 import { useDebtsStore } from './store'
 
-function SimulatorForm({ debts, asOf }: { debts: Debt[]; asOf: Date }) {
+interface SimulatorFormProps {
+  debts: Debt[]
+  asOf: Date
+  onSaveReminder?: (debtId: string, note: string) => Promise<string | null>
+}
+
+function SimulatorForm({ debts, asOf, onSaveReminder }: SimulatorFormProps) {
   const amortizingDebts = debts.filter((d) => d.monthlyPayment !== null)
   const [debtId, setDebtId] = useState(amortizingDebts[0]?.id ?? '')
   const [extra, setExtra] = useState(3000)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const debt = amortizingDebts.find((d) => d.id === debtId) ?? amortizingDebts[0]
 
   if (!debt) {
@@ -26,6 +35,17 @@ function SimulatorForm({ debts, asOf }: { debts: Debt[]; asOf: Date }) {
   }
 
   const result = simulateExtraPayment(debt.balance, debt.annualRate, debt.monthlyPayment!, extra, asOf)
+
+  async function handleSaveReminder() {
+    if (!onSaveReminder) return
+    setSaving(true)
+    setError(null)
+    const note = `Pago extra de ${extra.toLocaleString('es-ES')} € pendiente de hacer.`
+    const err = await onSaveReminder(debt!.id, note)
+    setSaving(false)
+    if (err) setError(err)
+    else setSaved(true)
+  }
 
   return (
     <>
@@ -50,7 +70,11 @@ function SimulatorForm({ debts, asOf }: { debts: Debt[]; asOf: Date }) {
         Deuda
         <select
           value={debtId}
-          onChange={(e) => setDebtId(e.target.value)}
+          onChange={(e) => {
+            setDebtId(e.target.value)
+            setSaved(false)
+            setError(null)
+          }}
           className="min-h-11 rounded-md border border-line bg-surface px-3 py-[11px] text-base text-ink"
         >
           {amortizingDebts.map((d) => (
@@ -91,18 +115,39 @@ function SimulatorForm({ debts, asOf }: { debts: Debt[]; asOf: Date }) {
         </div>
       </div>
 
-      <button
-        type="button"
-        className="min-h-11 rounded-md border border-brand bg-brand px-4 py-3 text-base font-bold text-surface hover:bg-brand-hover"
-      >
-        Programar el pago extra
-      </button>
+      {onSaveReminder ? (
+        <>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => void handleSaveReminder()}
+            className="min-h-11 rounded-md border border-brand bg-brand px-4 py-3 text-base font-bold text-surface hover:bg-brand-hover disabled:opacity-60"
+          >
+            Guardar como recordatorio
+          </button>
+          {saved && <p className="text-sm text-green-text">Recordatorio guardado — lo verás en la tabla de deudas.</p>}
+          {error && <p className="text-sm text-danger-text">{error}</p>}
+        </>
+      ) : (
+        <button
+          type="button"
+          className="min-h-11 rounded-md border border-brand bg-brand px-4 py-3 text-base font-bold text-surface hover:bg-brand-hover"
+        >
+          Programar el pago extra
+        </button>
+      )}
     </>
   )
 }
 
+interface ExtraPaymentPanelProps {
+  debts?: Debt[]
+  asOf?: Date
+  onSaveReminder?: (debtId: string, note: string) => Promise<string | null>
+}
+
 /** Panel simulador de pago extraordinario: importe → intereses ahorrados, tiempo y nueva fecha de fin. */
-export function ExtraPaymentPanel({ debts = demoDebts, asOf = CONTEXT_DATE }: { debts?: Debt[]; asOf?: Date }) {
+export function ExtraPaymentPanel({ debts = demoDebts, asOf = CONTEXT_DATE, onSaveReminder }: ExtraPaymentPanelProps) {
   const open = useDebtsStore((s) => s.simulatorOpen)
   const closeSimulator = useDebtsStore((s) => s.closeSimulator)
 
@@ -117,7 +162,7 @@ export function ExtraPaymentPanel({ debts = demoDebts, asOf = CONTEXT_DATE }: { 
         }, 0)
       }}
     >
-      {open && <SimulatorForm debts={debts} asOf={asOf} />}
+      {open && <SimulatorForm debts={debts} asOf={asOf} onSaveReminder={onSaveReminder} />}
     </SidePanel>
   )
 }

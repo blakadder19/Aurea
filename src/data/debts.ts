@@ -13,6 +13,8 @@ export interface Debt {
   monthlyPayment: number | null
   paymentLabel: string
   nextPaymentLabel: string
+  /** Nota de "pago extra pendiente" guardada desde el simulador — solo real, nunca fabricada en demo. */
+  reminder?: string | null
 }
 
 export const debts: Debt[] = [
