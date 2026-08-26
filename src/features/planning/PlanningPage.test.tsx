@@ -51,7 +51,7 @@ describe('PlanningPage', () => {
 
   it('mover un control actualiza el gráfico y las cifras en vivo', () => {
     renderPage()
-    const rentabilidad = screen.getByLabelText(/Rentabilidad anual esperada/)
+    const rentabilidad = screen.getByRole('slider', { name: 'Rentabilidad anual esperada' })
     fireEvent.change(rentabilidad, { target: { value: '7' } })
     expect(screen.getByText('7,0 %')).toBeInTheDocument()
     expect(screen.getAllByText('487.293 €').length).toBeGreaterThan(0)
@@ -63,5 +63,14 @@ describe('PlanningPage', () => {
     const tasaInput = screen.getByLabelText('Tasa de retirada anual')
     fireEvent.change(tasaInput, { target: { value: '3' } })
     expect(screen.getByText('960.000 €')).toBeInTheDocument()
+  })
+
+  it('el campo numérico de un slider acepta un valor por encima de su tope visual', () => {
+    renderPage()
+    const aportacionInput = screen.getByLabelText('Aportación a inversión (valor exacto)')
+    fireEvent.change(aportacionInput, { target: { value: '2500' } })
+    expect(screen.getByText('2.500 €/mes')).toBeInTheDocument()
+    const aportacionSlider = screen.getByRole('slider', { name: 'Aportación a inversión' })
+    expect(aportacionSlider).toHaveValue('1000') // el slider se satura en su tope, el valor real no
   })
 })

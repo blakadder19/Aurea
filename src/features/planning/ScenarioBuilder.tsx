@@ -23,21 +23,33 @@ interface SliderRowProps {
 
 function SliderRow({ label, value, min, max, step, valueLabel, onChange }: SliderRowProps) {
   return (
-    <label className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between text-[15px] font-semibold text-ink">
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between gap-2 text-[15px] font-semibold text-ink">
         <span>{label}</span>
-        <span className="tabular text-ink-muted">{valueLabel}</span>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            aria-label={`${label} (valor exacto)`}
+            min={min}
+            step={step}
+            value={value}
+            onChange={(e) => onChange(Math.max(min, Number(e.target.value)))}
+            className="min-h-9 w-24 rounded-md border border-line px-2 py-1 text-right text-[15px] font-semibold text-ink tabular"
+          />
+          <span className="tabular text-sm font-normal text-ink-muted">{valueLabel}</span>
+        </div>
       </div>
       <input
         type="range"
+        aria-label={label}
         min={min}
         max={max}
         step={step}
-        value={value}
+        value={Math.min(Math.max(value, min), max)}
         onChange={(e) => onChange(Number(e.target.value))}
         className="h-11 w-full cursor-pointer accent-green"
       />
-    </label>
+    </div>
   )
 }
 
