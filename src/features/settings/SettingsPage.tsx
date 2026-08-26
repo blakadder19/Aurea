@@ -2,12 +2,14 @@ import { useDeclaredIncomes } from '../../lib/declaredIncome'
 import { useAuthStore } from '../../lib/supabase/useAuth'
 import { useRealAccounts } from '../accounts/useRealAccounts'
 import { useRealCategories } from '../transactions/useRealCategories'
+import { useRealRules } from '../transactions/useRealRules'
 import { CategoryIconsCard } from './CategoryIconsCard'
 import { ConnectionsList } from './ConnectionsList'
 import { DeclaredIncomesCard } from './DeclaredIncomesCard'
 import { ImportCsvPanel } from './ImportCsvPanel'
 import { RealConnectionsCard } from './RealConnectionsCard'
 import { RealImportCsvPanel } from './RealImportCsvPanel'
+import { RulesCard } from './RulesCard'
 import { SettingsBasics } from './SettingsBasics'
 import { useSettingsStore } from './store'
 
@@ -43,6 +45,7 @@ export function SettingsPage() {
   const { accounts: realAccounts, refetch } = useRealAccounts()
   const { categories: realCategories, refetch: refetchCategories } = useRealCategories()
   const { incomes: declaredIncomes, refetch: refetchDeclaredIncomes } = useDeclaredIncomes()
+  const { rules: realRules, refetch: refetchRules } = useRealRules()
 
   return (
     <>
@@ -55,6 +58,9 @@ export function SettingsPage() {
         )}
         {importOpen && !isAuthenticated && <ImportCsvPanel />}
         {isAuthenticated && <CategoryIconsCard categories={realCategories ?? []} onRefetch={refetchCategories} />}
+        {isAuthenticated && (
+          <RulesCard rules={realRules ?? []} categories={realCategories ?? []} onRefetch={refetchRules} />
+        )}
         {isAuthenticated && <DeclaredIncomesCard incomes={declaredIncomes ?? []} onRefetch={refetchDeclaredIncomes} />}
         <SettingsBasics />
       </main>
