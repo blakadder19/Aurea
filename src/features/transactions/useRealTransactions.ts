@@ -129,6 +129,32 @@ export async function updateTransactionCategory(id: string, categoryId: string |
   return null
 }
 
+/**
+ * Aplica varias sugerencias de categoría (una distinta por movimiento) de
+ * golpe, sin refetch por cada una — pensado para el bucle de "Clasificar
+ * todos los pendientes con IA" del Centro de revisión, que puede llamar
+ * esto decenas de veces seguidas; quien lo use decide cuándo refrescar.
+ */
+export async function bulkApplyCategorySuggestions(
+  suggestions: { transactionId: string; categoryId: string }[],
+): Promise<{ appliedCount: number; error: string | null }> {
+  if (!supabase) return { appliedCount: 0, error: 'Supabase no está configurado.' }
+  if (suggestions.length === 0) return { appliedCount: 0, error: null }
+
+  const results = await Promise.all(
+    suggestions.map(({ transactionId, categoryId }) =>
+      supabase!.from('transactions').update({ category_id: categoryId, needs_review: false }).eq('id', transactionId),
+    ),
+  )
+  const failedCount = results.filter((r) => r.error).length
+  if (failedCount > 0) console.error('bulkApplyCategorySuggestions: fallo al guardar', failedCount, 'de', suggestions.length)
+
+  return {
+    appliedCount: suggestions.length - failedCount,
+    error: failedCount === suggestions.length ? 'No hemos podido guardar las sugerencias. Inténtalo de nuevo.' : null,
+  }
+}
+
 /** Cambia la categoría de varios movimientos a la vez. */
 export async function bulkUpdateTransactionCategory(ids: string[], categoryId: string): Promise<string | null> {
   if (!supabase) return 'Supabase no está configurado.'

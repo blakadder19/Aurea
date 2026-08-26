@@ -6,12 +6,16 @@ import { useTransactionsStore } from './store'
 import { displayLabelFor } from './TransactionsTable'
 import { suggestCategories } from './useAiCategorization'
 import { categoryLabel, type RealCategory } from './useRealCategories'
-import type { RealTransaction } from './useRealTransactions'
+import { bulkApplyCategorySuggestions, type RealTransaction } from './useRealTransactions'
+
+/** Techo de seguridad: 40 rondas × 30 movimientos = hasta 1200 clasificados en una sola pasada. */
+const MAX_AUTO_ROUNDS = 40
 
 interface RealReviewCenterProps {
   transactions: RealTransaction[]
   categories: RealCategory[]
   onSaveCategory: (id: string, categoryId: string) => Promise<string | null>
+  onBulkClassified: () => void
 }
 
 /**
@@ -20,7 +24,7 @@ interface RealReviewCenterProps {
  * sugerencia real de la API de Anthropic sobre tus propias categorías,
  * que tú aceptas o descartas; nunca se aplica sola.
  */
-export function RealReviewCenter({ transactions, categories, onSaveCategory }: RealReviewCenterProps) {
+export function RealReviewCenter({ transactions, categories, onSaveCategory, onBulkClassified }: RealReviewCenterProps) {
   const openPanel = useTransactionsStore((s) => s.openPanel)
   const pending = transactions.filter((t) => !t.categoryId || t.needsReview)
   const categoryById = new Map(categories.map((c) => [c.id, categoryLabel(c)]))
@@ -31,8 +35,54 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory }: R
   const [savingId, setSavingId] = useState<string | null>(null)
   const [acceptingAll, setAcceptingAll] = useState(false)
   const [acceptAllError, setAcceptAllError] = useState<string | null>(null)
+  const [autoRunning, setAutoRunning] = useState(false)
+  const [autoClassified, setAutoClassified] = useState(0)
+  const [autoSummary, setAutoSummary] = useState<string | null>(null)
 
   const suggestionCount = Object.keys(suggestions).length
+
+  /**
+   * En vez de obligar a pulsar "Sugerir" tanda a tanda (la Edge Function
+   * solo mira 30 movimientos por llamada), esto repite la llamada y acepta
+   * cada tanda automáticamente hasta que una vuelta no proponga nada más o
+   * se llegue al techo de seguridad — un único clic clasifica todo el
+   * histórico pendiente en vez de exigir ~9 rondas manuales para 270
+   * movimientos.
+   */
+  async function handleClassifyAll() {
+    setAutoRunning(true)
+    setAutoSummary(null)
+    setSuggestError(null)
+    setAutoClassified(0)
+
+    let classified = 0
+    for (let round = 0; round < MAX_AUTO_ROUNDS; round++) {
+      const { suggestions: result, error } = await suggestCategories()
+      if (error) {
+        setSuggestError(error)
+        break
+      }
+      if (result.length === 0) break
+
+      const { appliedCount, error: applyError } = await bulkApplyCategorySuggestions(
+        result.map((s) => ({ transactionId: s.transactionId, categoryId: s.categoryId })),
+      )
+      classified += appliedCount
+      setAutoClassified(classified)
+      if (applyError) {
+        setSuggestError(applyError)
+        break
+      }
+    }
+
+    setAutoRunning(false)
+    setAutoSummary(
+      classified > 0
+        ? `Clasificados ${classified} movimiento${classified === 1 ? '' : 's'}. Revisa cuando quieras los que no tengan sugerencia clara.`
+        : 'No hemos encontrado ninguna sugerencia con confianza suficiente.',
+    )
+    if (classified > 0) onBulkClassified()
+  }
 
   async function handleSuggest() {
     setLoadingSuggestions(true)
@@ -106,16 +156,27 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory }: R
             <button
               type="button"
               onClick={() => void handleSuggest()}
-              disabled={loadingSuggestions}
+              disabled={loadingSuggestions || autoRunning}
               className="min-h-11 rounded-md border border-brand bg-surface px-4 py-2.5 text-base font-semibold text-brand hover:bg-brand-soft disabled:opacity-60"
             >
               {loadingSuggestions ? 'Pensando…' : 'Sugerir categorías con IA'}
             </button>
+            {pending.length > 5 && (
+              <button
+                type="button"
+                onClick={() => void handleClassifyAll()}
+                disabled={autoRunning}
+                className="min-h-11 rounded-md border border-brand bg-brand px-4 py-2.5 text-base font-semibold text-surface hover:bg-brand-hover disabled:opacity-60"
+              >
+                {autoRunning ? `Clasificando… (${autoClassified})` : 'Clasificar todos los pendientes con IA'}
+              </button>
+            )}
           </div>
         )}
       </div>
       {suggestError && <p className="text-sm text-danger-text">{suggestError}</p>}
       {acceptAllError && <p className="text-sm text-danger-text">{acceptAllError}</p>}
+      {autoSummary && <p className="text-sm text-green-text">{autoSummary}</p>}
 
       {pending.length === 0 ? (
         <Card padding="lg" className="py-12 text-center">

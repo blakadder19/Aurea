@@ -247,7 +247,12 @@ export function TransactionsPage() {
             </>
           )
         ) : hasRealTransactions ? (
-          <RealReviewCenter transactions={realTransactions!} categories={realCategories ?? []} onSaveCategory={handleSaveCategory} />
+          <RealReviewCenter
+            transactions={realTransactions!}
+            categories={realCategories ?? []}
+            onSaveCategory={handleSaveCategory}
+            onBulkClassified={refetch}
+          />
         ) : (
           <>
             <ReviewCenter />

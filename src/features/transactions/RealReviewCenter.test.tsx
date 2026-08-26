@@ -9,8 +9,13 @@ import type { RealTransaction } from './useRealTransactions'
 vi.mock('./useAiCategorization', () => ({
   suggestCategories: vi.fn(),
 }))
+vi.mock('./useRealTransactions', async () => {
+  const actual = await vi.importActual<typeof import('./useRealTransactions')>('./useRealTransactions')
+  return { ...actual, bulkApplyCategorySuggestions: vi.fn() }
+})
 
 const { suggestCategories } = await import('./useAiCategorization')
+const { bulkApplyCategorySuggestions } = await import('./useRealTransactions')
 
 const transactions: RealTransaction[] = [
   {
@@ -51,13 +56,19 @@ const categories: RealCategory[] = [
   { id: 'cat-2', name: 'Ocio y suscripciones', icon: null },
 ]
 
-function renderCenter(onSaveCategory = vi.fn().mockResolvedValue(null)) {
+const manyTransactions: RealTransaction[] = Array.from({ length: 6 }, (_, i) => ({
+  ...transactions[0],
+  id: `tx-many-${i}`,
+}))
+
+function renderCenter(onSaveCategory = vi.fn().mockResolvedValue(null), onBulkClassified = vi.fn(), txs = transactions) {
   useTransactionsStore.setState({ panelTransactionId: null })
   return {
     onSaveCategory,
+    onBulkClassified,
     ...render(
       <BrowserRouter>
-        <RealReviewCenter transactions={transactions} categories={categories} onSaveCategory={onSaveCategory} />
+        <RealReviewCenter transactions={txs} categories={categories} onSaveCategory={onSaveCategory} onBulkClassified={onBulkClassified} />
       </BrowserRouter>,
     ),
   }
@@ -144,5 +155,23 @@ describe('RealReviewCenter', () => {
 
     expect(await screen.findByText(/No hemos podido guardar 1 de 2 sugerencias/)).toBeInTheDocument()
     expect(screen.getAllByText('Sugerencia IA')).toHaveLength(1)
+  })
+
+  it('"Clasificar todos los pendientes con IA" repite rondas hasta que no hay más sugerencias, y refresca una sola vez al final', async () => {
+    vi.mocked(suggestCategories)
+      .mockReset()
+      .mockResolvedValueOnce({ suggestions: manyTransactions.map((t) => ({ transactionId: t.id, categoryId: 'cat-1' })), error: null })
+      .mockResolvedValueOnce({ suggestions: [], error: null })
+    vi.mocked(bulkApplyCategorySuggestions)
+      .mockReset()
+      .mockResolvedValue({ appliedCount: manyTransactions.length, error: null })
+    const { onBulkClassified } = renderCenter(undefined, undefined, manyTransactions)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clasificar todos los pendientes con IA' }))
+
+    await waitFor(() => expect(screen.getByText(/Clasificados 6 movimientos/)).toBeInTheDocument())
+    expect(suggestCategories).toHaveBeenCalledTimes(2)
+    expect(bulkApplyCategorySuggestions).toHaveBeenCalledTimes(1)
+    expect(onBulkClassified).toHaveBeenCalledTimes(1)
   })
 })
