@@ -352,7 +352,10 @@ function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTag
     const { error: err, appliedCount } = await onCreateRule(transaction.comercio, categoryId)
     setSaving(false)
     if (err) setError(err)
-    else setRuleMessage(`Regla creada. ${appliedCount} movimiento${appliedCount === 1 ? '' : 's'} clasificado${appliedCount === 1 ? '' : 's'} con «${transaction.comercio}».`)
+    else
+      setRuleMessage(
+        `Hecho. ${appliedCount} movimiento${appliedCount === 1 ? '' : 's'} parecido${appliedCount === 1 ? '' : 's'} a «${transaction.comercio}» clasificado${appliedCount === 1 ? '' : 's'} igual. No se aplicará a movimientos futuros.`,
+      )
   }
 
   return (
@@ -517,7 +520,7 @@ function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTag
       {receiptError && <p className="text-sm text-danger-text">{receiptError}</p>}
       {categoryId && (
         <button type="button" disabled={saving} onClick={() => void handleCreateRule()} className={SECONDARY_BUTTON}>
-          Crear regla para «{transaction.comercio}»
+          Aplicar esta categoría a movimientos parecidos
         </button>
       )}
       {ruleMessage && <p className="text-sm text-green-text">{ruleMessage}</p>}
