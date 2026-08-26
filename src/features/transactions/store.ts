@@ -8,6 +8,9 @@ export const ALL_CATEGORIES = 'Todas las categorías'
 export const ALL_STATUSES = 'Cualquier estado'
 export const STATUS_NEEDS_REVIEW = 'Requiere revisión'
 export const STATUS_CONFIRMED = 'Confirmado'
+export const DATE_ALL = 'Todo'
+export const DATE_THIS_MONTH = 'Este mes'
+export const DATE_LAST_3_MONTHS = 'Últimos 3 meses'
 
 interface TransactionsUIState {
   view: TransactionsView
@@ -22,6 +25,9 @@ interface TransactionsUIState {
   setCategoryFilter: (category: string) => void
   statusFilter: string
   setStatusFilter: (status: string) => void
+  /** Solo se usa en real — la demo mantiene su propio "Este mes" cosmético en el propio componente. */
+  dateFilter: string
+  setDateFilter: (date: string) => void
 
   selectedIds: Set<string>
   toggleSelected: (id: string) => void
@@ -53,6 +59,8 @@ export const useTransactionsStore = create<TransactionsUIState>((set) => ({
   setCategoryFilter: (categoryFilter) => set({ categoryFilter }),
   statusFilter: ALL_STATUSES,
   setStatusFilter: (statusFilter) => set({ statusFilter }),
+  dateFilter: DATE_ALL,
+  setDateFilter: (dateFilter) => set({ dateFilter }),
 
   selectedIds: new Set(defaultSelectedIds),
   toggleSelected: (id) =>

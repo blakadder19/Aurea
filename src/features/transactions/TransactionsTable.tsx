@@ -4,7 +4,7 @@ import { NoSearchResults } from '../../components/states/NoSearchResults'
 import { transactions as demoTransactions, type Transaction } from '../../data/transactions'
 import { categoryColorClass } from '../../lib/categoryColor'
 import { formatMoney } from '../../lib/format'
-import { ALL_ACCOUNTS, ALL_CATEGORIES, ALL_STATUSES, STATUS_NEEDS_REVIEW, useTransactionsStore } from './store'
+import { ALL_ACCOUNTS, ALL_CATEGORIES, ALL_STATUSES, DATE_ALL, DATE_THIS_MONTH, STATUS_NEEDS_REVIEW, useTransactionsStore } from './store'
 
 /** Lo que se muestra como comercio: el nombre personal si lo has puesto, si no lo que dice el banco. */
 export function displayLabelFor(t: Transaction): string {
@@ -25,6 +25,20 @@ export function matchesSearch(t: Transaction, query: string): boolean {
 /** Mismo criterio que Centro de revisión: sin categoría o marcado needsReview — no solo needsReview a secas. */
 function needsReview(t: Transaction): boolean {
   return t.categoria === 'Sin clasificar' || Boolean(t.needsReview)
+}
+
+function monthStartIso(date: Date, monthsBack: number): string {
+  const d = new Date(date.getFullYear(), date.getMonth() - monthsBack, 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/** Solo real trae `dateISO` — en demo (o si faltara la fecha) nunca se oculta nada por fecha. */
+export function matchesDateFilter(t: Transaction, dateFilter: string): boolean {
+  if (dateFilter === DATE_ALL) return true
+  const dateISO = 'dateISO' in t ? (t as { dateISO: string | null }).dateISO : null
+  if (!dateISO) return true
+  const from = monthStartIso(new Date(), dateFilter === DATE_THIS_MONTH ? 0 : 2)
+  return dateISO >= from
 }
 
 function toneFor(t: Transaction) {
@@ -176,6 +190,8 @@ export function TransactionsTable({ transactions = demoTransactions }: { transac
   const setCategoryFilter = useTransactionsStore((s) => s.setCategoryFilter)
   const statusFilter = useTransactionsStore((s) => s.statusFilter)
   const setStatusFilter = useTransactionsStore((s) => s.setStatusFilter)
+  const dateFilter = useTransactionsStore((s) => s.dateFilter)
+  const setDateFilter = useTransactionsStore((s) => s.setDateFilter)
   const selectedIds = useTransactionsStore((s) => s.selectedIds)
   const setSelectedIds = useTransactionsStore((s) => s.setSelectedIds)
   const clearSelection = useTransactionsStore((s) => s.clearSelection)
@@ -186,7 +202,8 @@ export function TransactionsTable({ transactions = demoTransactions }: { transac
       matchesSearch(t, query) &&
       (accountFilter === ALL_ACCOUNTS || t.cuenta === accountFilter) &&
       (categoryFilter === ALL_CATEGORIES || t.categoria === categoryFilter) &&
-      (statusFilter === ALL_STATUSES || needsReview(t) === (statusFilter === STATUS_NEEDS_REVIEW)),
+      (statusFilter === ALL_STATUSES || needsReview(t) === (statusFilter === STATUS_NEEDS_REVIEW)) &&
+      matchesDateFilter(t, dateFilter),
   )
   const allFilteredSelected = filtered.length > 0 && filtered.every((t) => selectedIds.has(t.id))
 
@@ -200,6 +217,7 @@ export function TransactionsTable({ transactions = demoTransactions }: { transac
             setAccountFilter(ALL_ACCOUNTS)
             setCategoryFilter(ALL_CATEGORIES)
             setStatusFilter(ALL_STATUSES)
+            setDateFilter(DATE_ALL)
           }}
         />
       </div>
