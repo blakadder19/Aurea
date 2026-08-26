@@ -544,6 +544,12 @@ interface PanelContentProps {
   onClose: () => void
 }
 
+/** El año de verdad del movimiento en real (nunca uno fijo) — la demo no trae dateISO, se queda con el año de su contexto fijo. */
+function transactionYear(transaction: Transaction | RealTransaction): string {
+  const dateISO = 'dateISO' in transaction ? transaction.dateISO : null
+  return dateISO ? dateISO.slice(0, 4) : '2026'
+}
+
 function PanelContent({ transaction, real, onSave, onClose }: PanelContentProps) {
   return (
     <>
@@ -571,7 +577,7 @@ function PanelContent({ transaction, real, onSave, onClose }: PanelContentProps)
 
       <Money value={transaction.importe} serif className="text-[34px] font-semibold" />
       <div className="text-[15px] text-ink-muted">
-        {transaction.fecha} 2026 · {transaction.cuenta}
+        {transaction.fecha} {transactionYear(transaction)} · {transaction.cuenta}
       </div>
 
       {real ? (
