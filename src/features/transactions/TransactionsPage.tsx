@@ -7,6 +7,7 @@ import { TransactionPanel } from './TransactionPanel'
 import { TransactionsTable } from './TransactionsTable'
 import { useTransactionsStore, type TransactionsView } from './store'
 import {
+  bulkAddTag,
   bulkUpdateTransactionCategory,
   createRuleFromTransaction,
   updateTransactionCategory,
@@ -151,6 +152,12 @@ export function TransactionsPage() {
     return error
   }
 
+  async function handleBulkAddTag(ids: string[], tag: string) {
+    const error = await bulkAddTag(ids, tag)
+    if (!error) refetch()
+    return error
+  }
+
   async function handleUpdateManual(id: string, accountId: string, description: string, amountCents: number, dateIso: string) {
     const error = await updateManualTransaction(id, accountId, description, amountCents, dateIso)
     if (!error) {
@@ -230,7 +237,11 @@ export function TransactionsPage() {
                 accounts={hasRealTransactions ? [...new Set(realTransactions!.map((t) => t.cuenta))] : undefined}
                 categories={hasRealTransactions ? realCategories!.map((c) => categoryLabel(c)) : undefined}
               />
-              <BulkActionsBar categories={hasRealTransactions ? realCategories! : undefined} onBulkCategorize={hasRealTransactions ? handleBulkCategorize : undefined} />
+              <BulkActionsBar
+                categories={hasRealTransactions ? realCategories! : undefined}
+                onBulkCategorize={hasRealTransactions ? handleBulkCategorize : undefined}
+                onBulkAddTag={hasRealTransactions ? handleBulkAddTag : undefined}
+              />
               <TransactionsTable transactions={hasRealTransactions ? realTransactions! : undefined} />
               {!isAuthenticated && <UndoBar message={undoMessage ?? defaultUndoMessage} onUndo={dismissUndo} />}
             </>

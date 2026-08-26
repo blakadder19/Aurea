@@ -137,6 +137,38 @@ export async function bulkUpdateTransactionCategory(ids: string[], categoryId: s
   return null
 }
 
+/**
+ * Añade una etiqueta a varios movimientos a la vez, sin pisar las etiquetas
+ * que ya tuviera cada uno ni duplicarla si ya la llevaba — lee las etiquetas
+ * actuales de cada fila y las actualiza una a una (no hay `array_append` en
+ * el cliente de Supabase para un `.update().in(...)` masivo).
+ */
+export async function bulkAddTag(ids: string[], tag: string): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  const trimmed = tag.trim()
+  if (!trimmed) return 'Escribe una etiqueta.'
+
+  const { data, error: readError } = await supabase.from('transactions').select('id, tags').in('id', ids)
+  if (readError || !data) {
+    console.error('bulkAddTag: fallo al leer', readError)
+    return 'No hemos podido leer los movimientos seleccionados. Inténtalo de nuevo.'
+  }
+
+  const results = await Promise.all(
+    data.map((row) => {
+      const existing = (row.tags as string[] | null) ?? []
+      const tags = existing.includes(trimmed) ? existing : [...existing, trimmed]
+      return supabase!.from('transactions').update({ tags }).eq('id', row.id as string)
+    }),
+  )
+  const failed = results.find((r) => r.error)
+  if (failed) {
+    console.error('bulkAddTag: fallo al guardar', failed.error)
+    return 'No hemos podido guardar la etiqueta en todos los movimientos. Inténtalo de nuevo.'
+  }
+  return null
+}
+
 /** Escribe etiquetas y nota de un movimiento real. */
 export async function updateTransactionNotesAndTags(id: string, note: string, tags: string[]): Promise<string | null> {
   if (!supabase) return 'Supabase no está configurado.'

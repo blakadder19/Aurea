@@ -5,15 +5,18 @@ import { useTransactionsStore } from './store'
 interface BulkActionsBarProps {
   categories?: RealCategory[]
   onBulkCategorize?: (ids: string[], categoryId: string) => Promise<string | null>
+  onBulkAddTag?: (ids: string[], tag: string) => Promise<string | null>
 }
 
 /** Banda negra de acciones en lote. Solo visible cuando hay selección. */
-export function BulkActionsBar({ categories, onBulkCategorize }: BulkActionsBarProps) {
+export function BulkActionsBar({ categories, onBulkCategorize, onBulkAddTag }: BulkActionsBarProps) {
   const count = useTransactionsStore((s) => s.selectedIds.size)
   const selectedIds = useTransactionsStore((s) => s.selectedIds)
   const clearSelection = useTransactionsStore((s) => s.clearSelection)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [addingTag, setAddingTag] = useState(false)
+  const [tagInput, setTagInput] = useState('')
 
   if (count === 0) return null
 
@@ -24,6 +27,20 @@ export function BulkActionsBar({ categories, onBulkCategorize }: BulkActionsBarP
     const err = await onBulkCategorize(Array.from(selectedIds), categoryId)
     if (err) setError(err)
     else clearSelection()
+    setSaving(false)
+  }
+
+  async function handleBulkAddTag() {
+    if (!onBulkAddTag) return
+    setSaving(true)
+    setError(null)
+    const err = await onBulkAddTag(Array.from(selectedIds), tagInput)
+    if (err) setError(err)
+    else {
+      setAddingTag(false)
+      setTagInput('')
+      clearSelection()
+    }
     setSaving(false)
   }
 
@@ -59,10 +76,36 @@ export function BulkActionsBar({ categories, onBulkCategorize }: BulkActionsBarP
               Cambiar categoría
             </button>
           )}
-          {!onBulkCategorize && (
+          {addingTag ? (
+            <>
+              <input
+                autoFocus
+                type="text"
+                value={tagInput}
+                disabled={saving}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') void handleBulkAddTag()
+                  if (e.key === 'Escape') setAddingTag(false)
+                }}
+                placeholder="Nombre de la etiqueta"
+                className="min-h-11 rounded-md border-none bg-surface px-3.5 py-2 text-[15px] text-ink"
+              />
+              <button
+                type="button"
+                disabled={saving || !tagInput.trim()}
+                onClick={() => void handleBulkAddTag()}
+                className="min-h-11 rounded-md border-none bg-surface px-3.5 py-2 text-[15px] font-semibold text-ink disabled:opacity-60"
+              >
+                Añadir
+              </button>
+            </>
+          ) : (
             <button
               type="button"
-              className="min-h-11 rounded-md border border-ink-muted bg-transparent px-3.5 py-2 text-[15px] font-semibold text-surface"
+              disabled={!onBulkAddTag}
+              onClick={() => setAddingTag(true)}
+              className="min-h-11 rounded-md border border-ink-muted bg-transparent px-3.5 py-2 text-[15px] font-semibold text-surface disabled:opacity-50"
             >
               Añadir etiqueta
             </button>
