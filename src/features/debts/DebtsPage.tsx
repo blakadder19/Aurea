@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { DebtsTable } from './DebtsTable'
 import { EditDebtDetailPanel } from './EditDebtDetailPanel'
 import { ExtraPaymentPanel } from './ExtraPaymentPanel'
+import { RealStrategyComparisonCard } from './RealStrategyComparisonCard'
 import { StrategyComparisonCard } from './StrategyComparisonCard'
 import { useDebtsStore } from './store'
 import { saveDebtDetails, toDebtTableRow, useRealDebts } from './useRealDebts'
@@ -99,6 +100,7 @@ export function DebtsPage() {
               onEditDetail={hasRealDebts ? setEditingAccountId : undefined}
             />
             {!isAuthenticated && <StrategyComparisonCard />}
+            {hasRealDebts && <RealStrategyComparisonCard debts={realDebts!} />}
           </>
         )}
       </main>
