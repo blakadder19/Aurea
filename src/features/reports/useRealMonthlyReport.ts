@@ -48,21 +48,27 @@ export function useRealMonthlyReport(monthsAgo: number): RealMonthlyReportResult
       const now = new Date()
       const { start, fromIso, toIso } = monthBounds(monthsAgo, now)
       const prev = monthBounds(monthsAgo + 1, now)
+      const prevYear = monthBounds(monthsAgo + 12, now)
 
-      const [{ data: categories }, { data: txRows }, { data: prevTxRows }, declaredIncomeCents] = await Promise.all([
-        supabase.from('categories').select('id, name'),
-        supabase
-          .from('transaction_category_amounts')
-          .select('category_id, amount_cents')
-          .eq('is_internal_transfer', false)
-          .or(dateFilter(fromIso, toIso)),
-        supabase.from('transactions').select('amount_cents').eq('is_internal_transfer', false).or(dateFilter(prev.fromIso, prev.toIso)),
-        fetchActiveDeclaredIncomeCents(),
-      ])
+      const [{ data: categories }, { data: txRows }, { data: prevTxRows }, { data: prevYearTxRows }, { data: merchantTxRows }, declaredIncomeCents] =
+        await Promise.all([
+          supabase.from('categories').select('id, name'),
+          supabase
+            .from('transaction_category_amounts')
+            .select('category_id, amount_cents')
+            .eq('is_internal_transfer', false)
+            .or(dateFilter(fromIso, toIso)),
+          supabase.from('transactions').select('amount_cents').eq('is_internal_transfer', false).or(dateFilter(prev.fromIso, prev.toIso)),
+          supabase.from('transactions').select('amount_cents').eq('is_internal_transfer', false).or(dateFilter(prevYear.fromIso, prevYear.toIso)),
+          // Por comercio: se usa el movimiento completo, no la vista consciente de divisiones —
+          // a quién le pagaste no cambia porque hayas repartido el gasto entre varias categorías.
+          supabase.from('transactions').select('description, amount_cents').eq('is_internal_transfer', false).or(dateFilter(fromIso, toIso)),
+          fetchActiveDeclaredIncomeCents(),
+        ])
       if (cancelled) return
 
       const nameByCategory = new Map((categories ?? []).map((c) => [c.id as string, c.name as string]))
-      const spendByCategory = new Map<string, number>()
+      const spendByCategory = new Map<string, { name: string; categoryId: string | null; spentCents: number }>()
       let incomeCents = declaredIncomeCents
       let expenseCents = 0
       for (const tx of txRows ?? []) {
@@ -74,11 +80,23 @@ export function useRealMonthlyReport(monthsAgo: number): RealMonthlyReportResult
         expenseCents += -amount
         const categoryId = tx.category_id as string | null
         const name = categoryId ? (nameByCategory.get(categoryId) ?? 'Sin clasificar') : 'Sin clasificar'
-        spendByCategory.set(name, (spendByCategory.get(name) ?? 0) + -amount)
+        const key = categoryId ?? '__sin_clasificar__'
+        const existing = spendByCategory.get(key)
+        spendByCategory.set(key, { name, categoryId, spentCents: (existing?.spentCents ?? 0) + -amount })
       }
 
-      const prevRows = prevTxRows ?? []
-      const previousExpenseCents = prevRows.length > 0 ? prevRows.reduce((sum, tx) => (((tx.amount_cents as number) < 0) ? sum - (tx.amount_cents as number) : sum), 0) : null
+      const sumExpense = (rows: { amount_cents: unknown }[]) =>
+        rows.length > 0 ? rows.reduce((sum, tx) => (((tx.amount_cents as number) < 0) ? sum - (tx.amount_cents as number) : sum), 0) : null
+      const previousExpenseCents = sumExpense(prevTxRows ?? [])
+      const previousYearExpenseCents = sumExpense(prevYearTxRows ?? [])
+
+      const spendByMerchant = new Map<string, number>()
+      for (const tx of merchantTxRows ?? []) {
+        const amount = tx.amount_cents as number
+        if (amount >= 0) continue
+        const name = ((tx.description as string | null) ?? '').trim() || 'Sin descripción'
+        spendByMerchant.set(name, (spendByMerchant.get(name) ?? 0) + -amount)
+      }
 
       const hasAnyMovement = incomeCents > 0 || expenseCents > 0
       setReport(
@@ -87,8 +105,10 @@ export function useRealMonthlyReport(monthsAgo: number): RealMonthlyReportResult
               formatMonthYearLong(start.getMonth(), start.getFullYear()),
               incomeCents,
               expenseCents,
-              [...spendByCategory.entries()].map(([name, spentCents]) => ({ name, spentCents })),
+              [...spendByCategory.values()],
               previousExpenseCents,
+              previousYearExpenseCents,
+              [...spendByMerchant.entries()].map(([name, spentCents]) => ({ name, spentCents })),
             )
           : null,
       )

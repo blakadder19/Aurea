@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { filterAccounts, filterCategories } from '../../data/transactions'
+import { formatIsoMonthYear } from '../../lib/format'
 import {
   ALL_ACCOUNTS,
   ALL_CATEGORIES,
@@ -11,6 +12,9 @@ import {
   STATUS_NEEDS_REVIEW,
   useTransactionsStore,
 } from './store'
+
+const KNOWN_DATE_FILTERS = new Set([DATE_ALL, DATE_THIS_MONTH, DATE_LAST_3_MONTHS])
+const ISO_MONTH_RE = /^\d{4}-\d{2}$/
 
 const SELECT_CLASSES =
   'min-h-11 rounded-md border border-line bg-surface px-3 py-2.5 text-[15px] text-ink'
@@ -63,6 +67,8 @@ export function FilterBar({
           <option>{DATE_ALL}</option>
           <option>{DATE_THIS_MONTH}</option>
           <option>{DATE_LAST_3_MONTHS}</option>
+          {/* Llega desde un enlace "Ver movimientos" de Informes con un mes concreto — no es una opción elegible a mano. */}
+          {ISO_MONTH_RE.test(dateFilter) && !KNOWN_DATE_FILTERS.has(dateFilter) && <option value={dateFilter}>{formatIsoMonthYear(dateFilter)}</option>}
         </select>
       ) : (
         <select
@@ -95,6 +101,8 @@ export function FilterBar({
         {categories.map((c) => (
           <option key={c}>{c}</option>
         ))}
+        {/* Llega desde un enlace "Ver movimientos" de Informes con una categoría concreta que no está (todavía) en la lista de arriba. */}
+        {category !== ALL_CATEGORIES && !categories.includes(category) && <option value={category}>{category}</option>}
       </select>
       <select
         aria-label="Filtrar por estado"

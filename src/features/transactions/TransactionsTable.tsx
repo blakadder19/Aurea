@@ -32,11 +32,15 @@ function monthStartIso(date: Date, monthsBack: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+/** "2026-07" — un mes concreto, no una de las 3 ventanas fijas. Lo usan los enlaces "Ver movimientos" de Informes. */
+const ISO_MONTH_RE = /^\d{4}-\d{2}$/
+
 /** Solo real trae `dateISO` — en demo (o si faltara la fecha) nunca se oculta nada por fecha. */
 export function matchesDateFilter(t: Transaction, dateFilter: string): boolean {
   if (dateFilter === DATE_ALL) return true
   const dateISO = 'dateISO' in t ? (t as { dateISO: string | null }).dateISO : null
   if (!dateISO) return true
+  if (ISO_MONTH_RE.test(dateFilter)) return dateISO.slice(0, 7) === dateFilter
   const from = monthStartIso(new Date(), dateFilter === DATE_THIS_MONTH ? 0 : 2)
   return dateISO >= from
 }

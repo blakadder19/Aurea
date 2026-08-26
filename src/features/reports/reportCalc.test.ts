@@ -19,9 +19,9 @@ describe('buildMonthlyReport', () => {
       0,
       100000,
       [
-        { name: 'Restaurantes', spentCents: 30000 },
-        { name: 'Hogar', spentCents: 50000 },
-        { name: 'Ocio', spentCents: 20000 },
+        { name: 'Restaurantes', categoryId: 'cat-restaurantes', spentCents: 30000 },
+        { name: 'Hogar', categoryId: 'cat-hogar', spentCents: 50000 },
+        { name: 'Ocio', categoryId: 'cat-ocio', spentCents: 20000 },
       ],
       null,
     )
@@ -30,7 +30,7 @@ describe('buildMonthlyReport', () => {
   })
 
   it('descarta categorías con gasto 0 o negativo (no aportan nada al informe)', () => {
-    const report = buildMonthlyReport('julio de 2026', 0, 10000, [{ name: 'Vacía', spentCents: 0 }], null)
+    const report = buildMonthlyReport('julio de 2026', 0, 10000, [{ name: 'Vacía', categoryId: 'cat-vacia', spentCents: 0 }], null)
     expect(report.categories).toEqual([])
   })
 
@@ -51,6 +51,34 @@ describe('buildMonthlyReport', () => {
     const report = buildMonthlyReport('julio de 2026', 0, 10000, [], 0)
     expect(report.expenseDeltaCents).toBe(10000)
     expect(report.expenseDeltaPct).toBeNull()
+  })
+
+  it('sin dato del mismo mes hace un año, la comparación interanual es null', () => {
+    const report = buildMonthlyReport('julio de 2026', 0, 10000, [], null)
+    expect(report.previousYearExpenseCents).toBeNull()
+    expect(report.yearExpenseDeltaCents).toBeNull()
+    expect(report.yearExpenseDeltaPct).toBeNull()
+  })
+
+  it('con dato del mismo mes hace un año, calcula el delta interanual aparte del mensual', () => {
+    const report = buildMonthlyReport('julio de 2026', 0, 12000, [], 10000, 8000)
+    expect(report.expenseDeltaCents).toBe(2000) // vs. mes anterior
+    expect(report.yearExpenseDeltaCents).toBe(4000) // vs. mismo mes, año anterior
+    expect(report.yearExpenseDeltaPct).toBeCloseTo(50, 2)
+  })
+
+  it('sin comercios, la lista queda vacía', () => {
+    const report = buildMonthlyReport('julio de 2026', 0, 10000, [], null)
+    expect(report.merchants).toEqual([])
+  })
+
+  it('ordena los comercios de mayor a menor gasto, descarta los de gasto 0 y recorta a los 10 primeros', () => {
+    const merchantSpend = Array.from({ length: 12 }, (_, i) => ({ name: `Comercio ${i}`, spentCents: 100 - i }))
+    merchantSpend.push({ name: 'Sin gasto', spentCents: 0 })
+    const report = buildMonthlyReport('julio de 2026', 0, 1000, [], null, null, merchantSpend)
+    expect(report.merchants).toHaveLength(10)
+    expect(report.merchants[0]).toEqual({ name: 'Comercio 0', spentCents: 100, pctOfTotal: 10 })
+    expect(report.merchants.some((m) => m.name === 'Sin gasto')).toBe(false)
   })
 })
 

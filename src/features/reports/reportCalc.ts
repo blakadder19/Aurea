@@ -7,6 +7,15 @@
 
 export interface CategorySpend {
   name: string
+  /** null para el cajón "Sin clasificar" — no corresponde a ninguna fila real de categories. */
+  categoryId: string | null
+  spentCents: number
+  /** % del gasto total del mes, 0-100. */
+  pctOfTotal: number
+}
+
+export interface MerchantSpend {
+  name: string
   spentCents: number
   /** % del gasto total del mes, 0-100. */
   pctOfTotal: number
@@ -26,12 +35,27 @@ export interface MonthlyReport {
   expenseDeltaCents: number | null
   /** null si el mes anterior no tuvo gasto (no se puede calcular un % sobre 0). */
   expenseDeltaPct: number | null
+  /** null si no hay datos del mismo mes hace un año con los que comparar. */
+  previousYearExpenseCents: number | null
+  yearExpenseDeltaCents: number | null
+  /** null si el mismo mes hace un año no tuvo gasto (no se puede calcular un % sobre 0). */
+  yearExpenseDeltaPct: number | null
+  /** Los 10 comercios con más gasto, ordenados de mayor a menor. */
+  merchants: MerchantSpend[]
 }
 
 interface CategoryAgg {
   name: string
+  categoryId: string | null
   spentCents: number
 }
+
+interface MerchantAgg {
+  name: string
+  spentCents: number
+}
+
+const MAX_MERCHANTS = 10
 
 export function buildMonthlyReport(
   monthLabel: string,
@@ -39,6 +63,8 @@ export function buildMonthlyReport(
   expenseCents: number,
   categorySpend: CategoryAgg[],
   previousExpenseCents: number | null,
+  previousYearExpenseCents: number | null = null,
+  merchantSpend: MerchantAgg[] = [],
 ): MonthlyReport {
   const netCents = incomeCents - expenseCents
   const savingsRatePct = incomeCents > 0 ? (netCents / incomeCents) * 100 : null
@@ -46,7 +72,12 @@ export function buildMonthlyReport(
   const categories: CategorySpend[] = categorySpend
     .filter((c) => c.spentCents > 0)
     .sort((a, b) => b.spentCents - a.spentCents)
-    .map((c) => ({ name: c.name, spentCents: c.spentCents, pctOfTotal: expenseCents > 0 ? (c.spentCents / expenseCents) * 100 : 0 }))
+    .map((c) => ({
+      name: c.name,
+      categoryId: c.categoryId,
+      spentCents: c.spentCents,
+      pctOfTotal: expenseCents > 0 ? (c.spentCents / expenseCents) * 100 : 0,
+    }))
 
   const expenseDeltaCents = previousExpenseCents !== null ? expenseCents - previousExpenseCents : null
   const expenseDeltaPct =
@@ -54,7 +85,33 @@ export function buildMonthlyReport(
       ? (expenseDeltaCents / previousExpenseCents) * 100
       : null
 
-  return { monthLabel, incomeCents, expenseCents, netCents, savingsRatePct, categories, previousExpenseCents, expenseDeltaCents, expenseDeltaPct }
+  const yearExpenseDeltaCents = previousYearExpenseCents !== null ? expenseCents - previousYearExpenseCents : null
+  const yearExpenseDeltaPct =
+    previousYearExpenseCents !== null && previousYearExpenseCents > 0 && yearExpenseDeltaCents !== null
+      ? (yearExpenseDeltaCents / previousYearExpenseCents) * 100
+      : null
+
+  const merchants: MerchantSpend[] = merchantSpend
+    .filter((m) => m.spentCents > 0)
+    .sort((a, b) => b.spentCents - a.spentCents)
+    .slice(0, MAX_MERCHANTS)
+    .map((m) => ({ name: m.name, spentCents: m.spentCents, pctOfTotal: expenseCents > 0 ? (m.spentCents / expenseCents) * 100 : 0 }))
+
+  return {
+    monthLabel,
+    incomeCents,
+    expenseCents,
+    netCents,
+    savingsRatePct,
+    categories,
+    previousExpenseCents,
+    expenseDeltaCents,
+    expenseDeltaPct,
+    previousYearExpenseCents,
+    yearExpenseDeltaCents,
+    yearExpenseDeltaPct,
+    merchants,
+  }
 }
 
 export interface MonthlyTrendPoint {

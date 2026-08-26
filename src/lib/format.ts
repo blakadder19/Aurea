@@ -86,4 +86,10 @@ export function formatMonthYearLong(monthIndex0: number, year: number): string {
   return `${MONTHS_LONG[monthIndex0]} de ${year}`
 }
 
+/** "2026-07" → "julio de 2026" — para mostrar un filtro de mes concreto en un <select>. */
+export function formatIsoMonthYear(isoMonth: string): string {
+  const [year, month] = isoMonth.split('-').map(Number)
+  return formatMonthYearLong(month - 1, year)
+}
+
 export { MONTHS_ABBR }
