@@ -36,11 +36,15 @@ function CreateManualAccountForm({ onCreate, onDone }: CreateAccountFormProps) {
   const [startingBalance, setStartingBalance] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const isDebt = fn === 'Deuda'
 
   async function handleSubmit() {
     setSaving(true)
     setError(null)
-    const err = await onCreate(name, fn, Math.round(Number(startingBalance || '0') * 100))
+    const amountCents = Math.round(Number(startingBalance || '0') * 100)
+    // En una deuda el saldo siempre resta del patrimonio, sin importar el signo que se teclee —
+    // "cuánto debes" es una magnitud, no algo que el usuario deba saber expresar en negativo.
+    const err = await onCreate(name, fn, isDebt ? -Math.abs(amountCents) : amountCents)
     setSaving(false)
     if (err) setError(err)
     else onDone()
@@ -56,12 +60,19 @@ function CreateManualAccountForm({ onCreate, onDone }: CreateAccountFormProps) {
         <ClosePanelButton />
       </div>
       <p className="text-[15px] text-ink-muted">
-        Para dinero que no está en ningún banco conectado — efectivo, una hucha, un préstamo entre amigos. El saldo se lleva
-        sumando lo que registres aquí, nunca se sincroniza solo.
+        {isDebt
+          ? 'Para una deuda que ningún banco conectado ve — un préstamo personal, una tarjeta de otra entidad. El saldo pendiente se lleva sumando lo que registres aquí, nunca se sincroniza solo.'
+          : 'Para dinero que no está en ningún banco conectado — efectivo, una hucha, un préstamo entre amigos. El saldo se lleva sumando lo que registres aquí, nunca se sincroniza solo.'}
       </p>
       <label className={LABEL_CLASSES}>
         Nombre
-        <input value={name} disabled={saving} onChange={(e) => setName(e.target.value)} placeholder="p. ej. Efectivo" className={INPUT_CLASSES} />
+        <input
+          value={name}
+          disabled={saving}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={isDebt ? 'p. ej. Préstamo coche' : 'p. ej. Efectivo'}
+          className={INPUT_CLASSES}
+        />
       </label>
       <label className={LABEL_CLASSES}>
         Función
@@ -74,9 +85,10 @@ function CreateManualAccountForm({ onCreate, onDone }: CreateAccountFormProps) {
         </select>
       </label>
       <label className={LABEL_CLASSES}>
-        Saldo inicial
+        {isDebt ? 'Cuánto debes ahora mismo' : 'Saldo inicial'}
         <input
           type="number"
+          min={isDebt ? 0 : undefined}
           step={10}
           value={startingBalance}
           disabled={saving}
