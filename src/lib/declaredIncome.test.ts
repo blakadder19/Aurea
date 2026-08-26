@@ -74,3 +74,22 @@ describe('createDeclaredIncome', () => {
     expect(mockFrom).toHaveBeenCalledWith('declared_incomes')
   })
 })
+
+describe('fetchDeclaredIncomes', () => {
+  it('propaga income_type (snake_case) como incomeType, y null si no se declaró', async () => {
+    vi.resetModules()
+    const rows = [
+      { id: 'i1', name: 'Sueldo efectivo', amount_cents: 150000, active: true, income_type: 'salario' },
+      { id: 'i2', name: 'Chapuza puntual', amount_cents: 5000, active: true, income_type: null },
+    ]
+    vi.doMock('./supabase/client', () => ({
+      isSupabaseConfigured: true,
+      supabase: { from: () => chainable(rows), auth: { getSession: vi.fn().mockResolvedValue({ data: { session: null } }), onAuthStateChange: vi.fn() } },
+    }))
+    const { fetchDeclaredIncomes } = await import('./declaredIncome')
+
+    const incomes = await fetchDeclaredIncomes()
+    expect(incomes[0].incomeType).toBe('salario')
+    expect(incomes[1].incomeType).toBeNull()
+  })
+})

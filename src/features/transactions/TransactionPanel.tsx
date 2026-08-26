@@ -4,6 +4,7 @@ import { Money } from '../../components/Money'
 import { SectionLabel } from '../../components/SectionLabel'
 import { SidePanel } from '../../components/SidePanel'
 import { filterCategories, transactions as demoTransactions, type Transaction } from '../../data/transactions'
+import { INCOME_TYPE_LABELS, INCOME_TYPES, type IncomeType } from '../../lib/declaredIncome'
 import { focusRowById } from '../../lib/dom'
 import { displayLabelFor } from './TransactionsTable'
 import { useTransactionsStore } from './store'
@@ -202,6 +203,8 @@ interface RealFieldsProps {
   onDeleteManual?: (id: string, accountId: string) => Promise<string | null>
   onSaveDisplayName?: (id: string, displayName: string) => Promise<string | null>
   onSaveInternalTransfer?: (id: string, isInternalTransfer: boolean) => Promise<string | null>
+  /** Solo se ofrece en movimientos positivos — de qué tipo de ingreso se trata. */
+  onSaveIncomeType?: (id: string, incomeType: IncomeType | null) => Promise<string | null>
   /** Dividir/quitar división cambia hasSplits y la categoría mostrada en Movimientos/Centro de revisión — hace falta refrescar para que se note fuera de este panel. */
   onSplitsChanged?: () => void
 }
@@ -259,6 +262,7 @@ function RealFields({
   onDeleteManual,
   onSaveDisplayName,
   onSaveInternalTransfer,
+  onSaveIncomeType,
   onSplitsChanged,
 }: RealFieldsProps) {
   const [categoryId, setCategoryId] = useState(transaction.categoryId ?? '')
@@ -266,6 +270,7 @@ function RealFields({
   const [noteInput, setNoteInput] = useState(transaction.userNote)
   const [displayNameInput, setDisplayNameInput] = useState(transaction.displayName ?? '')
   const [isTransfer, setIsTransfer] = useState(transaction.isInternalTransfer)
+  const [incomeTypeInput, setIncomeTypeInput] = useState<IncomeType | ''>(transaction.incomeType ?? '')
   const isManual = manualAccountIds?.has(transaction.accountId) ?? false
   const [manualDescription, setManualDescription] = useState(transaction.comercio)
   const [manualAmount, setManualAmount] = useState(String(transaction.importe))
@@ -343,6 +348,9 @@ function RealFields({
       onSaveInternalTransfer && isTransfer !== transaction.isInternalTransfer
         ? onSaveInternalTransfer(transaction.id, isTransfer)
         : null,
+      onSaveIncomeType && (incomeTypeInput || null) !== transaction.incomeType
+        ? onSaveIncomeType(transaction.id, incomeTypeInput || null)
+        : null,
     ])
     setSaving(false)
     const firstError = errors.find((e): e is string => Boolean(e))
@@ -412,6 +420,24 @@ function RealFields({
         </label>
       )}
       {isTransfer && <p className="text-sm text-ink-muted">No contará como gasto ni ingreso, ni en detección de anomalías.</p>}
+      {onSaveIncomeType && transaction.importe > 0 && !isTransfer && (
+        <label className={LABEL_CLASSES}>
+          Tipo de ingreso (opcional)
+          <select
+            value={incomeTypeInput}
+            disabled={saving}
+            onChange={(e) => setIncomeTypeInput(e.target.value as IncomeType | '')}
+            className={INPUT_CLASSES}
+          >
+            <option value="">Sin especificar</option>
+            {INCOME_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {INCOME_TYPE_LABELS[t]}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       {isManual && onDeleteManual && (
         <div className="flex items-center gap-2.5">
           {confirmingDelete ? (

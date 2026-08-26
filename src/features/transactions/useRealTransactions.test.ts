@@ -112,6 +112,7 @@ describe('useRealTransactions', () => {
         isInternalTransfer: false,
         receiptPath: null,
         hasSplits: false,
+        incomeType: null,
       },
       {
         id: 'tx-2',
@@ -130,6 +131,7 @@ describe('useRealTransactions', () => {
         isInternalTransfer: false,
         receiptPath: null,
         hasSplits: false,
+        incomeType: null,
       },
     ])
   })
@@ -149,6 +151,32 @@ describe('useRealTransactions', () => {
     expect(notSplit?.hasSplits).toBe(false)
 
     delete fixtures.transaction_splits
+  })
+
+  it('propaga income_type (snake_case) como incomeType', async () => {
+    fixtures.transactions = [
+      {
+        id: 'tx-3',
+        account_id: 'acc-1',
+        booking_date: '2026-08-19',
+        value_date: null,
+        description: 'Nómina',
+        amount_cents: 250000,
+        category_id: null,
+        needs_review: false,
+        user_note: null,
+        tags: [],
+        display_name: null,
+        is_internal_transfer: false,
+        income_type: 'salario',
+      },
+    ]
+    useAuthStore.setState({ session: activeSession })
+    const { result } = renderHook(() => useRealTransactions(categories))
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    expect(result.current.transactions?.[0].incomeType).toBe('salario')
   })
 })
 

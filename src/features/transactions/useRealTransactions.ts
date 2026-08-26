@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Transaction } from '../../data/transactions'
+import type { IncomeType } from '../../lib/declaredIncome'
 import { formatIsoDayMonth } from '../../lib/format'
 import { supabase } from '../../lib/supabase/client'
 import { useAuthStore } from '../../lib/supabase/useAuth'
@@ -21,6 +22,8 @@ export interface RealTransaction extends Transaction {
   receiptPath: string | null
   /** Dividido en varias categorías (transaction_splits) — su categoryId propio ya no representa el gasto real, ver el desglose. */
   hasSplits: boolean
+  /** Solo tiene sentido en un movimiento positivo — de qué tipo de ingreso se trata (salario, extra...). */
+  incomeType: IncomeType | null
 }
 
 /**
@@ -86,7 +89,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
         supabase
           .from('transactions')
           .select(
-            'id, account_id, booking_date, value_date, description, amount_cents, category_id, needs_review, user_note, tags, display_name, is_internal_transfer, receipt_path',
+            'id, account_id, booking_date, value_date, description, amount_cents, category_id, needs_review, user_note, tags, display_name, is_internal_transfer, receipt_path, income_type',
           )
           .order('booking_date', { ascending: false })
           .limit(loadedCount),
@@ -135,6 +138,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
           isInternalTransfer: Boolean(row.is_internal_transfer),
           receiptPath: (row.receipt_path as string | null) ?? null,
           hasSplits,
+          incomeType: (row.income_type as IncomeType | null) ?? null,
         }
       })
 
@@ -252,6 +256,17 @@ export async function updateTransactionInternalTransfer(id: string, isInternalTr
   const { error } = await supabase.from('transactions').update({ is_internal_transfer: isInternalTransfer }).eq('id', id)
   if (error) {
     console.error('updateTransactionInternalTransfer: fallo al guardar', error)
+    return 'No hemos podido guardar el cambio. Inténtalo de nuevo.'
+  }
+  return null
+}
+
+/** Etiqueta un movimiento positivo como un tipo de ingreso (salario, extra...) — no cambia el total, solo el desglose. */
+export async function updateTransactionIncomeType(id: string, incomeType: IncomeType | null): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  const { error } = await supabase.from('transactions').update({ income_type: incomeType }).eq('id', id)
+  if (error) {
+    console.error('updateTransactionIncomeType: fallo al guardar', error)
     return 'No hemos podido guardar el cambio. Inténtalo de nuevo.'
   }
   return null

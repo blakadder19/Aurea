@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Card } from '../../components/Card'
-import { createDeclaredIncome, setDeclaredIncomeActive, type DeclaredIncome } from '../../lib/declaredIncome'
+import { createDeclaredIncome, INCOME_TYPE_LABELS, INCOME_TYPES, setDeclaredIncomeActive, type DeclaredIncome, type IncomeType } from '../../lib/declaredIncome'
 
 function IncomeRow({ income, onChanged }: { income: DeclaredIncome; onChanged: () => void }) {
   const [saving, setSaving] = useState(false)
@@ -16,7 +16,10 @@ function IncomeRow({ income, onChanged }: { income: DeclaredIncome; onChanged: (
     <div className="flex items-center justify-between gap-3 border-b border-[#f0f3f1] py-3 last:border-b-0">
       <div>
         <div className={`text-base font-semibold ${income.active ? 'text-ink' : 'text-ink-muted line-through'}`}>{income.name}</div>
-        <div className="text-sm text-ink-muted">{(income.amountCents / 100).toLocaleString('es-ES', { minimumFractionDigits: 2 })} € al mes</div>
+        <div className="text-sm text-ink-muted">
+          {(income.amountCents / 100).toLocaleString('es-ES', { minimumFractionDigits: 2 })} € al mes
+          {income.incomeType && ` · ${INCOME_TYPE_LABELS[income.incomeType]}`}
+        </div>
       </div>
       <button
         type="button"
@@ -34,18 +37,20 @@ function IncomeRow({ income, onChanged }: { income: DeclaredIncome; onChanged: (
 export function DeclaredIncomesCard({ incomes, onRefetch }: { incomes: DeclaredIncome[]; onRefetch: () => void }) {
   const [name, setName] = useState('')
   const [amount, setAmount] = useState('')
+  const [incomeType, setIncomeType] = useState<IncomeType | ''>('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   async function handleAdd() {
     setSaving(true)
     setError(null)
-    const err = await createDeclaredIncome(name, Math.round(Number(amount || '0') * 100))
+    const err = await createDeclaredIncome(name, Math.round(Number(amount || '0') * 100), incomeType || null)
     setSaving(false)
     if (err) setError(err)
     else {
       setName('')
       setAmount('')
+      setIncomeType('')
       onRefetch()
     }
   }
@@ -90,6 +95,22 @@ export function DeclaredIncomesCard({ incomes, onRefetch }: { incomes: DeclaredI
             />
             <span className="text-ink-muted">€</span>
           </div>
+        </label>
+        <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-muted">
+          Tipo (opcional)
+          <select
+            value={incomeType}
+            disabled={saving}
+            onChange={(e) => setIncomeType(e.target.value as IncomeType | '')}
+            className="min-h-11 rounded-md border border-line bg-surface px-3 py-2 text-base text-ink"
+          >
+            <option value="">Sin especificar</option>
+            {INCOME_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {INCOME_TYPE_LABELS[t]}
+              </option>
+            ))}
+          </select>
         </label>
         <button
           type="button"

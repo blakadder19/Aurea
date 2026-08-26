@@ -7,6 +7,7 @@ const HomePage = lazy(() => import('../features/home/HomePage').then((m) => ({ d
 const TransactionsPage = lazy(() => import('../features/transactions/TransactionsPage').then((m) => ({ default: m.TransactionsPage })))
 const BudgetPage = lazy(() => import('../features/budget/BudgetPage').then((m) => ({ default: m.BudgetPage })))
 const AccountsPage = lazy(() => import('../features/accounts/AccountsPage').then((m) => ({ default: m.AccountsPage })))
+const IngresosPage = lazy(() => import('../features/income/IngresosPage').then((m) => ({ default: m.IngresosPage })))
 const RecurringPage = lazy(() => import('../features/recurring/RecurringPage').then((m) => ({ default: m.RecurringPage })))
 const GoalsPage = lazy(() => import('../features/goals/GoalsPage').then((m) => ({ default: m.GoalsPage })))
 const InvestmentsPage = lazy(() => import('../features/investments/InvestmentsPage').then((m) => ({ default: m.InvestmentsPage })))
@@ -52,6 +53,7 @@ export function App() {
         <Route path="/movimientos" element={<TransactionsPage />} />
         <Route path="/presupuesto" element={<BudgetPage />} />
         <Route path="/cuentas" element={<AccountsPage />} />
+        <Route path="/ingresos" element={<IngresosPage />} />
         <Route path="/pagos" element={<RecurringPage />} />
         <Route path="/objetivos" element={<GoalsPage />} />
         <Route path="/inversiones" element={<InvestmentsPage />} />

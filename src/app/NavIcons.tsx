@@ -29,6 +29,13 @@ export const NAV_ICONS: Record<string, React.ReactNode> = {
       <path d="M3 11h18" />
     </svg>
   ),
+  Ingresos: (
+    <svg {...ICON_PROPS}>
+      <path d="M12 4v12" />
+      <path d="M7 11l5 5 5-5" />
+      <path d="M4 20h16" />
+    </svg>
+  ),
   Presupuesto: (
     <svg {...ICON_PROPS}>
       <circle cx="12" cy="12" r="9" />

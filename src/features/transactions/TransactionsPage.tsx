@@ -13,10 +13,12 @@ import {
   isTransactionPending,
   updateTransactionCategory,
   updateTransactionDisplayName,
+  updateTransactionIncomeType,
   updateTransactionInternalTransfer,
   updateTransactionNotesAndTags,
   useRealTransactions,
 } from './useRealTransactions'
+import type { IncomeType } from '../../lib/declaredIncome'
 import { categoryLabel, useRealCategories } from './useRealCategories'
 import { ErrorState } from '../../components/states/ErrorState'
 import { EmptyState } from '../../components/states/EmptyState'
@@ -193,6 +195,12 @@ export function TransactionsPage() {
     return error
   }
 
+  async function handleSaveIncomeType(id: string, incomeType: IncomeType | null) {
+    const error = await updateTransactionIncomeType(id, incomeType)
+    if (!error) refetch()
+    return error
+  }
+
   const manualAccountIds = new Set((realAccounts ?? []).filter((a) => a.isManual).map((a) => a.id))
 
   const realProps = hasRealTransactions
@@ -206,6 +214,7 @@ export function TransactionsPage() {
         onDeleteManual: handleDeleteManual,
         onSaveDisplayName: handleSaveDisplayName,
         onSaveInternalTransfer: handleSaveInternalTransfer,
+        onSaveIncomeType: handleSaveIncomeType,
         onSplitsChanged: refetch,
       }
     : undefined

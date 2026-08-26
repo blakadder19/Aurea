@@ -45,6 +45,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: 'Inicio', to: '/' },
       { label: 'Cuentas y patrimonio', to: '/cuentas' },
       { label: 'Movimientos', to: '/movimientos' },
+      { label: 'Ingresos', to: '/ingresos' },
     ],
   },
   {
