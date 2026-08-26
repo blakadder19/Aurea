@@ -91,4 +91,21 @@ describe('useRealAccounts', () => {
       },
     ])
   })
+
+  it('con varias filas de saldo para una misma cuenta, usa la marcada como principal, no una cualquiera', async () => {
+    fixtures.accounts = [
+      { id: 'acc-1', name: 'Nómina', product: null, connection_id: 'conn-1', account_function: 'gastar', currency: 'EUR', principal_balance_type: 'ITAV' },
+    ]
+    fixtures.balances = [
+      { account_id: 'acc-1', amount_cents: 111100, balance_type: 'CLBD' },
+      { account_id: 'acc-1', amount_cents: 222200, balance_type: 'ITAV' },
+    ]
+    fixtures.transactions = []
+    useAuthStore.setState({ session: activeSession })
+    const { result } = renderHook(() => useRealAccounts())
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    expect(result.current.accounts?.[0].balance).toBe(2222)
+  })
 })

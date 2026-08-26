@@ -102,7 +102,7 @@ export function useRealAccounts(): RealAccountsResult {
       const [{ data: accountRows, error: accountsError }, { data: connectionRows }] = await Promise.all([
         supabase
           .from('accounts')
-          .select('id, name, display_name, product, connection_id, account_function, share_percent, currency')
+          .select('id, name, display_name, product, connection_id, account_function, share_percent, currency, principal_balance_type')
           .neq('account_function', 'excluida')
           .order('created_at', { ascending: true }),
         supabase.from('bank_connections').select('id, aspsp_name, provider'),
@@ -125,7 +125,7 @@ export function useRealAccounts(): RealAccountsResult {
       }
 
       const [{ data: balanceRows }, { data: transactionRows }] = await Promise.all([
-        supabase.from('balances').select('account_id, amount_cents').in('account_id', accountIds),
+        supabase.from('balances').select('account_id, amount_cents, balance_type').in('account_id', accountIds),
         supabase
           .from('transactions')
           .select('account_id, booking_date, value_date, description, amount_cents')
@@ -135,7 +135,24 @@ export function useRealAccounts(): RealAccountsResult {
       ])
       if (cancelled) return
 
-      const balanceByAccount = new Map((balanceRows ?? []).map((b) => [b.account_id as string, b.amount_cents as number]))
+      // Un banco puede reportar varios tipos de saldo por cuenta (disponible, contable...);
+      // sin filtrar por el "principal" que ya calcula la sincronización, cuál gana dependía
+      // de un orden de filas que Postgres no garantiza.
+      const principalTypeByAccount = new Map(accountRows.map((a) => [a.id as string, a.principal_balance_type as string | null]))
+      const balanceRowsByAccount = new Map<string, { amountCents: number; balanceType: string }[]>()
+      for (const b of balanceRows ?? []) {
+        const accountId = b.account_id as string
+        const list = balanceRowsByAccount.get(accountId) ?? []
+        list.push({ amountCents: b.amount_cents as number, balanceType: b.balance_type as string })
+        balanceRowsByAccount.set(accountId, list)
+      }
+      function balanceCentsFor(accountId: string): number {
+        const rows = balanceRowsByAccount.get(accountId) ?? []
+        if (rows.length === 0) return 0
+        const principalType = principalTypeByAccount.get(accountId)
+        const principal = principalType ? rows.find((r) => r.balanceType === principalType) : undefined
+        return (principal ?? rows[0]).amountCents
+      }
       const movementsByAccount = new Map<string, { date: string; label: string; amount: number }[]>()
       for (const tx of transactionRows ?? []) {
         const list = movementsByAccount.get(tx.account_id as string) ?? []
@@ -157,7 +174,7 @@ export function useRealAccounts(): RealAccountsResult {
           displayName: row.display_name as string | null,
           institution: institutionByConnection.get(row.connection_id as string) ?? 'Banco conectado',
           fn,
-          balance: (balanceByAccount.get(row.id as string) ?? 0) / 100,
+          balance: balanceCentsFor(row.id as string) / 100,
           sharePercent: (row.share_percent as number | null) ?? 100,
           currency: row.currency as string,
           countsInAvailableToday: fn === 'Para gastar',
