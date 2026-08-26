@@ -1,12 +1,14 @@
 # Áurea — estado actual
 
 Snapshot tras la fase de datos reales (login, Supabase, sincronización bancaria vía
-Enable Banking) y la fase de funciones con IA (categorización, asistente libre) que
-siguieron al cierre de los 13 cortes de demostración. La versión anterior de este
-documento describía solo la demo estática — ya no es el estado del proyecto; se
-conserva el detalle histórico corte a corte en `docs/DUDAS.md`. Este documento es el
-resumen de referencia: rutas, componentes compartidos, cómo convive el modo real con la
-demo pública, decisiones estructurales, y qué queda explícitamente fuera de alcance.
+Enable Banking), la fase de funciones con IA (categorización, asistente libre) y una
+fase nocturna de paridad (ver `## Huecos reales cerrados`) que cerró catorce huecos
+concretos entre lo que la demo mostraba y lo que un usuario real podía hacer de verdad.
+La versión anterior de este documento describía solo la demo estática — ya no es el
+estado del proyecto; se conserva el detalle histórico corte a corte en `docs/DUDAS.md`.
+Este documento es el resumen de referencia: rutas, componentes compartidos, cómo
+convive el modo real con la demo pública, decisiones estructurales, y qué queda
+explícitamente fuera de alcance.
 
 ## Rutas
 
@@ -51,7 +53,8 @@ sesión de Supabase activa (`useAuthStore`, login por enlace mágico en `/entrar
   - Un hook `useReal<Cosa>()` por dominio (`useRealAccounts`, `useRealTransactions`,
     `useRealBudget`, `useRealGoals`, `useRealDebts`, `useRealInvestments`,
     `useRealRecurring`, `useRealSettings`, `useRealConnections`, `useRealAnswers`,
-    `useRealHome`, `useNetWorthHistory`, `useRealMonthlyReport`) que expone
+    `useRealHome`, `useNetWorthHistory`, `useRealMonthlyReport`, `useRealCategories`,
+    `useRealEmergencyFund`, `useRealPlanningScenarios`) que expone
     `{ loading, <dato>: T | null, refetch? }` — `null` significa "sin sesión" o
     "todavía cargando", nunca "cero elementos" (eso es `T[]` de longitud 0).
   - Cada componente de pantalla acepta el dato real como prop opcional
@@ -122,20 +125,32 @@ aceptable para un único usuario; a revisar si la app deja de ser de un solo usu
 ## Esquema real (Supabase, proyecto `aurea`)
 
 Migraciones en `supabase/migrations/`, todas con el mismo patrón de seguridad:
-`revoke all` + `grant select, insert, update to authenticated` (nunca `delete` — el
-borrado siempre es un flag `active`/`archived` reversible), RLS `for all using
-(user_id = auth.uid()) with check (user_id = auth.uid())`, FK compuesta `(id, user_id)`
-cuando una tabla referencia a otra del mismo usuario, y un bloque `do $$ ... $$` al
-final de cada migración que verifica en caliente los privilegios exactos (ni de más ni
-de menos) de `authenticated` y `anon`.
+`revoke all` + `grant select, insert, update to authenticated` por defecto, RLS `for all
+using (user_id = auth.uid()) with check (user_id = auth.uid())` (o una policy por
+comando cuando conviene distinguir, ver `transaction_splits` más abajo), FK compuesta
+`(id, user_id)` cuando una tabla referencia a otra del mismo usuario, y un bloque
+`do $$ ... $$` al final de cada migración que verifica en caliente los privilegios
+exactos (ni de más ni de menos) de `authenticated` y `anon`. `delete` solo se concede
+cuando hay una necesidad concreta y de bajo riesgo (categorías propias, filas de
+`transaction_splits`); el resto de borrados siguen siendo un flag `active`/`archived`
+reversible.
 
-Tablas: `bank_connections`, `accounts`, `balances`, `transactions`, `categories`,
-`rules`, `budgets`, `goals`, `goal_contributions`, `debt_details`, `investments`,
-`recurring_dismissals`, `user_settings`. Edge functions en `supabase/functions/`:
-`enable-banking-connect`, `enable-banking-callback`, `enable-banking-save`,
-`enable-banking-disconnect`, `ai-suggest-categories`, `ai-freeform-answer`, con lógica
-compartida en `_shared/` (`sync.ts` habla con la API de Enable Banking,
-`persistence.ts` escribe cuentas/saldos/movimientos, `anthropic.ts` llama a Claude).
+Tablas: `bank_connections`, `accounts` (+ `display_name`, nunca sobrescrito por el
+sync — ver "Renombrar cuenta" más abajo), `balances`, `transactions` (+ `receipt_path`),
+`categories`, `rules`, `budgets`, `goals`, `goal_contributions`, `debt_details` (+
+`extra_payment_reminder`), `investments`, `recurring_dismissals`, `user_settings`,
+`declared_incomes`, `manual_recurring_items`, `planning_scenarios`,
+`transaction_splits`. Vista `transaction_category_amounts` (`security_invoker`, respeta
+las RLS de `transactions`/`transaction_splits`) y función `replace_transaction_splits`
+— ver "División de un movimiento en varias categorías" más abajo. Bucket privado de
+Storage `receipts` (políticas de `storage.objects` por prefijo `<user_id>/...`, nunca
+público) — ver "Adjuntar recibo" más abajo.
+
+Edge functions en `supabase/functions/`: `enable-banking-connect`,
+`enable-banking-callback`, `enable-banking-save`, `enable-banking-disconnect`,
+`ai-suggest-categories`, `ai-freeform-answer`, con lógica compartida en `_shared/`
+(`sync.ts` habla con la API de Enable Banking, `persistence.ts` escribe
+cuentas/saldos/movimientos, `anthropic.ts` llama a Claude).
 
 ## Componentes compartidos
 
@@ -227,11 +242,87 @@ por diseño, documentado en `docs/DUDAS.md`.
   en el grupo compartido"), no es un añadido pequeño. Hoy Áurea es de un solo usuario
   por sesión; la única noción de "compartido" es el % de titularidad de una cuenta
   conjunta (`accounts.share_percent`), que ya existía.
-- **División de un movimiento en varias categorías**: no se persiste, real ni demo.
-- **Detección automática de transferencias internas**: no implementada.
+- **Detección automática de transferencias internas**: no implementada (marcar una
+  como transferencia sigue siendo manual, ver `updateTransactionInternalTransfer`).
+- **Compartir una cuenta manual, recurrente manual o categoría con pareja**: mismo
+  motivo que "Compartir cuenta con otra persona" arriba — no cambia con la fase de
+  paridad.
+- **Frecuencia distinta de mensual en recurrentes manuales**: `manual_recurring_items`
+  guarda `frequency` como texto libre pero la UI solo ofrece "Mensual", igual que la
+  detección automática de recurrentes.
 - **Arrastre táctil para cerrar hojas inferiores**: las hojas inferiores cierran con ✕,
   `Esc` y clic fuera; el gesto de arrastre no está implementado (ver `docs/DUDAS.md`,
   corte 12).
+
+## Huecos reales cerrados (fase de paridad)
+
+Patrón repetido descubierto al auditar el código real: varias pantallas tenían un
+cálculo o una acción ya implementados pero *solo visibles en modo demo*
+(`{!isAuthenticated && <Tarjeta/>}`), o un botón sin `onClick`. Los siguientes catorce
+puntos activaron esas piezas para usuarios reales, cada uno verificado en vivo contra
+una sesión real y con su propio commit:
+
+- **Renombrar cuenta de verdad** (`accounts.display_name`): el sync de Enable Banking
+  sigue escribiendo `accounts.name` en cada sincronización; `display_name` es la única
+  columna que el usuario controla. `accountLabel(a)` en `data/accounts.ts` es el único
+  punto de la app que decide qué nombre mostrar — nunca usar `account.name` directo en
+  una pantalla nueva si hay un usuario real de por medio.
+- **Copiar presupuesto del mes anterior** al ajustar (`fetchPreviousCycleBudget`,
+  `AdjustBudgetPanel.tsx`): solo rellena el formulario, no guarda solo.
+- **Ingresos declarados** (`declared_incomes`, `src/lib/declaredIncome.ts`): un sueldo en
+  efectivo o de una cuenta que Áurea no ve. Se suman aparte a los ingresos detectados en
+  movimientos en los tres sitios que calculan ingresos por separado (`useRealHome`,
+  `useRealMonthlyReport`, `useRealPlanning`) — nunca los sustituyen.
+- **Fondo de emergencia real** (Objetivos): `RealEmergencyFundCard.tsx` compara ahorro en
+  cuentas función "Ahorro" contra el gasto medio mensual × 6 — sin desglose
+  esencial/discrecional real, documentado como simplificación en el propio código.
+- **Comparación avalancha/bola de nieve real** (Deudas): `simulateStrategy` en
+  `features/debts/domain.ts` simula mes a mes con redirección de cuota liberada; con
+  solo 2 deudas los totales pueden salir idénticos (matemáticamente correcto, no un
+  bug — solo hay un destino posible para lo liberado).
+- **Asignación de inversiones real** (`RealAllocationCard.tsx`): reparto actual por
+  `product_type`, sin comparar contra un objetivo — no hay cartera modelo guardada por
+  usuario, así que no se fabrica un target.
+- **CRUD completo de Objetivos**: `updateGoal`/`archiveGoal`/`unarchiveGoal` en
+  `useRealGoals.ts`, mismo patrón reversible que `archiveInvestment`.
+- **Recurrentes manuales** (`manual_recurring_items`): para cargos que Áurea no ve.
+  Se fusionan con los detectados automáticamente en `useRealRecurring.ts` con un flag
+  `isManual`, mismo patrón que las cuentas manuales.
+- **Etiqueta en bloque** a varios movimientos (`bulkAddTag` en `useRealTransactions.ts`):
+  lee las etiquetas actuales de cada fila y añade la nueva sin pisar ni duplicar — no
+  hay `array_append` de un `.update().in(...)` masivo en el cliente de Supabase.
+- **Escenarios de Planificación guardados** (`planning_scenarios`): además de los 3
+  presets fijos (optimista/base/pesimista, que se quedan igual), el usuario guarda su
+  propia configuración de sliders con un nombre y la recupera con un toque
+  (`loadScenario` en `features/planning/store.ts`).
+- **Crear y borrar categorías propias** (`createCategory`/`deleteCategory` en
+  `useRealCategories.ts`): el borrado traduce el 23503 de Postgres (FK sin CASCADE
+  desde `transactions`/`budgets`/`rules`) a un mensaje legible. `category_group` tiene
+  un CHECK con un conjunto fijo de valores — una categoría nueva usa `'compras'` como
+  grupo genérico, nunca un valor fuera de ese conjunto.
+- **Pago extra como recordatorio, no como pago fingido** (`debt_details.
+  extra_payment_reminder`): Áurea no ejecuta pagos reales, así que "Guardar como
+  recordatorio" persiste la intención (importe) como nota 📌 visible en la fila de la
+  deuda, en vez de fingir que programa algo que la app no puede hacer.
+- **Dividir un movimiento en varias categorías** (`transaction_splits` +
+  `transaction_category_amounts`): el cambio más grande y de más riesgo de la fase,
+  porque toca el cálculo de Presupuesto e Informes. La vista devuelve, para cada
+  movimiento, sus filas de `transaction_splits` si existen o si no una fila sintética
+  con su `category_id`/`amount_cents` propios — así un movimiento sin dividir suma
+  exactamente igual que antes (verificado en vivo: mismo total antes/después de dividir
+  y de quitar la división). Guardar/borrar la división es atómico vía
+  `replace_transaction_splits` (borra e inserta en la misma transacción de Postgres); un
+  trigger de constraint diferido impide guardar splits cuya suma no cuadre con el
+  importe del movimiento padre. UI en `TransactionPanel.tsx` (`SplitEditor`).
+- **Adjuntar foto de recibo** (`transactions.receipt_path` + bucket `receipts`): sin
+  precedente de Storage en el proyecto. Vista previa siempre por
+  `createSignedUrl` de corta duración, nunca una URL pública; subir un archivo nuevo no
+  sobrescribe el anterior a nivel de Storage (cada subida genera una ruta con UUID
+  propio) pero sí reemplaza qué ruta apunta `receipt_path`.
+
+Fuera de alcance en esta fase, decidido de antemano: compartir cuenta con pareja,
+avisos por email/push, modo oscuro, command palette — ver también
+`## Fuera de alcance explícito` más arriba para los matices que dejó cada punto.
 
 ## Verificación
 
