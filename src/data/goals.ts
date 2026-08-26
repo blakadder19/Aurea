@@ -24,6 +24,8 @@ export interface Goal {
   status: 'success' | 'danger'
   statusLabel: string
   note: string
+  icon?: string | null
+  color?: string | null
 }
 
 export const goals: Goal[] = [

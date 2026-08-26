@@ -3,12 +3,18 @@ import type { Goal } from '../../data/goals'
 import { supabase } from '../../lib/supabase/client'
 import { useAuthStore } from '../../lib/supabase/useAuth'
 
+/** Paleta fija de colores para personalizar un objetivo — no es un input libre. */
+export const GOAL_COLORS = ['brand', 'green', 'blue', 'orange', 'pink', 'purple'] as const
+export type GoalColor = (typeof GOAL_COLORS)[number]
+
 export interface RealGoal {
   id: string
   name: string
   targetCents: number
   savedCents: number
   monthlyContributionCents: number
+  icon: string | null
+  color: GoalColor | null
 }
 
 interface RealGoalsResult {
@@ -39,7 +45,7 @@ export function useRealGoals(): RealGoalsResult {
       if (!supabase) return
       const { data, error } = await supabase
         .from('goals')
-        .select('id, name, target_cents, saved_cents, monthly_contribution_cents')
+        .select('id, name, target_cents, saved_cents, monthly_contribution_cents, icon, color')
         .eq('archived', false)
         .order('created_at', { ascending: true })
       if (cancelled) return
@@ -57,6 +63,8 @@ export function useRealGoals(): RealGoalsResult {
           targetCents: row.target_cents as number,
           savedCents: row.saved_cents as number,
           monthlyContributionCents: row.monthly_contribution_cents as number,
+          icon: (row.icon as string | null) || null,
+          color: (row.color as GoalColor | null) || null,
         })),
       )
       setLoading(false)
@@ -72,7 +80,13 @@ export function useRealGoals(): RealGoalsResult {
 }
 
 /** Crea un objetivo real. RLS asegura que solo puede crear los suyos. */
-export async function createGoal(name: string, targetCents: number, monthlyContributionCents: number): Promise<string | null> {
+export async function createGoal(
+  name: string,
+  targetCents: number,
+  monthlyContributionCents: number,
+  icon?: string | null,
+  color?: GoalColor | null,
+): Promise<string | null> {
   if (!supabase) return 'Supabase no está configurado.'
   if (!name.trim()) return 'Ponle un nombre al objetivo.'
   if (!Number.isInteger(targetCents) || targetCents <= 0) return 'El objetivo debe ser un importe mayor que 0.'
@@ -88,6 +102,8 @@ export async function createGoal(name: string, targetCents: number, monthlyContr
     name: name.trim(),
     target_cents: targetCents,
     monthly_contribution_cents: monthlyContributionCents,
+    icon: icon?.trim() || null,
+    color: color ?? null,
   })
   if (error) {
     console.error('createGoal: fallo al crear', error)
@@ -96,8 +112,15 @@ export async function createGoal(name: string, targetCents: number, monthlyContr
   return null
 }
 
-/** Actualiza nombre, importe objetivo y aportación mensual de un objetivo existente. */
-export async function updateGoal(id: string, name: string, targetCents: number, monthlyContributionCents: number): Promise<string | null> {
+/** Actualiza nombre, importe objetivo, aportación mensual e icono/color de un objetivo existente. */
+export async function updateGoal(
+  id: string,
+  name: string,
+  targetCents: number,
+  monthlyContributionCents: number,
+  icon?: string | null,
+  color?: GoalColor | null,
+): Promise<string | null> {
   if (!supabase) return 'Supabase no está configurado.'
   if (!name.trim()) return 'Ponle un nombre al objetivo.'
   if (!Number.isInteger(targetCents) || targetCents <= 0) return 'El objetivo debe ser un importe mayor que 0.'
@@ -105,7 +128,13 @@ export async function updateGoal(id: string, name: string, targetCents: number, 
 
   const { error } = await supabase
     .from('goals')
-    .update({ name: name.trim(), target_cents: targetCents, monthly_contribution_cents: monthlyContributionCents })
+    .update({
+      name: name.trim(),
+      target_cents: targetCents,
+      monthly_contribution_cents: monthlyContributionCents,
+      icon: icon?.trim() || null,
+      color: color ?? null,
+    })
     .eq('id', id)
   if (error) {
     console.error('updateGoal: fallo al actualizar', error)
@@ -164,7 +193,18 @@ export function toGoalCardProps(g: RealGoal): Goal {
   const monthlyContribution = euros(g.monthlyContributionCents)
 
   if (saved >= target) {
-    return { id: g.id, name: g.name, saved, target, monthlyContribution, status: 'success', statusLabel: 'Completado', note: 'objetivo alcanzado' }
+    return {
+      id: g.id,
+      name: g.name,
+      saved,
+      target,
+      monthlyContribution,
+      status: 'success',
+      statusLabel: 'Completado',
+      note: 'objetivo alcanzado',
+      icon: g.icon,
+      color: g.color,
+    }
   }
   if (monthlyContribution > 0) {
     return {
@@ -176,6 +216,8 @@ export function toGoalCardProps(g: RealGoal): Goal {
       status: 'success',
       statusLabel: 'Al día',
       note: `aportando ${monthlyContribution} €/mes`,
+      icon: g.icon,
+      color: g.color,
     }
   }
   return {
@@ -187,5 +229,7 @@ export function toGoalCardProps(g: RealGoal): Goal {
     status: 'danger',
     statusLabel: 'Sin aportación',
     note: 'sin aportación mensual definida, no hay fecha estimada',
+    icon: g.icon,
+    color: g.color,
   }
 }

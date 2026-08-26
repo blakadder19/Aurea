@@ -54,6 +54,12 @@
   --color-plum-bg: #f1eefe;
   --color-plum-line: #dcd0fc;
 
+  /* Paleta decorativa de personalización de Objetivos — sin significado semántico */
+  --color-goal-blue: #2f8fe0;
+  --color-goal-orange: #e0a020;
+  --color-goal-pink: #e0489a;
+  --color-goal-purple: #8b5cf6;
+
   /* Categorías de gasto: color fijo por categoría (igual siempre, para reconocer sin leer) */
   --color-cat-1: #17a673;
   --color-cat-2: #ef5a4c;

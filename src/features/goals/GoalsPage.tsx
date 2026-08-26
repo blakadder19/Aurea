@@ -14,6 +14,7 @@ import {
   unarchiveGoal,
   updateGoal,
   useRealGoals,
+  type GoalColor,
   type RealGoal,
 } from './useRealGoals'
 import { useRealEmergencyFund } from './useRealEmergencyFund'
@@ -89,8 +90,14 @@ export function GoalsPage() {
   const hasRealGoals = isAuthenticated && !loadingReal && realGoals !== null && realGoals.length > 0
   const today = new Date()
 
-  async function handleCreate(name: string, targetCents: number, monthlyContributionCents: number) {
-    return createGoal(name, targetCents, monthlyContributionCents)
+  async function handleCreate(
+    name: string,
+    targetCents: number,
+    monthlyContributionCents: number,
+    icon: string | null,
+    color: GoalColor | null,
+  ) {
+    return createGoal(name, targetCents, monthlyContributionCents, icon, color)
   }
 
   async function handleContribute(goalId: string, currentSavedCents: number, amountCents: number) {
@@ -113,8 +120,15 @@ export function GoalsPage() {
     refetch()
   }
 
-  async function handleUpdate(id: string, name: string, targetCents: number, monthlyContributionCents: number) {
-    return updateGoal(id, name, targetCents, monthlyContributionCents)
+  async function handleUpdate(
+    id: string,
+    name: string,
+    targetCents: number,
+    monthlyContributionCents: number,
+    icon: string | null,
+    color: GoalColor | null,
+  ) {
+    return updateGoal(id, name, targetCents, monthlyContributionCents, icon, color)
   }
 
   function openEdit(goal: RealGoal) {

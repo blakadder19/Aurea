@@ -56,8 +56,29 @@ describe('useRealGoals', () => {
     await waitFor(() => expect(result.current.loading).toBe(false))
 
     expect(result.current.goals).toEqual([
-      { id: 'goal-1', name: 'Viaje a Japón', targetCents: 400000, savedCents: 215000, monthlyContributionCents: 20000 },
-      { id: 'goal-2', name: 'Fondo de emergencia', targetCents: 1188000, savedCents: 890000, monthlyContributionCents: 0 },
+      { id: 'goal-1', name: 'Viaje a Japón', targetCents: 400000, savedCents: 215000, monthlyContributionCents: 20000, icon: null, color: null },
+      { id: 'goal-2', name: 'Fondo de emergencia', targetCents: 1188000, savedCents: 890000, monthlyContributionCents: 0, icon: null, color: null },
     ])
+  })
+
+  it('con sesión, propaga icono y color de un objetivo personalizado', async () => {
+    fixtures.goals = [
+      {
+        id: 'goal-1',
+        name: 'Viaje a Japón',
+        target_cents: 400000,
+        saved_cents: 215000,
+        monthly_contribution_cents: 20000,
+        icon: '🗾',
+        color: 'blue',
+      },
+    ] as unknown as typeof fixtures.goals
+    useAuthStore.setState({ session: activeSession })
+    const { result } = renderHook(() => useRealGoals())
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    expect(result.current.goals?.[0].icon).toBe('🗾')
+    expect(result.current.goals?.[0].color).toBe('blue')
   })
 })
