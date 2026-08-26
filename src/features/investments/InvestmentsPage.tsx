@@ -11,6 +11,7 @@ import { InvestmentPanel, type InvestmentFormValues } from './InvestmentPanel'
 import { PortfolioSummaryCard } from './PortfolioSummaryCard'
 import { PositionsTable } from './PositionsTable'
 import { ProductTypeBreakdown } from './ProductTypeBreakdown'
+import { RealAllocationCard } from './RealAllocationCard'
 import { useInvestmentsStore, type InvestmentsView } from './store'
 import {
   archiveInvestment,
@@ -161,6 +162,7 @@ export function InvestmentsPage() {
             />
             {isDetalle && <ProductTypeBreakdown positions={hasRealInvestments ? realPositions : undefined} />}
             {!isAuthenticated && <AllocationCard />}
+            {hasRealInvestments && <RealAllocationCard positions={realPositions} />}
           </>
         )}
         {pendingUndo && <UndoBar message={pendingUndo.message} onUndo={handleUndoArchive} />}
