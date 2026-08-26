@@ -1,10 +1,12 @@
 import * as Dialog from '@radix-ui/react-dialog'
 import { useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Money } from '../../components/Money'
 import { SectionLabel } from '../../components/SectionLabel'
 import { SidePanel } from '../../components/SidePanel'
 import { accountLabel, accounts as demoAccounts, type Account, type AccountFunction } from '../../data/accounts'
 import { focusRowById } from '../../lib/dom'
+import { formatIsoDateTime } from '../../lib/format'
 import { useAccountsStore } from './store'
 
 const ASSIGNABLE_FUNCTIONS: AccountFunction[] = ['Para gastar', 'Ahorro', 'Inversión', 'Deuda', 'Activo manual']
@@ -16,16 +18,24 @@ function looksJoint(name: string): boolean {
 
 function PanelContent({
   account,
+  isReal,
+  lastSyncedIso,
   onChangeFunction,
   onChangeSharePercent,
   onDeleteManual,
   onRename,
+  onDisconnect,
 }: {
   account: Account
+  /** true en real (con o sin banco ya sincronizado), false/undefined en demo. */
+  isReal?: boolean
+  /** Última sincronización real del banco — null si real pero aún sin sincronizar ninguno. */
+  lastSyncedIso?: string | null
   onChangeFunction?: (accountId: string, fn: AccountFunction) => Promise<string | null>
   onChangeSharePercent?: (accountId: string, percent: number) => Promise<string | null>
   onDeleteManual?: (accountId: string) => Promise<string | null>
   onRename?: (accountId: string, displayName: string) => Promise<string | null>
+  onDisconnect?: () => Promise<string | null>
 }) {
   const [savingFn, setSavingFn] = useState(false)
   const [fnError, setFnError] = useState<string | null>(null)
@@ -39,6 +49,9 @@ function PanelContent({
   const [nameInput, setNameInput] = useState(accountLabel(account))
   const [savingName, setSavingName] = useState(false)
   const [nameError, setNameError] = useState<string | null>(null)
+  const [confirmingDisconnect, setConfirmingDisconnect] = useState(false)
+  const [disconnecting, setDisconnecting] = useState(false)
+  const [disconnectError, setDisconnectError] = useState<string | null>(null)
 
   async function handleSaveName() {
     if (!onRename) return
@@ -80,6 +93,15 @@ function PanelContent({
     const error = await onChangeSharePercent(account.id, percent)
     if (error) setShareError(error)
     setSavingShare(false)
+  }
+
+  async function handleDisconnect() {
+    if (!onDisconnect) return
+    setDisconnecting(true)
+    setDisconnectError(null)
+    const error = await onDisconnect()
+    setDisconnecting(false)
+    if (error) setDisconnectError(error)
   }
 
   return (
@@ -145,9 +167,15 @@ function PanelContent({
         className="text-[40px] font-semibold"
       />
       <div className="text-base text-ink-muted">
-        {account.foreign
-          ? `${account.foreign.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })} ${account.foreign.currency} al tipo ${account.foreign.rate.toLocaleString('es-ES', { minimumFractionDigits: 4 })} · actualizado ${account.foreign.rateDate}, 08:42`
-          : `Actualizado 19 ago, 08:42`}
+        {isReal
+          ? account.isManual
+            ? 'Cuenta manual · se actualiza cuando registras un movimiento'
+            : lastSyncedIso
+              ? `Actualizado ${formatIsoDateTime(lastSyncedIso)}`
+              : 'Todavía sin sincronizar'
+          : account.foreign
+            ? `${account.foreign.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })} ${account.foreign.currency} al tipo ${account.foreign.rate.toLocaleString('es-ES', { minimumFractionDigits: 4 })} · actualizado ${account.foreign.rateDate}, 08:42`
+            : `Actualizado 19 ago, 08:42`}
       </div>
 
       <div className="flex flex-col gap-2 rounded-[14px] border border-line p-4">
@@ -244,6 +272,15 @@ function PanelContent({
           ))}
         </div>
       )}
+      {account.isManual && onDeleteManual && (
+        <p className="text-sm text-ink-muted">
+          ¿Te equivocaste al teclear un importe? Corrígelo desde{' '}
+          <Link to="/movimientos" className="font-semibold text-brand underline hover:no-underline">
+            Movimientos
+          </Link>
+          , incluido el saldo inicial.
+        </p>
+      )}
 
       <div className="flex flex-wrap gap-2.5">
         {!onChangeFunction && (
@@ -263,15 +300,43 @@ function PanelContent({
             Renombrar
           </button>
         )}
-        {!account.isManual && (
+        {!account.isManual && onDisconnect && !confirmingDisconnect && (
           <button
             type="button"
+            onClick={() => setConfirmingDisconnect(true)}
             className="min-h-11 rounded-md border border-line px-4 py-2.5 text-base font-semibold text-danger-text"
           >
             Desconectar
           </button>
         )}
       </div>
+
+      {!account.isManual && onDisconnect && confirmingDisconnect && (
+        <div className="flex flex-col gap-2 border-t border-line pt-4">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="text-sm text-danger-text">
+              Esto desconecta todo {account.institution}, no solo esta cuenta — perderás la sincronización de todas sus cuentas.
+            </span>
+            <button
+              type="button"
+              disabled={disconnecting}
+              onClick={() => void handleDisconnect()}
+              className="min-h-11 rounded-md border border-danger-line bg-danger-bg px-3.5 text-sm font-semibold text-danger-text disabled:opacity-60"
+            >
+              {disconnecting ? 'Desconectando…' : 'Sí, desconectar'}
+            </button>
+            <button
+              type="button"
+              disabled={disconnecting}
+              onClick={() => setConfirmingDisconnect(false)}
+              className="min-h-11 rounded-md border border-line px-3.5 text-sm font-semibold text-ink"
+            >
+              Cancelar
+            </button>
+          </div>
+          {disconnectError && <p className="text-sm text-danger-text">{disconnectError}</p>}
+        </div>
+      )}
 
       {account.isManual && onDeleteManual && (
         <div className="flex flex-col gap-2 border-t border-line pt-4">
@@ -314,16 +379,22 @@ function PanelContent({
 /** Panel lateral de detalle de cuenta: se abre al hacer click en una fila. */
 export function AccountDetailPanel({
   accounts = demoAccounts,
+  isReal,
+  lastSyncedIso,
   onChangeFunction,
   onChangeSharePercent,
   onDeleteManual,
   onRename,
+  onDisconnect,
 }: {
   accounts?: Account[]
+  isReal?: boolean
+  lastSyncedIso?: string | null
   onChangeFunction?: (accountId: string, fn: AccountFunction) => Promise<string | null>
   onChangeSharePercent?: (accountId: string, percent: number) => Promise<string | null>
   onDeleteManual?: (accountId: string) => Promise<string | null>
   onRename?: (accountId: string, displayName: string) => Promise<string | null>
+  onDisconnect?: () => Promise<string | null>
 }) {
   const accountId = useAccountsStore((s) => s.panelAccountId)
   const closePanel = useAccountsStore((s) => s.closePanel)
@@ -348,10 +419,13 @@ export function AccountDetailPanel({
         <PanelContent
           key={account.id}
           account={account}
+          isReal={isReal}
+          lastSyncedIso={lastSyncedIso}
           onChangeFunction={onChangeFunction}
           onChangeSharePercent={onChangeSharePercent}
           onDeleteManual={onDeleteManual}
           onRename={onRename}
+          onDisconnect={onDisconnect}
         />
       )}
     </SidePanel>

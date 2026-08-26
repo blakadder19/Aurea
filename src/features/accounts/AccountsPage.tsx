@@ -11,7 +11,8 @@ import { useNetWorthHistory } from './useNetWorthHistory'
 import { addManualTransaction, createManualAccount, deleteManualAccount } from './useManualEntries'
 import { updateAccountDisplayName, updateAccountFunction, updateAccountSharePercent, useRealAccounts } from './useRealAccounts'
 import type { AccountFunction } from '../../data/accounts'
-import { startBankConnection } from '../settings/bankConnection'
+import { accountShareValue, computeAssetsLiabilities } from '../../lib/netWorth'
+import { disconnectBank, startBankConnection } from '../settings/bankConnection'
 import { useAccountsStore, type AccountsView } from './store'
 import { CONTEXT_DATE, syncedAt } from '../../data/demo'
 import { formatMonthYearLong, formatWeekdayDate } from '../../lib/format'
@@ -179,6 +180,12 @@ export function AccountsPage() {
     return error
   }
 
+  async function handleDisconnectBank() {
+    const error = await disconnectBank()
+    if (!error) refetch()
+    return error
+  }
+
   const isAuthenticated = session !== null
   const hasRealAccounts = isAuthenticated && !loadingReal && realAccounts !== null && realAccounts.length > 0
 
@@ -187,22 +194,13 @@ export function AccountsPage() {
   // una, tal cual, nunca convertido a un EUR inventado.
   const foreignBalances: ForeignBalance[] = hasRealAccounts
     ? [...realAccounts!.filter((a) => a.currency !== undefined && a.currency !== 'EUR').reduce((acc, a) => {
-        const share = a.balance * ((a.sharePercent ?? 100) / 100)
-        acc.set(a.currency!, (acc.get(a.currency!) ?? 0) + share)
+        acc.set(a.currency!, (acc.get(a.currency!) ?? 0) + accountShareValue(a))
         return acc
       }, new Map<string, number>())].map(([currency, amount]) => ({ currency, amount }))
     : []
 
   const realKpis = hasRealAccounts
-    ? realAccounts!
-        .filter((a) => a.currency === undefined || a.currency === 'EUR')
-        .reduce(
-          (acc, a) => {
-            const share = a.balance * ((a.sharePercent ?? 100) / 100)
-            return share >= 0 ? { ...acc, assets: acc.assets + share } : { ...acc, liabilities: acc.liabilities - share }
-          },
-          { assets: 0, liabilities: 0 },
-        )
+    ? computeAssetsLiabilities(realAccounts!.filter((a) => a.currency === undefined || a.currency === 'EUR'))
     : null
   const realNetWorth = realKpis ? realKpis.assets - realKpis.liabilities : null
 
@@ -213,11 +211,13 @@ export function AccountsPage() {
     fromDateIso,
   )
 
+  const realLastSynced = latestSync(realConnections ?? [])
+
   return (
     <>
       <Header
         isAuthenticated={isAuthenticated}
-        realLastSynced={latestSync(realConnections ?? [])}
+        realLastSynced={realLastSynced}
         period={period}
         onPeriodChange={setPeriod}
         customFrom={customFrom}
@@ -253,10 +253,13 @@ export function AccountsPage() {
       </main>
       <AccountDetailPanel
         accounts={hasRealAccounts ? realAccounts! : undefined}
+        isReal={isAuthenticated}
+        lastSyncedIso={realLastSynced}
         onChangeFunction={hasRealAccounts ? handleChangeFunction : undefined}
         onChangeSharePercent={hasRealAccounts ? handleChangeSharePercent : undefined}
         onDeleteManual={hasRealAccounts ? handleDeleteManualAccount : undefined}
         onRename={hasRealAccounts ? handleRenameAccount : undefined}
+        onDisconnect={hasRealAccounts ? handleDisconnectBank : undefined}
       />
       <ManualEntryPanel
         mode={manualPanelMode}
