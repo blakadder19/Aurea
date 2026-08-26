@@ -17,7 +17,7 @@ describe('suggestCategories', () => {
     vi.unstubAllGlobals()
   })
 
-  it('con sesión, traduce transaction_id/category_id (snake_case) a camelCase', async () => {
+  it('con sesión, traduce transaction_id/category_id (snake_case) a camelCase, sin confidence tratado como alta', async () => {
     useAuthStore.setState({ getAccessToken: vi.fn().mockResolvedValue('token-123') })
     vi.stubGlobal(
       'fetch',
@@ -28,7 +28,22 @@ describe('suggestCategories', () => {
     )
 
     const result = await suggestCategories()
-    expect(result).toEqual({ suggestions: [{ transactionId: 'tx-1', categoryId: 'cat-1' }], error: null })
+    expect(result).toEqual({ suggestions: [{ transactionId: 'tx-1', categoryId: 'cat-1', confidence: 'alta' }], error: null })
+    vi.unstubAllGlobals()
+  })
+
+  it('propaga confidence: "baja" cuando la IA no está segura', async () => {
+    useAuthStore.setState({ getAccessToken: vi.fn().mockResolvedValue('token-123') })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ suggestions: [{ transaction_id: 'tx-1', category_id: 'cat-1', confidence: 'baja' }] }),
+      }),
+    )
+
+    const result = await suggestCategories()
+    expect(result.suggestions).toEqual([{ transactionId: 'tx-1', categoryId: 'cat-1', confidence: 'baja' }])
     vi.unstubAllGlobals()
   })
 

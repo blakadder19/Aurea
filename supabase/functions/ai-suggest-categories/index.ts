@@ -9,6 +9,7 @@ const MAX_TRANSACTIONS = 30
 interface RawSuggestion {
   transaction_id?: unknown
   category_id?: unknown
+  confidence?: unknown
 }
 
 /**
@@ -47,9 +48,10 @@ Deno.serve(
     const system =
       'Eres un clasificador de movimientos bancarios personales. Tu única tarea es asignar, a cada movimiento, ' +
       'EXACTAMENTE uno de los ids de categoría de la lista dada — nunca inventes un id ni un nombre de categoría ' +
-      'que no esté en la lista. Si no puedes decidir con confianza razonable para un movimiento, omítelo de la ' +
-      'respuesta en vez de adivinar. Responde solo con JSON válido: un array de objetos ' +
-      '{"transaction_id": "...", "category_id": "..."}, sin texto adicional ni bloque de código.'
+      'que no esté en la lista. Si tienes una intuición razonable pero no estás del todo seguro, inclúyelo igual ' +
+      'marcando "confidence": "baja" en vez de omitirlo — solo omite un movimiento si de verdad no tienes ninguna ' +
+      'pista (p. ej. descripción vacía o totalmente ambigua). Responde solo con JSON válido: un array de objetos ' +
+      '{"transaction_id": "...", "category_id": "...", "confidence": "alta"|"baja"}, sin texto adicional ni bloque de código.'
 
     const userMessage = `Categorías disponibles (id: nombre):\n${categoryList}\n\nMovimientos a clasificar (id | descripción | importe):\n${txList}`
 
@@ -70,13 +72,19 @@ Deno.serve(
     // sugerencias cuyo transaction_id y category_id son de verdad del usuario.
     const validCategoryIds = new Set(categories.map((c) => c.id as string))
     const validTxIds = new Set(transactions.map((t) => t.id as string))
-    const suggestions = parsed.filter(
-      (s): s is { transaction_id: string; category_id: string } =>
-        typeof s.transaction_id === 'string' &&
-        typeof s.category_id === 'string' &&
-        validTxIds.has(s.transaction_id) &&
-        validCategoryIds.has(s.category_id),
-    )
+    const suggestions = parsed
+      .filter(
+        (s): s is { transaction_id: string; category_id: string; confidence?: unknown } =>
+          typeof s.transaction_id === 'string' &&
+          typeof s.category_id === 'string' &&
+          validTxIds.has(s.transaction_id) &&
+          validCategoryIds.has(s.category_id),
+      )
+      .map((s) => ({
+        transaction_id: s.transaction_id,
+        category_id: s.category_id,
+        confidence: s.confidence === 'baja' ? 'baja' : 'alta',
+      }))
 
     return json(200, { suggestions })
   }),

@@ -29,7 +29,7 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory, onB
   const pending = transactions.filter(isTransactionPending)
   const categoryById = new Map(categories.map((c) => [c.id, categoryLabel(c)]))
 
-  const [suggestions, setSuggestions] = useState<Record<string, string>>({})
+  const [suggestions, setSuggestions] = useState<Record<string, { categoryId: string; confidence: 'alta' | 'baja' }>>({})
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
   const [suggestError, setSuggestError] = useState<string | null>(null)
   const [savingId, setSavingId] = useState<string | null>(null)
@@ -40,7 +40,7 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory, onB
   const [autoSummary, setAutoSummary] = useState<string | null>(null)
   const cancelRequested = useRef(false)
 
-  const suggestionCount = Object.keys(suggestions).length
+  const highConfidenceCount = Object.values(suggestions).filter((s) => s.confidence === 'alta').length
   // Las tres acciones escriben categorías sobre los mismos movimientos — que nunca corran a la vez.
   const busy = loadingSuggestions || acceptingAll || autoRunning
 
@@ -61,6 +61,7 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory, onB
 
     let classified = 0
     let cancelled = false
+    let stoppedForLowConfidence = false
     for (let round = 0; round < MAX_AUTO_ROUNDS; round++) {
       if (cancelRequested.current) {
         cancelled = true
@@ -73,8 +74,15 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory, onB
       }
       if (result.length === 0) break
 
+      // Las inseguras nunca se aplican en bloque — se quedan pendientes para revisarlas una a una.
+      const highConfidence = result.filter((s) => s.confidence === 'alta')
+      if (highConfidence.length === 0) {
+        stoppedForLowConfidence = true
+        break
+      }
+
       const { appliedCount, error: applyError } = await bulkApplyCategorySuggestions(
-        result.map((s) => ({ transactionId: s.transactionId, categoryId: s.categoryId })),
+        highConfidence.map((s) => ({ transactionId: s.transactionId, categoryId: s.categoryId })),
       )
       classified += appliedCount
       setAutoClassified(classified)
@@ -85,12 +93,15 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory, onB
     }
 
     setAutoRunning(false)
+    const lowConfidenceNote = ' La IA no tiene claros los que quedan — revísalos uno a uno con "Sugerir categorías con IA".'
     setAutoSummary(
       classified > 0
-        ? `Clasificados ${classified} movimiento${classified === 1 ? '' : 's'}${cancelled ? ' antes de cancelar' : ''}. Revisa cuando quieras los que no tengan sugerencia clara.`
+        ? `Clasificados ${classified} movimiento${classified === 1 ? '' : 's'}${cancelled ? ' antes de cancelar' : ''}.${stoppedForLowConfidence ? lowConfidenceNote : ' Revisa cuando quieras los que no tengan sugerencia clara.'}`
         : cancelled
           ? 'Cancelado antes de clasificar nada.'
-          : 'No hemos encontrado ninguna sugerencia con confianza suficiente.',
+          : stoppedForLowConfidence
+            ? `La IA no tiene claros los que quedan.${lowConfidenceNote}`
+            : 'No hemos encontrado ninguna sugerencia con confianza suficiente.',
     )
     if (classified > 0) onBulkClassified()
   }
@@ -108,7 +119,7 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory, onB
       setSuggestError(error)
       return
     }
-    setSuggestions(Object.fromEntries(result.map((s) => [s.transactionId, s.categoryId])))
+    setSuggestions(Object.fromEntries(result.map((s) => [s.transactionId, { categoryId: s.categoryId, confidence: s.confidence }])))
   }
 
   async function handleAccept(transactionId: string, categoryId: string) {
@@ -127,7 +138,10 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory, onB
   }
 
   async function handleAcceptAll() {
+    // Las inseguras nunca entran en "aceptar todas" — solo se aceptan una a una.
     const entries = Object.entries(suggestions)
+      .filter(([, s]) => s.confidence === 'alta')
+      .map(([transactionId, s]) => [transactionId, s.categoryId] as const)
     if (entries.length === 0) return
     setAcceptingAll(true)
     setAcceptAllError(null)
@@ -158,14 +172,14 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory, onB
         </p>
         {pending.length > 0 && categories.length > 0 && (
           <div className="flex flex-wrap gap-2.5">
-            {suggestionCount > 0 && (
+            {highConfidenceCount > 0 && (
               <button
                 type="button"
                 onClick={() => void handleAcceptAll()}
                 disabled={busy}
                 className="min-h-11 rounded-md border border-brand bg-brand px-4 py-2.5 text-base font-semibold text-surface hover:bg-brand-hover disabled:opacity-60"
               >
-                {acceptingAll ? 'Guardando…' : `Aceptar todas (${suggestionCount})`}
+                {acceptingAll ? 'Guardando…' : `Aceptar todas (${highConfidenceCount})`}
               </button>
             )}
             <button
@@ -213,8 +227,9 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory, onB
         </Card>
       ) : (
         pending.map((t) => {
-          const suggestedCategoryId = suggestions[t.id]
-          const suggestedName = suggestedCategoryId ? categoryById.get(suggestedCategoryId) : undefined
+          const suggestion = suggestions[t.id]
+          const suggestedName = suggestion ? categoryById.get(suggestion.categoryId) : undefined
+          const isLowConfidence = suggestion?.confidence === 'baja'
           return (
             <Card key={t.id} className="flex flex-col gap-3.5" padding="lg">
               <div className="flex items-start justify-between gap-4">
@@ -227,16 +242,20 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory, onB
                 <Money value={t.importe} signed={t.importe > 0} tone={t.importe > 0 ? 'green' : 'ink'} className="text-[17px] font-bold" />
               </div>
               {suggestedName && (
-                <div className="flex flex-wrap items-center gap-2.5 rounded-lg border border-plum-line bg-plum-bg p-3">
-                  <Badge variant="plum" icon="">
-                    Sugerencia IA
+                <div
+                  className={`flex flex-wrap items-center gap-2.5 rounded-lg border p-3 ${
+                    isLowConfidence ? 'border-warning-line bg-warning-bg' : 'border-plum-line bg-plum-bg'
+                  }`}
+                >
+                  <Badge variant={isLowConfidence ? 'warning' : 'plum'} icon="">
+                    {isLowConfidence ? '¿Quizás...?' : 'Sugerencia IA'}
                   </Badge>
                   <span className="text-[15px] font-semibold text-ink">{suggestedName}</span>
                   <div className="ml-auto flex gap-2">
                     <button
                       type="button"
                       disabled={savingId === t.id}
-                      onClick={() => void handleAccept(t.id, suggestedCategoryId)}
+                      onClick={() => void handleAccept(t.id, suggestion.categoryId)}
                       className="min-h-9 rounded-md border border-brand bg-brand px-3 text-[15px] font-semibold text-surface hover:bg-brand-hover disabled:opacity-60"
                     >
                       Aceptar

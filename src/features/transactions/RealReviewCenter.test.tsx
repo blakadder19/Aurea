@@ -78,7 +78,7 @@ function renderCenter(onSaveCategory = vi.fn().mockResolvedValue(null), onBulkCl
 
 describe('RealReviewCenter', () => {
   it('al pulsar "Sugerir categorías con IA", muestra la sugerencia con Aceptar/Descartar', async () => {
-    vi.mocked(suggestCategories).mockResolvedValue({ suggestions: [{ transactionId: 'tx-1', categoryId: 'cat-1' }], error: null })
+    vi.mocked(suggestCategories).mockResolvedValue({ suggestions: [{ transactionId: 'tx-1', categoryId: 'cat-1', confidence: 'alta' }], error: null })
     renderCenter()
 
     fireEvent.click(screen.getByRole('button', { name: 'Sugerir categorías con IA' }))
@@ -89,7 +89,7 @@ describe('RealReviewCenter', () => {
   })
 
   it('al aceptar, llama a onSaveCategory con el id sugerido y la sugerencia desaparece', async () => {
-    vi.mocked(suggestCategories).mockResolvedValue({ suggestions: [{ transactionId: 'tx-1', categoryId: 'cat-1' }], error: null })
+    vi.mocked(suggestCategories).mockResolvedValue({ suggestions: [{ transactionId: 'tx-1', categoryId: 'cat-1', confidence: 'alta' }], error: null })
     const { onSaveCategory } = renderCenter()
 
     fireEvent.click(screen.getByRole('button', { name: 'Sugerir categorías con IA' }))
@@ -101,7 +101,7 @@ describe('RealReviewCenter', () => {
   })
 
   it('al descartar, la sugerencia desaparece sin llamar a onSaveCategory', async () => {
-    vi.mocked(suggestCategories).mockResolvedValue({ suggestions: [{ transactionId: 'tx-1', categoryId: 'cat-1' }], error: null })
+    vi.mocked(suggestCategories).mockResolvedValue({ suggestions: [{ transactionId: 'tx-1', categoryId: 'cat-1', confidence: 'alta' }], error: null })
     const { onSaveCategory } = renderCenter()
 
     fireEvent.click(screen.getByRole('button', { name: 'Sugerir categorías con IA' }))
@@ -110,6 +110,41 @@ describe('RealReviewCenter', () => {
 
     expect(screen.queryByText('Sugerencia IA')).not.toBeInTheDocument()
     expect(onSaveCategory).not.toHaveBeenCalled()
+  })
+
+  it('una sugerencia insegura se muestra como "¿Quizás...?" y no cuenta para "Aceptar todas"', async () => {
+    vi.mocked(suggestCategories).mockResolvedValue({
+      suggestions: [
+        { transactionId: 'tx-1', categoryId: 'cat-1', confidence: 'baja' },
+        { transactionId: 'tx-2', categoryId: 'cat-2', confidence: 'alta' },
+      ],
+      error: null,
+    })
+    renderCenter()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sugerir categorías con IA' }))
+    expect(await screen.findByText('¿Quizás...?')).toBeInTheDocument()
+    expect(screen.getByText('Sugerencia IA')).toBeInTheDocument() // la de confianza alta, sin cambios
+    expect(screen.getByRole('button', { name: 'Aceptar todas (1)' })).toBeInTheDocument() // solo cuenta la segura
+  })
+
+  it('una sugerencia insegura solo se acepta una a una, "Aceptar todas" no la toca', async () => {
+    vi.mocked(suggestCategories).mockResolvedValue({
+      suggestions: [
+        { transactionId: 'tx-1', categoryId: 'cat-1', confidence: 'baja' },
+        { transactionId: 'tx-2', categoryId: 'cat-2', confidence: 'alta' },
+      ],
+      error: null,
+    })
+    const { onSaveCategory } = renderCenter()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sugerir categorías con IA' }))
+    await screen.findByRole('button', { name: 'Aceptar todas (1)' })
+    fireEvent.click(screen.getByRole('button', { name: 'Aceptar todas (1)' }))
+
+    await waitFor(() => expect(onSaveCategory).toHaveBeenCalledWith('tx-2', 'cat-2'))
+    expect(onSaveCategory).not.toHaveBeenCalledWith('tx-1', 'cat-1')
+    expect(screen.getByText('¿Quizás...?')).toBeInTheDocument() // sigue ahí, pendiente de decisión manual
   })
 
   it('si la Edge Function falla, muestra el error en vez de una sugerencia fabricada', async () => {
@@ -124,8 +159,8 @@ describe('RealReviewCenter', () => {
   it('"Aceptar todas" guarda cada sugerencia y las hace desaparecer todas', async () => {
     vi.mocked(suggestCategories).mockResolvedValue({
       suggestions: [
-        { transactionId: 'tx-1', categoryId: 'cat-1' },
-        { transactionId: 'tx-2', categoryId: 'cat-2' },
+        { transactionId: 'tx-1', categoryId: 'cat-1', confidence: 'alta' },
+        { transactionId: 'tx-2', categoryId: 'cat-2', confidence: 'alta' },
       ],
       error: null,
     })
@@ -143,8 +178,8 @@ describe('RealReviewCenter', () => {
   it('"Aceptar todas" con un fallo parcial, deja la que falló para revisar a mano', async () => {
     vi.mocked(suggestCategories).mockResolvedValue({
       suggestions: [
-        { transactionId: 'tx-1', categoryId: 'cat-1' },
-        { transactionId: 'tx-2', categoryId: 'cat-2' },
+        { transactionId: 'tx-1', categoryId: 'cat-1', confidence: 'alta' },
+        { transactionId: 'tx-2', categoryId: 'cat-2', confidence: 'alta' },
       ],
       error: null,
     })
@@ -162,7 +197,7 @@ describe('RealReviewCenter', () => {
   it('"Clasificar todos los pendientes con IA" repite rondas hasta que no hay más sugerencias, y refresca una sola vez al final', async () => {
     vi.mocked(suggestCategories)
       .mockReset()
-      .mockResolvedValueOnce({ suggestions: manyTransactions.map((t) => ({ transactionId: t.id, categoryId: 'cat-1' })), error: null })
+      .mockResolvedValueOnce({ suggestions: manyTransactions.map((t) => ({ transactionId: t.id, categoryId: 'cat-1', confidence: 'alta' as const })), error: null })
       .mockResolvedValueOnce({ suggestions: [], error: null })
     vi.mocked(bulkApplyCategorySuggestions)
       .mockReset()
@@ -177,9 +212,23 @@ describe('RealReviewCenter', () => {
     expect(onBulkClassified).toHaveBeenCalledTimes(1)
   })
 
+  it('"Clasificar todos" para en cuanto una ronda solo trae sugerencias inseguras, sin aplicarlas en bloque', async () => {
+    vi.mocked(suggestCategories)
+      .mockReset()
+      .mockResolvedValueOnce({ suggestions: manyTransactions.map((t) => ({ transactionId: t.id, categoryId: 'cat-1', confidence: 'baja' as const })), error: null })
+    vi.mocked(bulkApplyCategorySuggestions).mockReset().mockResolvedValue({ appliedCount: 0, error: null })
+    renderCenter(undefined, undefined, manyTransactions)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clasificar todos los pendientes con IA' }))
+
+    await waitFor(() => expect(screen.getByText(/La IA no tiene claros los que quedan/)).toBeInTheDocument())
+    expect(bulkApplyCategorySuggestions).not.toHaveBeenCalled()
+    expect(suggestCategories).toHaveBeenCalledTimes(1)
+  })
+
   it('"Cancelar" detiene el bucle antes de la siguiente ronda, sin perder lo ya clasificado', async () => {
-    let resolveRound1: (v: { suggestions: { transactionId: string; categoryId: string }[]; error: null }) => void = () => {}
-    const round1Promise = new Promise<{ suggestions: { transactionId: string; categoryId: string }[]; error: null }>((resolve) => {
+    let resolveRound1: (v: { suggestions: { transactionId: string; categoryId: string; confidence: 'alta' | 'baja' }[]; error: null }) => void = () => {}
+    const round1Promise = new Promise<{ suggestions: { transactionId: string; categoryId: string; confidence: 'alta' | 'baja' }[]; error: null }>((resolve) => {
       resolveRound1 = resolve
     })
     vi.mocked(suggestCategories).mockReset().mockReturnValueOnce(round1Promise)
@@ -191,15 +240,15 @@ describe('RealReviewCenter', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Clasificar todos los pendientes con IA' }))
     await screen.findByRole('button', { name: 'Cancelar' })
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
-    resolveRound1({ suggestions: manyTransactions.map((t) => ({ transactionId: t.id, categoryId: 'cat-1' })), error: null })
+    resolveRound1({ suggestions: manyTransactions.map((t) => ({ transactionId: t.id, categoryId: 'cat-1', confidence: 'alta' as const })), error: null })
 
     await waitFor(() => expect(screen.getByText(/Clasificados 6 movimientos antes de cancelar/)).toBeInTheDocument())
     expect(suggestCategories).toHaveBeenCalledTimes(1)
   })
 
   it('mientras "Clasificar todos" corre, "Sugerir" y "Aceptar todas" quedan deshabilitados para no pisarse', async () => {
-    let resolveRound1: (v: { suggestions: { transactionId: string; categoryId: string }[]; error: null }) => void = () => {}
-    const round1Promise = new Promise<{ suggestions: { transactionId: string; categoryId: string }[]; error: null }>((resolve) => {
+    let resolveRound1: (v: { suggestions: { transactionId: string; categoryId: string; confidence: 'alta' | 'baja' }[]; error: null }) => void = () => {}
+    const round1Promise = new Promise<{ suggestions: { transactionId: string; categoryId: string; confidence: 'alta' | 'baja' }[]; error: null }>((resolve) => {
       resolveRound1 = resolve
     })
     vi.mocked(suggestCategories).mockReset().mockReturnValueOnce(round1Promise)

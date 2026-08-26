@@ -6,6 +6,8 @@ const FUNCTIONS_BASE = isSupabaseConfigured ? `${import.meta.env.VITE_SUPABASE_U
 export interface AiCategorySuggestion {
   transactionId: string
   categoryId: string
+  /** 'baja' cuando la IA no está del todo segura — se muestra distinto y nunca entra en un "aceptar todas". */
+  confidence: 'alta' | 'baja'
 }
 
 /**
@@ -22,13 +24,20 @@ export async function suggestCategories(): Promise<{ suggestions: AiCategorySugg
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
   })
-  const data = (await res.json().catch(() => ({}))) as { suggestions?: { transaction_id: string; category_id: string }[]; error?: string }
+  const data = (await res.json().catch(() => ({}))) as {
+    suggestions?: { transaction_id: string; category_id: string; confidence?: 'alta' | 'baja' }[]
+    error?: string
+  }
 
   if (!res.ok) {
     return { suggestions: [], error: 'No hemos podido sugerir categorías. Inténtalo de nuevo en unos minutos.' }
   }
   return {
-    suggestions: (data.suggestions ?? []).map((s) => ({ transactionId: s.transaction_id, categoryId: s.category_id })),
+    suggestions: (data.suggestions ?? []).map((s) => ({
+      transactionId: s.transaction_id,
+      categoryId: s.category_id,
+      confidence: s.confidence === 'baja' ? 'baja' : 'alta',
+    })),
     error: null,
   }
 }
