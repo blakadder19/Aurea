@@ -5,6 +5,7 @@ import { DetailBreakdowns } from './DetailBreakdowns'
 import { ManualEntryPanel, type ManualEntryPanelMode } from './ManualEntryPanel'
 import { NetWorthKpis, type ForeignBalance } from './NetWorthKpis'
 import { NetWorthTrendChart } from './NetWorthTrendChart'
+import { RealDetailBreakdowns } from './RealDetailBreakdowns'
 import { periodStartIso, type NetWorthPeriod } from './netWorthHistory'
 import { useNetWorthHistory } from './useNetWorthHistory'
 import { addManualTransaction, createManualAccount, deleteManualAccount } from './useManualEntries'
@@ -246,6 +247,7 @@ export function AccountsPage() {
             {hasRealAccounts && <NetWorthTrendChart points={netWorthHistory} loading={loadingHistory} />}
             <AccountsTable accounts={hasRealAccounts ? realAccounts! : undefined} />
             {isDetalle && !isAuthenticated && <DetailBreakdowns />}
+            {isDetalle && hasRealAccounts && <RealDetailBreakdowns accounts={realAccounts!} />}
           </>
         )}
       </main>
