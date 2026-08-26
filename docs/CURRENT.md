@@ -346,7 +346,24 @@ Auditoría de seguimiento sobre lo que quedó tras la fase de arriba, misma disc
 - **"Crear regla para «X»" ya no promete un motor de reglas continuo**: el texto del
   botón y del mensaje de éxito ahora describen lo que el código siempre hizo
   (aplicación puntual, no afecta a movimientos futuros) — sin cambio de
-  comportamiento, solo de honestidad en la copy.
+  comportamiento, solo de honestidad en la copy. *(Superado por el punto
+  siguiente: ahora sí es continuo.)*
+
+## Motor de reglas continuo (segunda pasada de mejoras)
+
+- **Las reglas ya se aplican solas a los movimientos que lleguen después**:
+  `applyRulesToNewTransactions` en `supabase/functions/_shared/persistence.ts`
+  se ejecuta dentro de `persistCollected`, justo después de insertar los
+  movimientos nuevos de cada sincronización (nunca sobre los ya existentes,
+  para no pisar la clasificación que el usuario ya haya puesto a mano).
+  Compara la descripción de cada movimiento nuevo contra las reglas de
+  `match_field = 'description'` del usuario (las únicas que crea
+  `createRuleFromTransaction`) con el mismo criterio `ilike` de siempre;
+  primera regla que encaje gana, sin prioridad explícita entre reglas. Si
+  falla, no tumba el sync (try/catch propio) — siempre queda "Clasificar
+  todos los pendientes con IA" como red de seguridad. El mensaje de "Aplicar
+  esta categoría a movimientos parecidos" y el comentario de
+  `createRuleFromTransaction` ya no dicen "no se aplicará a futuros".
 
 ## Verificación
 

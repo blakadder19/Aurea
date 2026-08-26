@@ -13,6 +13,46 @@ function toDate(iso: string | undefined): string | null {
   return iso ? iso.slice(0, 10) : null
 }
 
+/**
+ * Motor de reglas continuo: "Aplicar esta categoría a movimientos parecidos"
+ * ya clasificaba retroactivamente al crear la regla, pero un sync posterior
+ * volvía a dejar sin categoría cualquier movimiento nuevo del mismo comercio
+ * — la regla se quedaba en `rules` sin volver a usarse nunca. Aquí se
+ * reutiliza contra cada tanda de movimientos recién insertados (nunca contra
+ * los ya existentes). Solo hay reglas de `match_field: 'description'` en la
+ * práctica (es lo único que crea `createRuleFromTransaction`), por eso no
+ * hace falta mirar `merchant`/`account`. Primera regla que encaje gana — sin
+ * prioridad explícita entre reglas, igual de simple que la coincidencia
+ * `ilike` que ya usa la creación de reglas.
+ */
+async function applyRulesToNewTransactions(
+  client: SupabaseClient,
+  newTransactions: { id: string; description: string | null }[],
+): Promise<void> {
+  const { data: rules, error } = await client
+    .from('rules')
+    .select('id, match_value, category_id')
+    .eq('match_field', 'description')
+  if (error || !rules || rules.length === 0) return
+
+  const idsByCategory = new Map<string, string[]>()
+  for (const tx of newTransactions) {
+    if (!tx.description) continue
+    const description = tx.description.toLowerCase()
+    const rule = rules.find((r) => description.includes((r.match_value as string).toLowerCase()))
+    if (!rule) continue
+    const categoryId = rule.category_id as string
+    idsByCategory.set(categoryId, [...(idsByCategory.get(categoryId) ?? []), tx.id])
+  }
+  if (idsByCategory.size === 0) return
+
+  await Promise.all(
+    [...idsByCategory.entries()].map(([categoryId, ids]) =>
+      client.from('transactions').update({ category_id: categoryId }).in('id', ids),
+    ),
+  )
+}
+
 interface PersistParams {
   client: SupabaseClient
   userId: string
@@ -59,6 +99,7 @@ export async function persistCollected(params: PersistParams): Promise<PersistRe
   const connectionId = connection.id as string
 
   let transactionsNew = 0
+  const newlyInserted: { id: string; description: string | null }[] = []
 
   for (const account of accounts) {
     const principal = pickPrincipalBalance(account.balances)
@@ -119,9 +160,22 @@ export async function persistCollected(params: PersistParams): Promise<PersistRe
       const { data: inserted, error: transactionsError } = await client
         .from('transactions')
         .upsert(transactionRows, { onConflict: 'user_id,account_id,dedup_key', ignoreDuplicates: true })
-        .select('id')
+        .select('id, description')
       if (transactionsError) throw new PersistenceError('db_error')
       transactionsNew += inserted?.length ?? 0
+      if (inserted) newlyInserted.push(...(inserted as { id: string; description: string | null }[]))
+    }
+  }
+
+  // Solo movimientos nuevos de este sync, nunca los ya existentes: un re-sync
+  // no debe pisar la clasificación que el usuario ya haya puesto a mano. Si
+  // esto falla, no debe tumbar un sync que por lo demás fue bien — siempre se
+  // puede clasificar después a mano o con "Clasificar todos los pendientes".
+  if (newlyInserted.length > 0) {
+    try {
+      await applyRulesToNewTransactions(client, newlyInserted)
+    } catch (err) {
+      console.error('persistCollected: fallo al aplicar reglas a movimientos nuevos', err)
     }
   }
 

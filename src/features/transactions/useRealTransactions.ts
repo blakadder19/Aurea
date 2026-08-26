@@ -245,8 +245,9 @@ export async function updateTransactionDisplayName(id: string, displayName: stri
 /**
  * Crea una regla ("todo lo que contenga este texto en la descripción va a
  * esta categoría") y la aplica retroactivamente a los movimientos que ya
- * coinciden — igual que `applyRuleToExisting` en Aurea Finanzas: aplicación
- * puntual al crearla, no un motor de reglas continuo.
+ * coinciden. También sigue viva después: `persistCollected` (sincronización
+ * bancaria) la vuelve a aplicar a cada movimiento nuevo que llegue, así que
+ * no hace falta recrearla cada vez que aparece un cargo del mismo comercio.
  */
 export async function createRuleFromTransaction(
   matchValue: string,

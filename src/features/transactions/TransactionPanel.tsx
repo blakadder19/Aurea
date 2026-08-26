@@ -354,7 +354,7 @@ function RealFields({ transaction, categories, onSaveCategory, onSaveNotesAndTag
     if (err) setError(err)
     else
       setRuleMessage(
-        `Hecho. ${appliedCount} movimiento${appliedCount === 1 ? '' : 's'} parecido${appliedCount === 1 ? '' : 's'} a «${transaction.comercio}» clasificado${appliedCount === 1 ? '' : 's'} igual. No se aplicará a movimientos futuros.`,
+        `Hecho. ${appliedCount} movimiento${appliedCount === 1 ? '' : 's'} parecido${appliedCount === 1 ? '' : 's'} a «${transaction.comercio}» clasificado${appliedCount === 1 ? '' : 's'} igual. Los que lleguen de aquí en adelante se clasificarán solos en la próxima sincronización.`,
       )
   }
 
