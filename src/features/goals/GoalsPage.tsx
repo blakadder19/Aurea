@@ -5,7 +5,17 @@ import { GoalCard } from './GoalCard'
 import { RealEmergencyFundCard } from './RealEmergencyFundCard'
 import { RealGoalPanel, type RealGoalPanelMode } from './RealGoalPanel'
 import { useGoalsStore } from './store'
-import { archiveGoal, contributeToGoal, createGoal, toGoalCardProps, unarchiveGoal, updateGoal, useRealGoals, type RealGoal } from './useRealGoals'
+import {
+  archiveGoal,
+  contributeToGoal,
+  createGoal,
+  revertGoalContribution,
+  toGoalCardProps,
+  unarchiveGoal,
+  updateGoal,
+  useRealGoals,
+  type RealGoal,
+} from './useRealGoals'
 import { useRealEmergencyFund } from './useRealEmergencyFund'
 import { EmptyState } from '../../components/states/EmptyState'
 import { LoadingRealData } from '../../components/states/LoadingRealData'
@@ -69,6 +79,7 @@ export function GoalsPage() {
   const [panelMode, setPanelMode] = useState<RealGoalPanelMode>(null)
   const [editingGoal, setEditingGoal] = useState<RealGoal | null>(null)
   const [pendingArchive, setPendingArchive] = useState<{ id: string; message: string } | null>(null)
+  const [pendingContribution, setPendingContribution] = useState<{ goalId: string; previousSavedCents: number; message: string } | null>(null)
 
   const { loading: loadingReal, goals: realGoals, refetch } = useRealGoals()
   const { accounts: realAccounts } = useRealAccounts()
@@ -83,7 +94,23 @@ export function GoalsPage() {
   }
 
   async function handleContribute(goalId: string, currentSavedCents: number, amountCents: number) {
-    return contributeToGoal(goalId, currentSavedCents, amountCents)
+    const error = await contributeToGoal(goalId, currentSavedCents, amountCents)
+    if (error) return error
+    const goal = realGoals?.find((g) => g.id === goalId)
+    const amountLabel = (amountCents / 100).toLocaleString('es-ES', { minimumFractionDigits: 2 })
+    setPendingContribution({
+      goalId,
+      previousSavedCents: currentSavedCents,
+      message: `Aportación de ${amountLabel} € a ${goal?.name ?? 'objetivo'} registrada.`,
+    })
+    return null
+  }
+
+  async function handleUndoContribution() {
+    if (!pendingContribution) return
+    await revertGoalContribution(pendingContribution.goalId, pendingContribution.previousSavedCents)
+    setPendingContribution(null)
+    refetch()
   }
 
   async function handleUpdate(id: string, name: string, targetCents: number, monthlyContributionCents: number) {
@@ -148,6 +175,9 @@ export function GoalsPage() {
         )}
         {!isAuthenticated && undoMessage && <UndoBar message={undoMessage} onUndo={undoLastContribution} />}
         {isAuthenticated && pendingArchive && <UndoBar message={pendingArchive.message} onUndo={handleUndoArchive} />}
+        {isAuthenticated && !pendingArchive && pendingContribution && (
+          <UndoBar message={pendingContribution.message} onUndo={handleUndoContribution} />
+        )}
       </main>
       {isAuthenticated ? (
         <RealGoalPanel

@@ -148,6 +148,13 @@ export async function contributeToGoal(goalId: string, currentSavedCents: number
   return null
 }
 
+/** Deshace una aportación: vuelve a dejar saved_cents en el valor que tenía justo antes. */
+export async function revertGoalContribution(goalId: string, previousSavedCents: number): Promise<void> {
+  if (!supabase) return
+  const { error } = await supabase.from('goals').update({ saved_cents: previousSavedCents }).eq('id', goalId)
+  if (error) console.error('revertGoalContribution: fallo al deshacer', error)
+}
+
 const euros = (cents: number) => Math.round(cents / 100)
 
 /** Convierte un objetivo real a la misma forma (euros) que ya consume GoalCard. */
