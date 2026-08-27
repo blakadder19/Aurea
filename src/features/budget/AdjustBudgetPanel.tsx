@@ -69,16 +69,32 @@ interface RealFormProps {
   onSave: (categoryId: string, amountCents: number) => Promise<string | null>
   onSaved: () => void
   onFetchPrevious: () => Promise<Record<string, number>>
+  /** Propuesta a partir de lo que ya gastas — para no empezar en blanco. */
+  onFetchProposal: () => Promise<Record<string, number>>
 }
 
 /** Versión real: cada importe se guarda de verdad en Supabase (céntimos), bajo RLS. */
-function RealAdjustForm({ categories, onSave, onSaved, onFetchPrevious }: RealFormProps) {
+function RealAdjustForm({ categories, onSave, onSaved, onFetchPrevious, onFetchProposal }: RealFormProps) {
   const initial = Object.fromEntries(categories.map((c) => [c.categoryId, Math.round(c.budgetedCents / 100)]))
   const [draft, setDraft] = useState<Record<string, number>>(initial)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copying, setCopying] = useState(false)
   const [copyMessage, setCopyMessage] = useState<string | null>(null)
+  const [proposing, setProposing] = useState(false)
+
+  async function handleProposeFromHistory() {
+    setProposing(true)
+    setCopyMessage(null)
+    const proposal = await onFetchProposal()
+    setProposing(false)
+    if (Object.keys(proposal).length === 0) {
+      setCopyMessage('Todavía no hay suficiente histórico para proponerte nada.')
+      return
+    }
+    setDraft((d) => ({ ...d, ...proposal }))
+    setCopyMessage('Propuesta cargada abajo, a partir de lo que sueles gastar. Revísala y guarda.')
+  }
 
   async function handleCopyPrevious() {
     setCopying(true)
@@ -116,14 +132,24 @@ function RealAdjustForm({ categories, onSave, onSaved, onFetchPrevious }: RealFo
         Cambia el importe presupuestado de cada categoría para este mes.
       </Dialog.Description>
 
-      <button
-        type="button"
-        disabled={copying}
-        onClick={() => void handleCopyPrevious()}
-        className="min-h-11 self-start rounded-md border border-line px-3.5 text-[15px] font-semibold text-ink hover:bg-canvas disabled:opacity-60"
-      >
-        {copying ? 'Copiando…' : 'Copiar del mes anterior'}
-      </button>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          disabled={proposing || copying}
+          onClick={() => void handleProposeFromHistory()}
+          className="min-h-11 rounded-md border border-brand bg-brand px-3.5 text-[15px] font-semibold text-surface hover:bg-brand-hover disabled:opacity-60"
+        >
+          {proposing ? 'Calculando…' : 'Proponer según lo que gasto'}
+        </button>
+        <button
+          type="button"
+          disabled={copying || proposing}
+          onClick={() => void handleCopyPrevious()}
+          className="min-h-11 rounded-md border border-line px-3.5 text-[15px] font-semibold text-ink hover:bg-canvas disabled:opacity-60"
+        >
+          {copying ? 'Copiando…' : 'Copiar del mes anterior'}
+        </button>
+      </div>
       {copyMessage && <p className="text-sm text-ink-muted">{copyMessage}</p>}
 
       <div className="flex flex-col gap-4">
@@ -188,6 +214,7 @@ export function AdjustBudgetPanel({ real }: { real?: RealFormProps }) {
             categories={real.categories}
             onSave={real.onSave}
             onFetchPrevious={real.onFetchPrevious}
+            onFetchProposal={real.onFetchProposal}
             onSaved={() => {
               real.onSaved()
               closePanel()

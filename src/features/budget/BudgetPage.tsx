@@ -6,7 +6,7 @@ import { MonthVerdictCard } from './MonthVerdictCard'
 import { NonSpendCards } from './NonSpendCards'
 import { RealNonSpendCards } from './RealNonSpendCards'
 import { useBudgetStore, type BudgetView } from './store'
-import { fetchPreviousCycleBudget, saveCategoryBudget, toBudgetViewModel, useRealBudget } from './useRealBudget'
+import { fetchPreviousCycleBudget, fetchProposedBudget, saveCategoryBudget, toBudgetViewModel, useRealBudget } from './useRealBudget'
 import { useRealNonSpend } from './useRealNonSpend'
 import { useRealCategories } from '../transactions/useRealCategories'
 import { LoadingRealData } from '../../components/states/LoadingRealData'
@@ -141,6 +141,10 @@ export function BudgetPage() {
     return fetchPreviousCycleBudget(realSettings?.budgetMonthStart ?? 1, monthOffset)
   }
 
+  async function handleFetchProposedBudget() {
+    return fetchProposedBudget(realSettings?.budgetMonthStart ?? 1, monthOffset)
+  }
+
   // Nunca mostrar la demo de relleno mientras el presupuesto real todavía
   // está cargando: se vería un mes/cifras que no son las tuyas.
   if (isAuthenticated && loadingReal) {
@@ -179,6 +183,7 @@ export function BudgetPage() {
                 categories: realBudget!.categories.map((c) => ({ categoryId: c.categoryId, name: c.name, budgetedCents: c.budgetedCents })),
                 onSave: handleSaveCategoryBudget,
                 onFetchPrevious: handleFetchPreviousBudget,
+                onFetchProposal: handleFetchProposedBudget,
                 onSaved: refetch,
               }
             : undefined

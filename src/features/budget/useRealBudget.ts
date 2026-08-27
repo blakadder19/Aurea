@@ -4,6 +4,7 @@ import type { BudgetStatus } from '../../lib/budgetCalc'
 import { computeCategoryPace, cycleEnd, cycleStart, daysElapsedInCycle, daysInCycle, forecastCents, isoDate } from '../../lib/budgetCalc'
 import { formatDayMonth, formatMonthYearLong } from '../../lib/format'
 import { countsTowardCategorySpend, expenseContribution } from '../../lib/reimbursements'
+import { proposeBudgetFromHistory } from './proposeBudget'
 import { supabase } from '../../lib/supabase/client'
 import { useAuthStore } from '../../lib/supabase/useAuth'
 import { categoryLabel, type RealCategory } from '../transactions/useRealCategories'
@@ -279,4 +280,64 @@ export function toBudgetViewModel(real: RealBudgetSummary): { verdict: RealVerdi
       detail: categoryDetail(c),
     })),
   }
+}
+
+/** Cuántos ciclos cerrados se miran para proponer un presupuesto. Tres da mediana sin pedir un histórico largo. */
+const PROPOSAL_CYCLES = 3
+
+/**
+ * Lo que de verdad has gastado por categoría en los últimos ciclos
+ * cerrados, para proponer un presupuesto de partida (ver
+ * `proposeBudgetFromHistory`). Devuelve euros por categoría, ya redondeados,
+ * con la misma forma que `fetchPreviousCycleBudget` — así el panel trata
+ * las dos fuentes igual.
+ *
+ * Usa la misma vista y la misma regla de gasto que el resto de la app: los
+ * traspasos entre cuentas propias no cuentan y un reembolso resta.
+ */
+export async function fetchProposedBudget(budgetMonthStart: number, monthOffset: number): Promise<Record<string, number>> {
+  if (!supabase) return {}
+
+  // Ciclos ya cerrados: el actual va a medias y propondría de menos.
+  const cycles = Array.from({ length: PROPOSAL_CYCLES }, (_, i) => shiftedCycleStart(new Date(), budgetMonthStart, monthOffset + i + 1))
+  const oldest = cycles[cycles.length - 1]
+  const newestEnd = cycleEnd(cycles[0])
+  const from = isoDate(oldest)
+  const to = isoDate(newestEnd)
+
+  const { data, error } = await supabase
+    .from('transaction_category_amounts')
+    .select('category_id, amount_cents, booking_date, value_date, is_reimbursement, is_balance_adjustment')
+    .not('category_id', 'is', null)
+    .eq('is_internal_transfer', false)
+    .or(`and(booking_date.gte.${from},booking_date.lt.${to}),and(booking_date.is.null,value_date.gte.${from},value_date.lt.${to})`)
+  if (error || !data) {
+    console.error('fetchProposedBudget: fallo al leer el histórico', error)
+    return {}
+  }
+
+  // Un cubo por ciclo y categoría: la propuesta es la mediana entre ciclos,
+  // así que hace falta el reparto por mes, no el total.
+  const cycleStarts = [...cycles].reverse().map(isoDate)
+  const byCategory = new Map<string, number[]>()
+  for (const row of data) {
+    const tx = {
+      amountCents: row.amount_cents as number,
+      isReimbursement: Boolean(row.is_reimbursement),
+      isBalanceAdjustment: Boolean(row.is_balance_adjustment),
+    }
+    if (!countsTowardCategorySpend(tx)) continue
+    const iso = (row.booking_date as string | null) ?? (row.value_date as string | null)
+    if (!iso) continue
+    // El ciclo al que pertenece: el último inicio de ciclo que no lo supera.
+    const index = cycleStarts.findLastIndex((start) => iso >= start)
+    if (index === -1) continue
+    const categoryId = row.category_id as string
+    const buckets = byCategory.get(categoryId) ?? Array.from({ length: PROPOSAL_CYCLES }, () => 0)
+    buckets[index] += expenseContribution(tx)
+    byCategory.set(categoryId, buckets)
+  }
+
+  const proposal = proposeBudgetFromHistory([...byCategory.entries()].map(([categoryId, spentCentsByMonth]) => ({ categoryId, spentCentsByMonth })))
+  return Object.fromEntries(Object.entries(proposal).map(([categoryId, cents]) => [categoryId, Math.round(cents / 100)]))
 }
