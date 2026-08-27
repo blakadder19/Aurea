@@ -34,8 +34,13 @@ export function CategoryList({ categories = budgetCategories }: { categories?: B
               <div className="flex items-baseline justify-between gap-2 border-b border-line pb-1.5">
                 <h3 className="text-[13px] font-semibold tracking-[0.06em] text-ink-muted uppercase">{label}</h3>
                 <span className="text-sm whitespace-nowrap text-ink-muted">
-                  <Money value={groupCategories.reduce((sum, c) => sum + c.spent, 0)} decimals={0} tone="muted" /> de{' '}
-                  <Money value={groupCategories.reduce((sum, c) => sum + c.budgeted, 0)} decimals={0} tone="muted" />
+                  <Money value={groupCategories.reduce((sum, c) => sum + c.spent, 0)} decimals={0} tone="muted" />
+                  {groupCategories.some((c) => c.budgeted > 0) && (
+                    <>
+                      {' de '}
+                      <Money value={groupCategories.reduce((sum, c) => sum + c.budgeted, 0)} decimals={0} tone="muted" />
+                    </>
+                  )}
                 </span>
               </div>
               <div className="flex flex-col gap-3.5">

@@ -144,7 +144,9 @@ export function useRealBudget(categories: RealCategory[] | null, budgetMonthStar
         spentByCategory.set(categoryId, (spentByCategory.get(categoryId) ?? 0) + expenseContribution(tx))
       }
 
-      const realCategories: RealBudgetCategory[] = (categories ?? []).map((c) => {
+      // Las categorías de ingresos no pintan nada en un presupuesto de
+      // GASTO: salían siempre como "0 € de 0 €", una fila de ruido fija.
+      const realCategories: RealBudgetCategory[] = (categories ?? []).filter((c) => c.categoryGroup !== 'ingresos').map((c) => {
         const budgetedCents = budgetedByCategory.get(c.id) ?? 0
         const spentCents = spentByCategory.get(c.id) ?? 0
         const pace = computeCategoryPace(budgetedCents, spentCents, daysElapsed, totalDays)

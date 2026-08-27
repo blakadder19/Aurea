@@ -22,12 +22,25 @@ export function CategoryRow({ category }: { category: BudgetCategory }) {
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
         <div className="text-[17px] font-semibold text-ink">{category.name}</div>
         <div className="flex items-center gap-3 tabular">
+          {/*
+            Sin presupuesto, "846 € de 0 €" es ruido: el "de 0 €" no aporta
+            nada y se repite en cada categoría. Se enseña solo lo gastado.
+          */}
           <span className="text-base text-ink-muted whitespace-nowrap">
-            <Money value={category.spent} decimals={0} tone="muted" /> de <Money value={budgeted} decimals={0} tone="muted" />
+            <Money value={category.spent} decimals={0} tone="muted" />
+            {budgeted > 0 && (
+              <>
+                {' de '}
+                <Money value={budgeted} decimals={0} tone="muted" />
+              </>
+            )}
           </span>
-          <span className={`rounded-full px-2.5 py-1 text-sm font-semibold whitespace-nowrap ${style.chip}`}>
-            {category.status}
-          </span>
+          {/* El chip "Sin presupuesto" repetido en cada fila no informa: que no haya cifra ya lo dice. */}
+          {category.status !== 'Sin presupuesto' && (
+            <span className={`rounded-full px-2.5 py-1 text-sm font-semibold whitespace-nowrap ${style.chip}`}>
+              {category.status}
+            </span>
+          )}
         </div>
       </div>
 

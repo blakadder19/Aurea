@@ -42,11 +42,13 @@ export function MonthVerdictCard({ real }: { real?: RealVerdict }) {
   const spentPct = real ? (real.paceRealPct ?? 0) : (budgetSummary.spent / totalBudgeted) * 100
   const expectedPct = real ? real.paceExpectedPct : budgetSummary.paceExpected
 
+  // Sin presupuesto, "Restante" sería restante de 0 — un número que solo
+  // repite lo gastado en negativo. Se cae del resumen hasta que haya uno.
   const kpis: Kpi[] = real
     ? [
         { label: 'Presupuestado', value: real.presupuestado },
         { label: 'Gastado', value: real.gastado },
-        { label: 'Restante', value: real.restante },
+        ...(real.presupuestado > 0 ? [{ label: 'Restante', value: real.restante }] : []),
         { label: 'Previsión de cierre', value: real.previsionCierre, warn: true },
       ]
     : [
