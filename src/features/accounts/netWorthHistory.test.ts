@@ -92,4 +92,20 @@ describe('reconstructNetWorthSeries', () => {
     const series = reconstructNetWorthSeries(1000, [], new Map(), '2026-08-01', '2026-08-03')
     expect(series[0].dateISO).toBe('2026-08-01')
   })
+
+  it('una foto real de ese día gana a la reconstrucción', () => {
+    const snapshots = new Map([['2026-08-02', 777]])
+    const series = reconstructNetWorthSeries(
+      1000,
+      [{ accountId: 'a1', dateISO: '2026-08-03', amountCents: 50000 }],
+      new Map([['a1', 100]]),
+      '2026-08-01',
+      '2026-08-03',
+      null,
+      snapshots,
+    )
+    expect(series.find((p) => p.dateISO === '2026-08-02')?.netWorth).toBe(777)
+    // Los días sin foto siguen reconstruyéndose como siempre.
+    expect(series.find((p) => p.dateISO === '2026-08-01')?.netWorth).toBe(500)
+  })
 })

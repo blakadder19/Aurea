@@ -3,6 +3,7 @@ import type { Account, AccountFunction } from '../../data/accounts'
 import { formatIsoDayMonth } from '../../lib/format'
 import { supabase } from '../../lib/supabase/client'
 import { useAuthStore } from '../../lib/supabase/useAuth'
+import { recordBalanceSnapshot } from './balanceSnapshots'
 
 /** account_function (esquema real) → AccountFunction (forma que ya consume la UI). */
 const FUNCTION_MAP: Record<string, AccountFunction> = {
@@ -202,6 +203,13 @@ export function useRealAccounts(): RealAccountsResult {
 
       setAccounts(mapped)
       setLoading(false)
+
+      // Foto del día para que el histórico de patrimonio crezca de verdad,
+      // en vez de depender siempre de reconstruirlo desde los movimientos.
+      // Sin await: que tarde o falle no debe retrasar la pantalla.
+      const today = new Date()
+      const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+      void recordBalanceSnapshot(mapped, todayIso)
     }
 
     load()

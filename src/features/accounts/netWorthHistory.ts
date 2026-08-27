@@ -55,6 +55,10 @@ function enumerateDatesIso(fromIso: string, toIso: string): string[] {
  * sin acotar a `fromDateIso`) es posterior a `fromDateIso`, la serie se
  * recorta para no dibujar una línea plana fabricada en el tramo sin datos
  * — mejor no mostrar esos días que fingir que el patrimonio no cambió.
+ *
+ * Donde haya una foto real del patrimonio de ese día (`snapshotsByDate`,
+ * de la tabla balance_snapshots) se usa esa en vez de la reconstrucción:
+ * un dato medido siempre gana a uno deducido.
  */
 export function reconstructNetWorthSeries(
   currentNetWorth: number,
@@ -63,10 +67,16 @@ export function reconstructNetWorthSeries(
   fromDateIso: string,
   toDateIso: string,
   earliestKnownDateIso?: string | null,
+  /** Patrimonio real guardado ese día (suma de las fotos de saldo), si lo hay. */
+  snapshotsByDate?: Map<string, number>,
 ): NetWorthPoint[] {
   const effectiveFromIso = earliestKnownDateIso && earliestKnownDateIso > fromDateIso ? earliestKnownDateIso : fromDateIso
   const dates = enumerateDatesIso(effectiveFromIso, toDateIso)
   return dates.map((dateISO) => {
+    // Una foto real de ese día gana siempre a la reconstrucción: la
+    // reconstrucción solo sabe de movimientos, la foto sabe del saldo.
+    const snapshot = snapshotsByDate?.get(dateISO)
+    if (snapshot !== undefined) return { dateISO, netWorth: snapshot }
     const deltaCents = transactions
       .filter((tx) => tx.dateISO > dateISO)
       .reduce((sum, tx) => sum + tx.amountCents * ((shareByAccount.get(tx.accountId) ?? 100) / 100), 0)

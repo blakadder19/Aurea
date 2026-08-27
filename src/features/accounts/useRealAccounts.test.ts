@@ -9,7 +9,7 @@ import type { Session } from '@supabase/supabase-js'
  */
 function chainable(data: unknown[]) {
   const builder: Record<string, unknown> = {}
-  for (const method of ['select', 'neq', 'order', 'in', 'limit']) {
+  for (const method of ['select', 'neq', 'eq', 'order', 'in', 'limit', 'insert']) {
     builder[method] = () => builder
   }
   // oxlint-disable-next-line unicorn/no-thenable -- imita a propósito el query builder real de supabase-js.
@@ -40,6 +40,7 @@ vi.mock('../../lib/supabase/client', () => ({
     from: (table: string) => mockFrom(table),
     auth: {
       getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+      getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } } }),
       onAuthStateChange: vi.fn(),
     },
   },

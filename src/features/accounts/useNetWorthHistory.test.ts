@@ -7,7 +7,7 @@ import type { Account } from '../../data/accounts'
 function chainable(data: Record<string, unknown>[]) {
   let result = data
   const builder: Record<string, unknown> = {}
-  for (const method of ['select', 'in', 'or']) {
+  for (const method of ['select', 'in', 'or', 'gte']) {
     builder[method] = () => builder
   }
   builder.order = (column: string, opts?: { ascending?: boolean }) => {
