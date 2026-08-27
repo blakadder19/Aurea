@@ -12,6 +12,11 @@ export interface CategorySpend {
   spentCents: number
   /** % del gasto total del mes, 0-100. */
   pctOfTotal: number
+  /**
+   * Desglose por subcategoría, de mayor a menor. `spentCents` de la madre
+   * ya incluye lo de sus hijas: sumar ambas contaría doble.
+   */
+  children: { categoryId: string; name: string; spentCents: number }[]
 }
 
 export interface MerchantSpend {
@@ -48,6 +53,7 @@ interface CategoryAgg {
   name: string
   categoryId: string | null
   spentCents: number
+  children?: { categoryId: string; name: string; spentCents: number }[]
 }
 
 interface MerchantAgg {
@@ -77,6 +83,7 @@ export function buildMonthlyReport(
       categoryId: c.categoryId,
       spentCents: c.spentCents,
       pctOfTotal: expenseCents > 0 ? (c.spentCents / expenseCents) * 100 : 0,
+      children: [...(c.children ?? [])].filter((child) => child.spentCents > 0).sort((a, b) => b.spentCents - a.spentCents),
     }))
 
   const expenseDeltaCents = previousExpenseCents !== null ? expenseCents - previousExpenseCents : null

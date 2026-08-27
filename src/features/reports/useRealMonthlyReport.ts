@@ -53,7 +53,7 @@ export function useRealMonthlyReport(monthsAgo: number): RealMonthlyReportResult
 
       const [{ data: categories }, { data: txRows }, { data: prevTxRows }, { data: prevYearTxRows }, { data: merchantTxRows }, declaredIncomeCents] =
         await Promise.all([
-          supabase.from('categories').select('id, name'),
+          supabase.from('categories').select('id, name, parent_id'),
           supabase
             .from('transaction_category_amounts')
             .select('category_id, amount_cents, is_reimbursement, is_balance_adjustment')
@@ -77,7 +77,14 @@ export function useRealMonthlyReport(monthsAgo: number): RealMonthlyReportResult
       if (cancelled) return
 
       const nameByCategory = new Map((categories ?? []).map((c) => [c.id as string, c.name as string]))
-      const spendByCategory = new Map<string, { name: string; categoryId: string | null; spentCents: number }>()
+      const parentByCategory = new Map((categories ?? []).map((c) => [c.id as string, (c.parent_id as string | null) ?? null]))
+      // El gasto de una subcategoría suma en su madre: si no, crear
+      // subcategorías rompería el informe en filas pequeñas en vez de
+      // explicarlo mejor. El desglose por hija se guarda aparte.
+      const spendByCategory = new Map<
+        string,
+        { name: string; categoryId: string | null; spentCents: number; children: Map<string, { name: string; spentCents: number }> }
+      >()
       let incomeCents = declaredIncomeCents
       let expenseCents = 0
       for (const row of txRows ?? []) {
@@ -91,10 +98,19 @@ export function useRealMonthlyReport(monthsAgo: number): RealMonthlyReportResult
         if (!countsTowardCategorySpend(tx)) continue
 
         const categoryId = row.category_id as string | null
-        const name = categoryId ? (nameByCategory.get(categoryId) ?? 'Sin clasificar') : 'Sin clasificar'
-        const key = categoryId ?? '__sin_clasificar__'
-        const existing = spendByCategory.get(key)
-        spendByCategory.set(key, { name, categoryId, spentCents: (existing?.spentCents ?? 0) + expenseContribution(tx) })
+        const parentId = categoryId ? parentByCategory.get(categoryId) : null
+        const rootId = parentId ?? categoryId
+        const rootName = rootId ? (nameByCategory.get(rootId) ?? 'Sin clasificar') : 'Sin clasificar'
+        const key = rootId ?? '__sin_clasificar__'
+        const existing = spendByCategory.get(key) ?? { name: rootName, categoryId: rootId, spentCents: 0, children: new Map() }
+        existing.spentCents += expenseContribution(tx)
+        if (parentId && categoryId) {
+          const childName = nameByCategory.get(categoryId) ?? 'Sin clasificar'
+          const child = existing.children.get(categoryId) ?? { name: childName, spentCents: 0 }
+          child.spentCents += expenseContribution(tx)
+          existing.children.set(categoryId, child)
+        }
+        spendByCategory.set(key, existing)
       }
 
       const sumExpense = (rows: { amount_cents: unknown; is_reimbursement?: unknown; is_balance_adjustment?: unknown }[]) =>
@@ -128,7 +144,12 @@ export function useRealMonthlyReport(monthsAgo: number): RealMonthlyReportResult
               formatMonthYearLong(start.getMonth(), start.getFullYear()),
               incomeCents,
               expenseCents,
-              [...spendByCategory.values()],
+              [...spendByCategory.values()].map((c) => ({
+                name: c.name,
+                categoryId: c.categoryId,
+                spentCents: c.spentCents,
+                children: [...c.children.entries()].map(([categoryId, child]) => ({ categoryId, ...child })),
+              })),
               previousExpenseCents,
               previousYearExpenseCents,
               [...spendByMerchant.entries()].map(([name, spentCents]) => ({ name, spentCents })),

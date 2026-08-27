@@ -111,8 +111,8 @@ describe('useRealMonthlyReport', () => {
     expect(report.incomeCents).toBe(200000)
     expect(report.expenseCents).toBe(6000)
     expect(report.categories).toEqual([
-      { name: 'Restaurantes', categoryId: 'cat-1', spentCents: 5000, pctOfTotal: expect.closeTo(83.33, 1) },
-      { name: 'Sin clasificar', categoryId: null, spentCents: 1000, pctOfTotal: expect.closeTo(16.67, 1) },
+      { name: 'Restaurantes', categoryId: 'cat-1', spentCents: 5000, pctOfTotal: expect.closeTo(83.33, 1), children: [] },
+      { name: 'Sin clasificar', categoryId: null, spentCents: 1000, pctOfTotal: expect.closeTo(16.67, 1), children: [] },
     ])
     expect(report.previousExpenseCents).toBe(8000)
     expect(report.expenseDeltaCents).toBe(-2000)
@@ -161,6 +161,37 @@ describe('useRealMonthlyReport', () => {
     expect(report.previousYearExpenseCents).toBeNull()
     expect(report.yearExpenseDeltaCents).toBeNull()
     expect(report.yearExpenseDeltaPct).toBeNull()
+  })
+
+  it('el gasto de una subcategoría suma en su madre, y queda como desglose aparte', async () => {
+    vi.resetModules()
+    const { supabaseMock } = makeSupabaseMock({
+      categories: [
+        { id: 'restaurantes', name: 'Restaurantes', parent_id: null },
+        { id: 'delivery', name: 'Delivery', parent_id: 'restaurantes' },
+      ],
+      currentMonthRows: [
+        { category_id: 'restaurantes', amount_cents: -3000 },
+        { category_id: 'delivery', amount_cents: -2000 },
+      ],
+      previousMonthRows: [],
+    })
+    vi.doMock('../../lib/supabase/client', () => ({ isSupabaseConfigured: true, supabase: supabaseMock }))
+    const { useAuthStore } = await import('../../lib/supabase/useAuth')
+    const { useRealMonthlyReport } = await import('./useRealMonthlyReport')
+
+    useAuthStore.setState({ session: activeSession })
+    const { result } = renderHook(() => useRealMonthlyReport(1))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    const report = result.current.report!
+    // Una sola fila, la madre, con el total de las dos.
+    expect(report.categories).toHaveLength(1)
+    expect(report.categories[0].name).toBe('Restaurantes')
+    expect(report.categories[0].spentCents).toBe(5000)
+    // Y la hija aparte, sin volver a sumar al total.
+    expect(report.categories[0].children).toEqual([{ categoryId: 'delivery', name: 'Delivery', spentCents: 2000 }])
+    expect(report.expenseCents).toBe(5000)
   })
 
   it('desglosa el gasto por comercio, ignora ingresos y usa el importe completo aunque esté dividido en categorías', async () => {

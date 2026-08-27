@@ -234,6 +234,16 @@ function ReportBody({
                   </div>
                 </div>
                 <ProgressBar percent={c.pctOfTotal} fillClassName={categoryColorClass(c.name)} heightPx={8} label={`${c.name}: ${c.pctOfTotal.toFixed(0)} % del gasto`} />
+                {c.children.length > 0 && (
+                  <div className="mt-0.5 flex flex-col gap-1 pl-5">
+                    {c.children.map((child) => (
+                      <div key={child.categoryId} className="flex items-center justify-between gap-3 text-sm text-ink-muted">
+                        <span className="truncate">└ {child.name}</span>
+                        <Money value={euros(child.spentCents)} decimals={0} className="shrink-0 tabular" />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
