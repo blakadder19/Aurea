@@ -5,8 +5,18 @@ import { Money } from '../../components/Money'
 import { formatIsoDayMonth } from '../../lib/format'
 import type { TransferCandidate } from '../../lib/internalTransfers'
 import { confirmInternalTransfer, dismissInternalTransfer } from './useInternalTransfers'
+import { updateTransactionReimbursement } from './useRealTransactions'
 
-function CandidateRow({ candidate, onResolved }: { candidate: TransferCandidate; onResolved: () => void }) {
+function CandidateRow({
+  candidate,
+  categoryIdOf,
+  onResolved,
+}: {
+  candidate: TransferCandidate
+  /** Categoría del cargo emparejado — la que hereda el reembolso para restar del sitio correcto. */
+  categoryIdOf: (transactionId: string) => string | undefined
+  onResolved: () => void
+}) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { outgoing, incoming, confidence } = candidate
@@ -49,10 +59,24 @@ function CandidateRow({ candidate, onResolved }: { candidate: TransferCandidate;
           <button
             type="button"
             disabled={busy}
+            title="Te devuelven parte de este gasto: restará del gasto en vez de contar como ingreso"
+            onClick={() =>
+              void run(async () => {
+                const err = await updateTransactionReimbursement(incoming.id, true, categoryIdOf(outgoing.id))
+                return err ?? (await dismissInternalTransfer(outgoing.id, incoming.id))
+              })
+            }
+            className="min-h-9 rounded-md border border-brand bg-surface px-3 text-[15px] font-semibold text-brand hover:bg-brand-soft disabled:opacity-60"
+          >
+            Es un reembolso
+          </button>
+          <button
+            type="button"
+            disabled={busy}
             onClick={() => void run(() => dismissInternalTransfer(outgoing.id, incoming.id))}
             className="min-h-9 rounded-md border border-line bg-surface px-3 text-[15px] font-semibold text-ink hover:bg-canvas disabled:opacity-60"
           >
-            No
+            Ninguna
           </button>
         </div>
       </div>
@@ -66,7 +90,15 @@ function CandidateRow({ candidate, onResolved }: { candidate: TransferCandidate;
  * marcan solas: un reembolso de un tercero encaja igual de bien en importe
  * y fecha, y darlo por hecho borraría un gasto real.
  */
-export function InternalTransfersCard({ candidates, onResolved }: { candidates: TransferCandidate[]; onResolved: () => void }) {
+export function InternalTransfersCard({
+  candidates,
+  categoryIdOf,
+  onResolved,
+}: {
+  candidates: TransferCandidate[]
+  categoryIdOf: (transactionId: string) => string | undefined
+  onResolved: () => void
+}) {
   const [confirmingAll, setConfirmingAll] = useState(false)
   const [bulkError, setBulkError] = useState<string | null>(null)
   const sure = candidates.filter((c) => c.confidence === 'alta')
@@ -107,7 +139,7 @@ export function InternalTransfersCard({ candidates, onResolved }: { candidates: 
       {bulkError && <p className="text-sm text-danger-text">{bulkError}</p>}
       <div className="flex flex-col">
         {candidates.map((c) => (
-          <CandidateRow key={`${c.outgoing.id}::${c.incoming.id}`} candidate={c} onResolved={onResolved} />
+          <CandidateRow key={`${c.outgoing.id}::${c.incoming.id}`} candidate={c} categoryIdOf={categoryIdOf} onResolved={onResolved} />
         ))}
       </div>
     </Card>

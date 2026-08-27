@@ -35,6 +35,7 @@ const transactions: RealTransaction[] = [
     receiptPath: null,
     hasSplits: false,
     incomeType: null,
+    isReimbursement: false,
   },
   {
     id: 'tx-2',
@@ -53,6 +54,7 @@ const transactions: RealTransaction[] = [
     receiptPath: null,
     hasSplits: false,
     incomeType: null,
+    isReimbursement: false,
   },
 ]
 const categories: RealCategory[] = [

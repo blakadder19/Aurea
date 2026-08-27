@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Account } from '../../data/accounts'
 import { fetchActiveDeclaredIncomeCents } from '../../lib/declaredIncome'
+import { expenseContribution, incomeContribution } from '../../lib/reimbursements'
 import { computeAssetsLiabilities } from '../../lib/netWorth'
 import { supabase } from '../../lib/supabase/client'
 import { useAuthStore } from '../../lib/supabase/useAuth'
@@ -32,14 +33,23 @@ interface MonthlyAverages {
 }
 
 /** Media mensual de ingresos (CRDT) y gastos (DBIT), sobre los meses con movimientos reales. */
-export function computeMonthlyAverages(rows: { amountCents: number; creditDebit: string; dateISO: string }[]): MonthlyAverages {
+/**
+ * Media mensual de ingresos y gastos reales. Usa el signo del importe (no
+ * `credit_debit`) y la misma regla que Inicio, Presupuesto e Informes, para
+ * que las cuatro pantallas no den cifras distintas del mismo dinero: los
+ * traspasos entre cuentas propias no cuentan, y un reembolso resta del
+ * gasto en vez de sumar como ingreso.
+ */
+export function computeMonthlyAverages(
+  rows: { amountCents: number; dateISO: string; isInternalTransfer?: boolean; isReimbursement?: boolean }[],
+): MonthlyAverages {
   const months = new Set<string>()
   let incomeCents = 0
   let expenseCents = 0
   for (const row of rows) {
     months.add(row.dateISO.slice(0, 7))
-    if (row.creditDebit === 'CRDT') incomeCents += Math.abs(row.amountCents)
-    else if (row.creditDebit === 'DBIT') expenseCents += Math.abs(row.amountCents)
+    incomeCents += incomeContribution(row)
+    expenseCents += expenseContribution(row)
   }
   const monthCount = months.size || 1
   return { ingresos: incomeCents / 100 / monthCount, gastos: expenseCents / 100 / monthCount }
@@ -79,7 +89,10 @@ export function useRealPlanning(accounts: Account[] | null, debts: RealDebt[] | 
       // Tope generoso, no un recorte real: a más de 10.000 movimientos (~6 años al ritmo actual)
       // habría que paginar de verdad, igual que ya hace Movimientos.
       const [{ data, error }, declaredIncomeCents] = await Promise.all([
-        supabase.from('transactions').select('amount_cents, credit_debit, booking_date, value_date').limit(10000),
+        supabase
+          .from('transactions')
+          .select('amount_cents, booking_date, value_date, is_internal_transfer, is_reimbursement')
+          .limit(10000),
         fetchActiveDeclaredIncomeCents(),
       ])
       if (cancelled) return
@@ -88,7 +101,14 @@ export function useRealPlanning(accounts: Account[] | null, debts: RealDebt[] | 
       const rows = (data ?? []).flatMap((tx) => {
         const dateISO = (tx.booking_date as string | null) ?? (tx.value_date as string | null)
         if (!dateISO) return []
-        return [{ amountCents: tx.amount_cents as number, creditDebit: tx.credit_debit as string, dateISO }]
+        return [
+          {
+            amountCents: tx.amount_cents as number,
+            dateISO,
+            isInternalTransfer: Boolean(tx.is_internal_transfer),
+            isReimbursement: Boolean(tx.is_reimbursement),
+          },
+        ]
       })
       const { ingresos, gastos } = computeMonthlyAverages(rows)
 

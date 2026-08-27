@@ -11,6 +11,7 @@ import { buildRealTimeline } from './timelineCalc'
 import { findPossibleDuplicates, findUnusualAmounts } from '../../lib/anomalyCalc'
 import { useDeclaredIncomes } from '../../lib/declaredIncome'
 import { computeAssetsLiabilities } from '../../lib/netWorth'
+import { expenseContribution, incomeContribution } from '../../lib/reimbursements'
 
 const FN_LABEL: Record<string, string> = {
   Ahorro: 'Ahorro',
@@ -227,8 +228,12 @@ export function useRealHome(budgetMonthStart: number | null): RealHomeData | nul
 
     const monthPrefix = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
     const thisMonthTx = nonTransferTx.filter((t) => t.dateISO?.startsWith(monthPrefix))
-    const monthIncome = thisMonthTx.filter((t) => t.importe > 0).reduce((sum, t) => sum + t.importe, 0) + declaredIncomeCents / 100
-    const monthExpense = thisMonthTx.filter((t) => t.importe < 0).reduce((sum, t) => sum - t.importe, 0)
+    // Misma regla que Presupuesto, Informes y Planificación: un reembolso
+    // resta del gasto en vez de contar como ingreso (los traspasos ya se
+    // han filtrado antes, en `nonTransferTx`).
+    const monthAmounts = thisMonthTx.map((t) => ({ amountCents: Math.round(t.importe * 100), isReimbursement: t.isReimbursement }))
+    const monthIncome = monthAmounts.reduce((sum, t) => sum + incomeContribution(t), 0) / 100 + declaredIncomeCents / 100
+    const monthExpense = monthAmounts.reduce((sum, t) => sum + expenseContribution(t), 0) / 100
     const savingsRatePct = computeSavingsRate(monthIncome, monthExpense)
 
     const recentTransactions = (transactions ?? []).slice(0, 8).map(toMovement)

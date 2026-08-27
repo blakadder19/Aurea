@@ -3,6 +3,7 @@ import type { BudgetCategory } from '../../data/budget'
 import type { BudgetStatus } from '../../lib/budgetCalc'
 import { computeCategoryPace, cycleEnd, cycleStart, daysElapsedInCycle, daysInCycle, forecastCents, isoDate } from '../../lib/budgetCalc'
 import { formatDayMonth, formatMonthYearLong } from '../../lib/format'
+import { countsTowardCategorySpend, expenseContribution } from '../../lib/reimbursements'
 import { supabase } from '../../lib/supabase/client'
 import { useAuthStore } from '../../lib/supabase/useAuth'
 import { categoryLabel, type RealCategory } from '../transactions/useRealCategories'
@@ -114,7 +115,7 @@ export function useRealBudget(categories: RealCategory[] | null, budgetMonthStar
         supabase.from('budgets').select('category_id, amount_cents').eq('month', monthKeyForCycle(start)),
         supabase
           .from('transaction_category_amounts')
-          .select('category_id, amount_cents')
+          .select('category_id, amount_cents, is_reimbursement')
           .not('category_id', 'is', null)
           .eq('is_internal_transfer', false)
           .or(dateFilter),
@@ -129,11 +130,13 @@ export function useRealBudget(categories: RealCategory[] | null, budgetMonthStar
 
       const budgetedByCategory = new Map((budgetRows ?? []).map((b) => [b.category_id as string, b.amount_cents as number]))
       const spentByCategory = new Map<string, number>()
-      for (const tx of txRows ?? []) {
-        const amount = tx.amount_cents as number
-        if (amount >= 0) continue // solo gasto: los ingresos no cuentan en el ritmo del presupuesto.
-        const categoryId = tx.category_id as string
-        spentByCategory.set(categoryId, (spentByCategory.get(categoryId) ?? 0) - amount)
+      for (const row of txRows ?? []) {
+        // Solo gasto: los ingresos no cuentan en el ritmo del presupuesto,
+        // pero un reembolso sí — resta de lo gastado en esa categoría.
+        const tx = { amountCents: row.amount_cents as number, isReimbursement: Boolean(row.is_reimbursement) }
+        if (!countsTowardCategorySpend(tx)) continue
+        const categoryId = row.category_id as string
+        spentByCategory.set(categoryId, (spentByCategory.get(categoryId) ?? 0) + expenseContribution(tx))
       }
 
       const realCategories: RealBudgetCategory[] = (categories ?? []).map((c) => {

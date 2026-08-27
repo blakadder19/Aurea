@@ -113,6 +113,7 @@ describe('useRealTransactions', () => {
         receiptPath: null,
         hasSplits: false,
         incomeType: null,
+        isReimbursement: false,
       },
       {
         id: 'tx-2',
@@ -132,6 +133,7 @@ describe('useRealTransactions', () => {
         receiptPath: null,
         hasSplits: false,
         incomeType: null,
+        isReimbursement: false,
       },
     ])
   })

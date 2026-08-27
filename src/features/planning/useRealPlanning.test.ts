@@ -59,10 +59,10 @@ describe('computeAvgDebtRate', () => {
 describe('computeMonthlyAverages', () => {
   it('promedia ingresos y gastos sobre los meses con movimientos', () => {
     const rows = [
-      { amountCents: 300000, creditDebit: 'CRDT', dateISO: '2026-06-01' },
-      { amountCents: -200000, creditDebit: 'DBIT', dateISO: '2026-06-15' },
-      { amountCents: 300000, creditDebit: 'CRDT', dateISO: '2026-07-01' },
-      { amountCents: -220000, creditDebit: 'DBIT', dateISO: '2026-07-15' },
+      { amountCents: 300000, dateISO: '2026-06-01' },
+      { amountCents: -200000, dateISO: '2026-06-15' },
+      { amountCents: 300000, dateISO: '2026-07-01' },
+      { amountCents: -220000, dateISO: '2026-07-15' },
     ]
     const { ingresos, gastos } = computeMonthlyAverages(rows)
     expect(ingresos).toBeCloseTo(3000, 2)
@@ -71,5 +71,26 @@ describe('computeMonthlyAverages', () => {
 
   it('sin movimientos, devuelve 0 sin dividir por cero', () => {
     expect(computeMonthlyAverages([])).toEqual({ ingresos: 0, gastos: 0 })
+  })
+
+  it('un traspaso entre cuentas propias no infla ni los ingresos ni los gastos', () => {
+    const rows = [
+      { amountCents: 300000, dateISO: '2026-06-01' },
+      { amountCents: -85000, dateISO: '2026-06-10', isInternalTransfer: true },
+      { amountCents: 85000, dateISO: '2026-06-10', isInternalTransfer: true },
+    ]
+    const { ingresos, gastos } = computeMonthlyAverages(rows)
+    expect(ingresos).toBeCloseTo(3000, 2)
+    expect(gastos).toBeCloseTo(0, 2)
+  })
+
+  it('un reembolso resta del gasto en vez de contar como ingreso', () => {
+    const rows = [
+      { amountCents: -4000, dateISO: '2026-06-10' },
+      { amountCents: 2000, dateISO: '2026-06-11', isReimbursement: true },
+    ]
+    const { ingresos, gastos } = computeMonthlyAverages(rows)
+    expect(ingresos).toBeCloseTo(0, 2)
+    expect(gastos).toBeCloseTo(20, 2)
   })
 })

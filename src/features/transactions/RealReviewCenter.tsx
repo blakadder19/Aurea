@@ -174,7 +174,11 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory, onB
 
   return (
     <div className="flex flex-col gap-4">
-      <InternalTransfersCard candidates={transferCandidates} onResolved={handleTransferResolved} />
+      <InternalTransfersCard
+        candidates={transferCandidates}
+        categoryIdOf={(id) => transactions.find((t) => t.id === id)?.categoryId ?? undefined}
+        onResolved={handleTransferResolved}
+      />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-base text-ink-muted">
           {pending.length === 0

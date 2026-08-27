@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { isoDate } from '../../lib/budgetCalc'
 import { fetchActiveDeclaredIncomeCents } from '../../lib/declaredIncome'
 import { MONTHS_ABBR } from '../../lib/format'
+import { expenseContribution, incomeContribution } from '../../lib/reimbursements'
 import { supabase } from '../../lib/supabase/client'
 import { useAuthStore } from '../../lib/supabase/useAuth'
 import { buildMonthlyTrend, type MonthlyTrendPoint } from './reportCalc'
@@ -58,7 +59,11 @@ export function useMonthlyTrend(): MonthlyTrendResult {
         `and(booking_date.is.null,value_date.gte.${fromIso},value_date.lt.${toIso})`
 
       const [{ data: txRows, error }, declaredIncomeCents] = await Promise.all([
-        supabase.from('transactions').select('amount_cents, booking_date, value_date').eq('is_internal_transfer', false).or(dateFilter),
+        supabase
+          .from('transactions')
+          .select('amount_cents, booking_date, value_date, is_reimbursement')
+          .eq('is_internal_transfer', false)
+          .or(dateFilter),
         fetchActiveDeclaredIncomeCents(),
       ])
       if (cancelled) return
@@ -77,13 +82,13 @@ export function useMonthlyTrend(): MonthlyTrendResult {
         })
       }
 
-      for (const tx of txRows ?? []) {
-        const iso = (tx.booking_date as string | null) ?? (tx.value_date as string | null)
+      for (const row of txRows ?? []) {
+        const iso = (row.booking_date as string | null) ?? (row.value_date as string | null)
         const bucket = iso ? buckets.get(iso.slice(0, 7)) : undefined
         if (!bucket) continue
-        const amount = tx.amount_cents as number
-        if (amount >= 0) bucket.incomeCents += amount
-        else bucket.expenseCents += -amount
+        const tx = { amountCents: row.amount_cents as number, isReimbursement: Boolean(row.is_reimbursement) }
+        bucket.incomeCents += incomeContribution(tx)
+        bucket.expenseCents += expenseContribution(tx)
       }
 
       const months = [...buckets.entries()]

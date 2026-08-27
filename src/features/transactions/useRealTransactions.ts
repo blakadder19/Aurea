@@ -24,6 +24,8 @@ export interface RealTransaction extends Transaction {
   hasSplits: boolean
   /** Solo tiene sentido en un movimiento positivo — de qué tipo de ingreso se trata (salario, extra...). */
   incomeType: IncomeType | null
+  /** Te devuelven parte de un gasto compartido: resta del gasto de su categoría, no suma como ingreso. */
+  isReimbursement: boolean
 }
 
 /**
@@ -89,7 +91,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
         supabase
           .from('transactions')
           .select(
-            'id, account_id, booking_date, value_date, description, amount_cents, category_id, needs_review, user_note, tags, display_name, is_internal_transfer, receipt_path, income_type',
+            'id, account_id, booking_date, value_date, description, amount_cents, category_id, needs_review, user_note, tags, display_name, is_internal_transfer, receipt_path, income_type, is_reimbursement',
           )
           .order('booking_date', { ascending: false })
           .limit(loadedCount),
@@ -139,6 +141,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
           receiptPath: (row.receipt_path as string | null) ?? null,
           hasSplits,
           incomeType: (row.income_type as IncomeType | null) ?? null,
+          isReimbursement: Boolean(row.is_reimbursement),
         }
       })
 
@@ -256,6 +259,23 @@ export async function updateTransactionInternalTransfer(id: string, isInternalTr
   const { error } = await supabase.from('transactions').update({ is_internal_transfer: isInternalTransfer }).eq('id', id)
   if (error) {
     console.error('updateTransactionInternalTransfer: fallo al guardar', error)
+    return 'No hemos podido guardar el cambio. Inténtalo de nuevo.'
+  }
+  return null
+}
+
+/**
+ * Marca un abono como reembolso de un gasto compartido: deja de contar
+ * como ingreso y pasa a restar del gasto de su categoría. Necesita que el
+ * movimiento tenga categoría — la del gasto que te están devolviendo.
+ */
+export async function updateTransactionReimbursement(id: string, isReimbursement: boolean, categoryId?: string): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  const patch: Record<string, unknown> = { is_reimbursement: isReimbursement }
+  if (isReimbursement && categoryId) patch.category_id = categoryId
+  const { error } = await supabase.from('transactions').update(patch).eq('id', id)
+  if (error) {
+    console.error('updateTransactionReimbursement: fallo al guardar', error)
     return 'No hemos podido guardar el cambio. Inténtalo de nuevo.'
   }
   return null

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { isoDate } from '../../lib/budgetCalc'
 import { MONTHS_ABBR } from '../../lib/format'
+import { countsTowardCategorySpend, expenseContribution } from '../../lib/reimbursements'
 import { supabase } from '../../lib/supabase/client'
 import { useAuthStore } from '../../lib/supabase/useAuth'
 import { buildCategoryTrend, type CategoryTrendEntry, type CategoryTrendResult } from './categoryTrendCalc'
@@ -58,7 +59,7 @@ export function useCategoryTrend(): CategoryTrendHookResult {
         supabase.from('categories').select('id, name'),
         supabase
           .from('transaction_category_amounts')
-          .select('category_id, amount_cents, booking_date, value_date')
+          .select('category_id, amount_cents, booking_date, value_date, is_reimbursement')
           .eq('is_internal_transfer', false)
           .or(dateFilter),
       ])
@@ -73,15 +74,15 @@ export function useCategoryTrend(): CategoryTrendHookResult {
         monthLabels.push(shortLabel(key))
       }
 
-      const entries: CategoryTrendEntry[] = (rows ?? []).flatMap((tx) => {
-        const amount = tx.amount_cents as number
-        if (amount >= 0) return []
-        const iso = (tx.booking_date as string | null) ?? (tx.value_date as string | null)
+      const entries: CategoryTrendEntry[] = (rows ?? []).flatMap((row) => {
+        const tx = { amountCents: row.amount_cents as number, isReimbursement: Boolean(row.is_reimbursement) }
+        if (!countsTowardCategorySpend(tx)) return []
+        const iso = (row.booking_date as string | null) ?? (row.value_date as string | null)
         const monthIndex = iso ? monthIndexByKey.get(iso.slice(0, 7)) : undefined
         if (monthIndex === undefined) return []
-        const categoryId = tx.category_id as string | null
+        const categoryId = row.category_id as string | null
         const name = categoryId ? (nameByCategory.get(categoryId) ?? 'Sin clasificar') : 'Sin clasificar'
-        return [{ monthIndex, categoryId, name, spentCents: -amount }]
+        return [{ monthIndex, categoryId, name, spentCents: expenseContribution(tx) }]
       })
 
       setResult(buildCategoryTrend(monthLabels, entries))
