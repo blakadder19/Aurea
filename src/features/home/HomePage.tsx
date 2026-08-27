@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { AttentionTray } from './AttentionTray'
+import { TodayCard } from './TodayCard'
+import { buildTodayHeadline } from './todayCalc'
 import { AvailableTodayCard } from './AvailableTodayCard'
 import { BudgetBreakdownTable } from './BudgetBreakdownTable'
 import { BudgetPaceCard } from './BudgetPaceCard'
@@ -227,6 +229,18 @@ export function HomePage() {
         onAddManualMovement={() => setManualPanelMode('movement')}
       />
       <main className="flex flex-1 flex-col gap-6 lg:gap-5 overflow-y-auto p-4 lg:p-6">
+        {hasReal && (
+          <TodayCard
+            headline={buildTodayHeadline({
+              availableToday: home!.availableToday,
+              eligibleAccountsSum: home!.eligibleAccountsSum,
+              commitments14d: home!.commitments14d,
+              monthExpense: home!.monthExpense,
+            })}
+            attentionItems={home!.attentionItems}
+            today={today}
+          />
+        )}
         <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-[1.25fr_1fr]">
           <div className="min-w-0">
             <AvailableTodayCard
