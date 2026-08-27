@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { Transaction } from '../../data/transactions'
 import type { IncomeType } from '../../lib/declaredIncome'
 import { formatIsoDayMonth } from '../../lib/format'
@@ -58,9 +58,21 @@ interface RealTransactionsResult {
   hasMore: boolean
   /** Carga otra página de movimientos más antiguos (además de los ya cargados, no en su lugar). */
   loadMore: () => void
+  /**
+   * Carga de golpe todo el histórico. Lo usa Movimientos al filtrar o
+   * buscar: si no, el buscador solo mira la primera página y jura que no
+   * existe algo que sí tienes, solo que más atrás.
+   */
+  loadAll: () => void
 }
 
 const PAGE_SIZE = 300
+
+/**
+ * Tope de seguridad para "cargarlo todo". Muy por encima de lo que tiene
+ * nadie con unos años de histórico, pero evita pedir sin límite.
+ */
+const MAX_TRANSACTIONS = 10000
 
 /**
  * Movimientos reales del usuario autenticado: transactions + accounts +
@@ -158,8 +170,13 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
     }
   }, [session, categories, version, loadedCount])
 
+  // Identidad estable: son dependencias de efectos en Movimientos, y si
+  // cambiaran en cada render los harían dispararse sin parar.
+  const loadMore = useCallback(() => setLoadedCount((n) => n + PAGE_SIZE), [])
+  const loadAll = useCallback(() => setLoadedCount(MAX_TRANSACTIONS), [])
+
   const hasMore = transactions !== null && transactions.length === loadedCount
-  return { loading, transactions, refetch: bump, hasMore, loadMore: () => setLoadedCount((n) => n + PAGE_SIZE) }
+  return { loading, transactions, refetch: bump, hasMore, loadMore, loadAll }
 }
 
 /** Escribe la categoría de un movimiento real. RLS asegura que solo puede tocar los suyos. */

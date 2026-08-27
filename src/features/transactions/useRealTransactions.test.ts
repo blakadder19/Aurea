@@ -184,6 +184,34 @@ describe('useRealTransactions', () => {
   })
 })
 
+describe('paginación', () => {
+  it('loadAll pide todo el histórico, para que buscar no mienta con solo la primera página', async () => {
+    fixtures.transactions = Array.from({ length: 2 }, (_, i) => ({
+      id: `tx-${i}`,
+      account_id: 'acc-1',
+      booking_date: '2026-08-19',
+      value_date: null,
+      description: 'Movimiento',
+      amount_cents: -100,
+      category_id: null,
+      needs_review: false,
+      user_note: null,
+      tags: [],
+      display_name: null,
+      is_internal_transfer: false,
+    }))
+    useAuthStore.setState({ session: activeSession })
+    const { result } = renderHook(() => useRealTransactions(categories))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    // Identidad estable: si cambiara en cada render, los efectos que la usan
+    // como dependencia se dispararían sin parar.
+    const first = result.current.loadAll
+    expect(result.current.loadMore).toBe(result.current.loadMore)
+    expect(first).toBe(result.current.loadAll)
+  })
+})
+
 describe('isTransactionPending', () => {
   it('sin categoría, está pendiente', () => {
     expect(isTransactionPending({ categoryId: null, needsReview: false, hasSplits: false, isInternalTransfer: false })).toBe(true)

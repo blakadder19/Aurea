@@ -5,7 +5,7 @@ import { RealReviewCenter } from './RealReviewCenter'
 import { ReviewCenter } from './ReviewCenter'
 import { TransactionPanel } from './TransactionPanel'
 import { TransactionsTable } from './TransactionsTable'
-import { useTransactionsStore, type TransactionsView } from './store'
+import { ALL_ACCOUNTS, ALL_CATEGORIES, ALL_STATUSES, DATE_ALL, useTransactionsStore, type TransactionsView } from './store'
 import {
   bulkAddTag,
   bulkUpdateTransactionCategory,
@@ -119,7 +119,7 @@ export function TransactionsPage() {
   const session = useAuthStore((s) => s.session)
 
   const { categories: realCategories } = useRealCategories()
-  const { loading: loadingReal, transactions: realTransactions, refetch, hasMore, loadMore } = useRealTransactions(realCategories)
+  const { loading: loadingReal, transactions: realTransactions, refetch, hasMore, loadMore, loadAll } = useRealTransactions(realCategories)
   const { connections: realConnections } = useRealConnections()
   const { accounts: realAccounts, refetch: refetchAccounts } = useRealAccounts()
   const [manualPanelMode, setManualPanelMode] = useState<ManualEntryPanelMode>(null)
@@ -127,6 +127,25 @@ export function TransactionsPage() {
   const isAuthenticated = session !== null
   const hasRealTransactions = isAuthenticated && !loadingReal && realTransactions !== null && realTransactions.length > 0
   const realReviewCount = realTransactions?.filter(isTransactionPending).length ?? 0
+
+  // Buscar o filtrar mirando solo la primera página es mentir: el
+  // buscador diría que no tienes algo que sí tienes, solo que más atrás.
+  // En cuanto hay un filtro activo se trae el histórico entero.
+  const searchQuery = useTransactionsStore((s) => s.searchQuery)
+  const accountFilter = useTransactionsStore((s) => s.accountFilter)
+  const categoryFilter = useTransactionsStore((s) => s.categoryFilter)
+  const statusFilter = useTransactionsStore((s) => s.statusFilter)
+  const dateFilter = useTransactionsStore((s) => s.dateFilter)
+  const hasActiveFilter =
+    searchQuery.trim() !== '' ||
+    accountFilter !== ALL_ACCOUNTS ||
+    categoryFilter !== ALL_CATEGORIES ||
+    statusFilter !== ALL_STATUSES ||
+    dateFilter !== DATE_ALL
+
+  useEffect(() => {
+    if (isAuthenticated && hasActiveFilter && hasMore) loadAll()
+  }, [isAuthenticated, hasActiveFilter, hasMore, loadAll])
 
   // La selección por defecto de la demo (AMZN/Zara) no tiene sentido en real:
   // esos ids nunca corresponden a un movimiento real, pero seguirían contando
