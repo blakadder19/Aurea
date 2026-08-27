@@ -8,6 +8,8 @@ export interface RealCategory {
   icon: string | null
   /** Uno de los valores fijos del CHECK de la tabla — agrupa la categoría en Presupuesto y Ajustes. */
   categoryGroup: string
+  /** Categoría madre si esta es una subcategoría (p. ej. Supermercado dentro de Alimentación). Solo dos niveles. */
+  parentId: string | null
 }
 
 /** Etiqueta en español de cada `category_group` — mismo conjunto fijo que el CHECK de la tabla `categories`. */
@@ -49,8 +51,8 @@ const DEFAULT_CATEGORIES: { name: string; group: string; icon: string }[] = [
   { name: 'Ingresos', group: 'ingresos', icon: '💰' },
 ]
 
-function toRealCategory(row: { id: string; name: string; icon: string | null; category_group: string }): RealCategory {
-  return { id: row.id, name: row.name, icon: row.icon, categoryGroup: row.category_group }
+function toRealCategory(row: { id: string; name: string; icon: string | null; category_group: string; parent_id?: string | null }): RealCategory {
+  return { id: row.id, name: row.name, icon: row.icon, categoryGroup: row.category_group, parentId: row.parent_id ?? null }
 }
 
 interface RealCategoriesResult {
@@ -82,7 +84,7 @@ export function useRealCategories(): RealCategoriesResult {
       if (!supabase) return
       const { data, error } = await supabase
         .from('categories')
-        .select('id, name, icon, category_group')
+        .select('id, name, icon, category_group, parent_id')
         .order('name', { ascending: true })
       if (cancelled) return
       if (error) {
@@ -104,7 +106,7 @@ export function useRealCategories(): RealCategoriesResult {
           DEFAULT_CATEGORIES.map((c) => ({ user_id: userId, name: c.name, category_group: c.group, icon: c.icon })),
           { onConflict: 'user_id,name' },
         )
-        .select('id, name, icon, category_group')
+        .select('id, name, icon, category_group, parent_id')
       if (cancelled) return
       if (seedError) {
         console.error('useRealCategories: fallo al sembrar categories', seedError)
@@ -143,7 +145,7 @@ export async function updateCategoryIcon(id: string, icon: string): Promise<stri
 }
 
 /** Crea una categoría propia además del catálogo por defecto, en el grupo elegido — así aparece agrupada donde toca en Presupuesto. */
-export async function createCategory(name: string, icon: string, group: string): Promise<string | null> {
+export async function createCategory(name: string, icon: string, group: string, parentId: string | null = null): Promise<string | null> {
   if (!supabase) return 'Supabase no está configurado.'
   if (!name.trim()) return 'Ponle un nombre a la categoría.'
   if (!CATEGORY_GROUP_ORDER.includes(group)) return 'Elige un grupo para la categoría.'
@@ -155,7 +157,7 @@ export async function createCategory(name: string, icon: string, group: string):
 
   const { error } = await supabase
     .from('categories')
-    .insert({ user_id: user.id, name: name.trim(), category_group: group, icon: icon.trim() || null })
+    .insert({ user_id: user.id, name: name.trim(), category_group: group, icon: icon.trim() || null, parent_id: parentId })
   if (error) {
     console.error('createCategory: fallo al crear', error)
     if (error.code === '23505') return 'Ya tienes una categoría con ese nombre.'

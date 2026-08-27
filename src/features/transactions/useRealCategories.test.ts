@@ -62,8 +62,8 @@ describe('useRealCategories', () => {
     await waitFor(() => expect(result.current.loading).toBe(false))
 
     expect(result.current.categories).toEqual([
-      { id: 'cat-1', name: 'Ingresos' },
-      { id: 'cat-2', name: 'Transporte' },
+      { id: 'cat-1', name: 'Ingresos', parentId: null },
+      { id: 'cat-2', name: 'Transporte', parentId: null },
     ])
   })
 
