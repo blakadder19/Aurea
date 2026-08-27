@@ -1,9 +1,11 @@
+import { Link } from 'react-router-dom'
 import { Badge, type BadgeVariant } from '../../components/Badge'
 import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
 import { ProgressBar } from '../../components/ProgressBar'
 import { RingChart } from '../../components/RingChart'
 import { budget } from '../../data/demo'
+import { useBudgetStore } from '../budget/store'
 import type { RealVerdict } from '../budget/MonthVerdictCard'
 
 const VARIANT_STROKE: Partial<Record<BadgeVariant, string>> = {
@@ -46,20 +48,40 @@ export function BudgetPaceCard({ real }: { real?: RealVerdict } = {}) {
           </>
         )}
 
-        <div className="flex items-baseline justify-between border-t border-line pt-3 tabular">
-          <div>
-            <div className="text-sm text-ink-muted">Previsión de cierre</div>
-            <div className="text-[22px] font-bold">
-              <Money value={real.previsionCierre} decimals={0} />
+        {real.paceRealPct === null ? (
+          // Sin presupuesto, "Restante" sería restante de 0 — un número que
+          // no significa nada. Mejor lo gastado y una salida para arreglarlo.
+          <div className="flex flex-wrap items-end justify-between gap-3 border-t border-line pt-3 tabular">
+            <div>
+              <div className="text-sm text-ink-muted">Llevas gastado</div>
+              <div className="text-[22px] font-bold text-ink">
+                <Money value={real.gastado} decimals={0} />
+              </div>
+            </div>
+            <Link
+              to="/presupuesto"
+              onClick={() => useBudgetStore.getState().openPanel()}
+              className="inline-flex min-h-11 items-center rounded-md border border-brand bg-brand px-4 text-base font-semibold text-surface hover:bg-brand-hover"
+            >
+              Poner presupuesto
+            </Link>
+          </div>
+        ) : (
+          <div className="flex items-baseline justify-between border-t border-line pt-3 tabular">
+            <div>
+              <div className="text-sm text-ink-muted">Previsión de cierre</div>
+              <div className="text-[22px] font-bold">
+                <Money value={real.previsionCierre} decimals={0} />
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-ink-muted">Restante</div>
+              <div className="text-[22px] font-bold text-ink">
+                <Money value={real.restante} decimals={0} />
+              </div>
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-sm text-ink-muted">Restante</div>
-            <div className="text-[22px] font-bold text-ink">
-              <Money value={real.restante} decimals={0} />
-            </div>
-          </div>
-        </div>
+        )}
       </Card>
     )
   }

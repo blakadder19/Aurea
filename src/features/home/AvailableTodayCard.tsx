@@ -80,15 +80,35 @@ export function AvailableTodayCard({ real }: { real?: RealAvailableToday } = {})
         </div>
       </div>
 
+      {/*
+        La resta, siempre a la vista: la cifra sola no dice de dónde sale, y
+        dejarla detrás de un botón desperdiciaba media tarjeta en blanco.
+        El detalle cuenta a cuenta sigue tras "Ver el detalle".
+      */}
+      <div className="flex flex-col gap-2 rounded-lg border border-line bg-canvas p-4 tabular">
+        <div className="flex justify-between text-base text-ink">
+          <span>Cuentas para gastar</span>
+          <Money value={data.eligibleAccountsSum} className="font-semibold" />
+        </div>
+        <div className="flex justify-between text-base">
+          <span className="text-ink-muted">− {data.commitmentsLabel}</span>
+          <Money value={-data.commitments14d} tone="danger" className="font-semibold" />
+        </div>
+        <div className="flex justify-between border-t border-line pt-2 text-base text-ink">
+          <span className="font-bold">Disponible hoy</span>
+          <Money value={data.availableToday} className="font-bold" />
+        </div>
+      </div>
+
       <div className="flex items-center gap-4">
         <button
           type="button"
           onClick={toggleCalc}
           aria-expanded={showCalc}
           aria-controls="disponible-hoy-desglose"
-          className="min-h-11 rounded-xl border border-brand px-4 py-[11px] text-base font-semibold text-brand hover:bg-brand-soft"
+          className="min-h-11 rounded-xl border border-line px-4 py-[11px] text-base font-semibold text-ink hover:bg-canvas"
         >
-          Ver cómo se calcula
+          {showCalc ? 'Ocultar el detalle' : 'Ver el detalle'}
         </button>
         {!real && <span className="text-sm text-ink-muted">Actualizado hoy a las {syncedAt}</span>}
       </div>
@@ -98,9 +118,7 @@ export function AvailableTodayCard({ real }: { real?: RealAvailableToday } = {})
           id="disponible-hoy-desglose"
           className="flex flex-col gap-3.5 rounded-lg border border-line bg-canvas p-6"
         >
-          <div className="text-base font-bold text-ink">
-            Cuentas aptas para gastar menos compromisos a 14 días
-          </div>
+          <div className="text-base font-bold text-ink">De qué cuentas sale</div>
 
           <div className="flex flex-col gap-2 tabular">
             {data.eligibleAccounts.length === 0 && <div className="text-base text-ink-muted">Ninguna cuenta marcada como «Para gastar».</div>}
@@ -110,21 +128,6 @@ export function AvailableTodayCard({ real }: { real?: RealAvailableToday } = {})
                 <Money value={account.amount} className="font-semibold" />
               </div>
             ))}
-
-            <div className="flex justify-between border-t border-line pt-2 text-base text-ink">
-              <span className="font-semibold">Suma en cuentas para gastar</span>
-              <Money value={data.eligibleAccountsSum} className="font-bold" />
-            </div>
-
-            <div className="flex justify-between text-base">
-              <span className="font-normal text-danger-text">− {data.commitmentsLabel}</span>
-              <Money value={-data.commitments14d} tone="danger" className="font-bold" />
-            </div>
-
-            <div className="flex justify-between border-t-2 border-ink pt-2.5 text-xl text-ink">
-              <span className="font-bold">Disponible hoy</span>
-              <Money value={data.availableToday} serif className="text-[26px] font-bold" />
-            </div>
           </div>
 
           <div className="border-t border-line pt-3.5">
