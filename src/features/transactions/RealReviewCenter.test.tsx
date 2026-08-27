@@ -36,6 +36,7 @@ const transactions: RealTransaction[] = [
     hasSplits: false,
     incomeType: null,
     isReimbursement: false,
+    isBalanceAdjustment: false,
   },
   {
     id: 'tx-2',
@@ -55,6 +56,7 @@ const transactions: RealTransaction[] = [
     hasSplits: false,
     incomeType: null,
     isReimbursement: false,
+    isBalanceAdjustment: false,
   },
 ]
 const categories: RealCategory[] = [

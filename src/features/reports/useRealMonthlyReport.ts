@@ -56,17 +56,17 @@ export function useRealMonthlyReport(monthsAgo: number): RealMonthlyReportResult
           supabase.from('categories').select('id, name'),
           supabase
             .from('transaction_category_amounts')
-            .select('category_id, amount_cents, is_reimbursement')
+            .select('category_id, amount_cents, is_reimbursement, is_balance_adjustment')
             .eq('is_internal_transfer', false)
             .or(dateFilter(fromIso, toIso)),
           supabase
             .from('transactions')
-            .select('amount_cents, is_reimbursement')
+            .select('amount_cents, is_reimbursement, is_balance_adjustment')
             .eq('is_internal_transfer', false)
             .or(dateFilter(prev.fromIso, prev.toIso)),
           supabase
             .from('transactions')
-            .select('amount_cents, is_reimbursement')
+            .select('amount_cents, is_reimbursement, is_balance_adjustment')
             .eq('is_internal_transfer', false)
             .or(dateFilter(prevYear.fromIso, prevYear.toIso)),
           // Por comercio: se usa el movimiento completo, no la vista consciente de divisiones —
@@ -81,7 +81,11 @@ export function useRealMonthlyReport(monthsAgo: number): RealMonthlyReportResult
       let incomeCents = declaredIncomeCents
       let expenseCents = 0
       for (const row of txRows ?? []) {
-        const tx = { amountCents: row.amount_cents as number, isReimbursement: Boolean(row.is_reimbursement) }
+        const tx = {
+          amountCents: row.amount_cents as number,
+          isReimbursement: Boolean(row.is_reimbursement),
+          isBalanceAdjustment: Boolean(row.is_balance_adjustment),
+        }
         incomeCents += incomeContribution(tx)
         expenseCents += expenseContribution(tx)
         if (!countsTowardCategorySpend(tx)) continue
@@ -93,10 +97,16 @@ export function useRealMonthlyReport(monthsAgo: number): RealMonthlyReportResult
         spendByCategory.set(key, { name, categoryId, spentCents: (existing?.spentCents ?? 0) + expenseContribution(tx) })
       }
 
-      const sumExpense = (rows: { amount_cents: unknown; is_reimbursement?: unknown }[]) =>
+      const sumExpense = (rows: { amount_cents: unknown; is_reimbursement?: unknown; is_balance_adjustment?: unknown }[]) =>
         rows.length > 0
           ? rows.reduce(
-              (sum, r) => sum + expenseContribution({ amountCents: r.amount_cents as number, isReimbursement: Boolean(r.is_reimbursement) }),
+              (sum, r) =>
+                sum +
+                expenseContribution({
+                  amountCents: r.amount_cents as number,
+                  isReimbursement: Boolean(r.is_reimbursement),
+                  isBalanceAdjustment: Boolean(r.is_balance_adjustment),
+                }),
               0,
             )
           : null

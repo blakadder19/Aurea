@@ -8,7 +8,7 @@ import { NetWorthTrendChart } from './NetWorthTrendChart'
 import { RealDetailBreakdowns } from './RealDetailBreakdowns'
 import { periodStartIso, type NetWorthPeriod } from './netWorthHistory'
 import { useNetWorthHistory } from './useNetWorthHistory'
-import { addManualTransaction, createManualAccount, deleteManualAccount } from './useManualEntries'
+import { addManualTransaction, createManualAccount, deleteManualAccount, revalueManualAccount } from './useManualEntries'
 import {
   updateAccountDisplayName,
   updateAccountExcluded,
@@ -174,6 +174,12 @@ export function AccountsPage() {
     return error
   }
 
+  async function handleRevalue(accountId: string, newValueCents: number) {
+    const error = await revalueManualAccount(accountId, newValueCents, new Date().toISOString().slice(0, 10))
+    if (!error) refetch()
+    return error
+  }
+
   async function handleChangeExcluded(accountId: string, excluded: boolean) {
     const error = await updateAccountExcluded(accountId, excluded)
     if (!error) refetch()
@@ -273,6 +279,7 @@ export function AccountsPage() {
         onRename={hasRealAccounts ? handleRenameAccount : undefined}
         onDisconnect={hasRealAccounts ? handleDisconnectBank : undefined}
         onChangeExcluded={hasRealAccounts ? handleChangeExcluded : undefined}
+        onRevalue={hasRealAccounts ? handleRevalue : undefined}
       />
       <ManualEntryPanel
         mode={manualPanelMode}

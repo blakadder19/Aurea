@@ -89,6 +89,9 @@ export async function createManualAccount(name: string, fn: AccountFunction, sta
     credit_debit: startingBalanceCents >= 0 ? 'CRDT' : 'DBIT',
     booking_date: todayIso(),
     description: 'Saldo inicial',
+    // El saldo con el que nace la cuenta no es un ingreso: es dinero (o
+    // valor, si es un piso o un coche) que ya tenías ese día.
+    is_balance_adjustment: true,
   })
   if (txError) {
     console.error('createManualAccount: fallo al registrar el saldo inicial', txError)
@@ -355,4 +358,65 @@ export async function importManualTransactions(accountId: string, rows: Importab
 
   const total = rows.reduce((sum, row) => sum + row.amountCents, 0)
   return adjustManualBalance(accountId, user.id, total)
+}
+
+/**
+ * Pone un activo manual (un piso, un coche, una hucha) a su valor de hoy.
+ * Registra la diferencia como ajuste de saldo, no como ingreso ni gasto:
+ * que tu piso pase a valer 10.000 € más no es que hayas ingresado 10.000 €,
+ * pero tu patrimonio sí ha subido. Mantiene la regla de siempre — el saldo
+ * de una cuenta manual es la suma de sus propios movimientos.
+ */
+export async function revalueManualAccount(accountId: string, newValueCents: number, dateIso: string): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  if (!Number.isInteger(newValueCents)) return 'El valor no es válido.'
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return 'Inicia sesión de nuevo.'
+
+  const { data: currentBalance, error: readError } = await supabase
+    .from('balances')
+    .select('amount_cents')
+    .eq('account_id', accountId)
+    .eq('balance_type', 'MANUAL')
+    .maybeSingle()
+  if (readError) {
+    console.error('revalueManualAccount: fallo al leer el saldo', readError)
+    return 'No hemos podido leer el valor actual. Inténtalo de nuevo.'
+  }
+
+  const currentCents = (currentBalance?.amount_cents as number | undefined) ?? 0
+  const deltaCents = newValueCents - currentCents
+  if (deltaCents === 0) return null
+
+  const { error: txError } = await supabase.from('transactions').insert({
+    user_id: user.id,
+    account_id: accountId,
+    dedup_key: `manual-revalue-${crypto.randomUUID()}`,
+    amount_cents: deltaCents,
+    currency: 'EUR',
+    credit_debit: deltaCents >= 0 ? 'CRDT' : 'DBIT',
+    booking_date: dateIso,
+    description: 'Actualización de valor',
+    is_balance_adjustment: true,
+  })
+  if (txError) {
+    console.error('revalueManualAccount: fallo al registrar la actualización', txError)
+    return 'No hemos podido guardar el nuevo valor. Inténtalo de nuevo.'
+  }
+
+  const { error: writeError } = await supabase
+    .from('balances')
+    .upsert(
+      { user_id: user.id, account_id: accountId, balance_type: 'MANUAL', amount_cents: newValueCents, currency: 'EUR' },
+      { onConflict: 'account_id,balance_type' },
+    )
+  if (writeError) {
+    console.error('revalueManualAccount: fallo al guardar el saldo', writeError)
+    return 'La actualización se registró, pero no hemos podido guardar el saldo. Actualiza la página.'
+  }
+
+  return null
 }

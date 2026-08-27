@@ -231,7 +231,11 @@ export function useRealHome(budgetMonthStart: number | null): RealHomeData | nul
     // Misma regla que Presupuesto, Informes y Planificación: un reembolso
     // resta del gasto en vez de contar como ingreso (los traspasos ya se
     // han filtrado antes, en `nonTransferTx`).
-    const monthAmounts = thisMonthTx.map((t) => ({ amountCents: Math.round(t.importe * 100), isReimbursement: t.isReimbursement }))
+    const monthAmounts = thisMonthTx.map((t) => ({
+      amountCents: Math.round(t.importe * 100),
+      isReimbursement: t.isReimbursement,
+      isBalanceAdjustment: t.isBalanceAdjustment,
+    }))
     const monthIncome = monthAmounts.reduce((sum, t) => sum + incomeContribution(t), 0) / 100 + declaredIncomeCents / 100
     const monthExpense = monthAmounts.reduce((sum, t) => sum + expenseContribution(t), 0) / 100
     const savingsRatePct = computeSavingsRate(monthIncome, monthExpense)

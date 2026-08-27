@@ -59,7 +59,7 @@ export function useCategoryTrend(): CategoryTrendHookResult {
         supabase.from('categories').select('id, name'),
         supabase
           .from('transaction_category_amounts')
-          .select('category_id, amount_cents, booking_date, value_date, is_reimbursement')
+          .select('category_id, amount_cents, booking_date, value_date, is_reimbursement, is_balance_adjustment')
           .eq('is_internal_transfer', false)
           .or(dateFilter),
       ])
@@ -75,7 +75,11 @@ export function useCategoryTrend(): CategoryTrendHookResult {
       }
 
       const entries: CategoryTrendEntry[] = (rows ?? []).flatMap((row) => {
-        const tx = { amountCents: row.amount_cents as number, isReimbursement: Boolean(row.is_reimbursement) }
+        const tx = {
+          amountCents: row.amount_cents as number,
+          isReimbursement: Boolean(row.is_reimbursement),
+          isBalanceAdjustment: Boolean(row.is_balance_adjustment),
+        }
         if (!countsTowardCategorySpend(tx)) return []
         const iso = (row.booking_date as string | null) ?? (row.value_date as string | null)
         const monthIndex = iso ? monthIndexByKey.get(iso.slice(0, 7)) : undefined

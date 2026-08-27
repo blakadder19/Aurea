@@ -61,7 +61,7 @@ export function useMonthlyTrend(): MonthlyTrendResult {
       const [{ data: txRows, error }, declaredIncomeCents] = await Promise.all([
         supabase
           .from('transactions')
-          .select('amount_cents, booking_date, value_date, is_reimbursement')
+          .select('amount_cents, booking_date, value_date, is_reimbursement, is_balance_adjustment')
           .eq('is_internal_transfer', false)
           .or(dateFilter),
         fetchActiveDeclaredIncomeCents(),
@@ -86,7 +86,11 @@ export function useMonthlyTrend(): MonthlyTrendResult {
         const iso = (row.booking_date as string | null) ?? (row.value_date as string | null)
         const bucket = iso ? buckets.get(iso.slice(0, 7)) : undefined
         if (!bucket) continue
-        const tx = { amountCents: row.amount_cents as number, isReimbursement: Boolean(row.is_reimbursement) }
+        const tx = {
+          amountCents: row.amount_cents as number,
+          isReimbursement: Boolean(row.is_reimbursement),
+          isBalanceAdjustment: Boolean(row.is_balance_adjustment),
+        }
         bucket.incomeCents += incomeContribution(tx)
         bucket.expenseCents += expenseContribution(tx)
       }

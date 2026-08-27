@@ -114,6 +114,7 @@ describe('useRealTransactions', () => {
         hasSplits: false,
         incomeType: null,
         isReimbursement: false,
+        isBalanceAdjustment: false,
       },
       {
         id: 'tx-2',
@@ -134,6 +135,7 @@ describe('useRealTransactions', () => {
         hasSplits: false,
         incomeType: null,
         isReimbursement: false,
+        isBalanceAdjustment: false,
       },
     ])
   })

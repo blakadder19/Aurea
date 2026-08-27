@@ -91,7 +91,7 @@ export function useRealPlanning(accounts: Account[] | null, debts: RealDebt[] | 
       const [{ data, error }, declaredIncomeCents] = await Promise.all([
         supabase
           .from('transactions')
-          .select('amount_cents, booking_date, value_date, is_internal_transfer, is_reimbursement')
+          .select('amount_cents, booking_date, value_date, is_internal_transfer, is_reimbursement, is_balance_adjustment')
           .limit(10000),
         fetchActiveDeclaredIncomeCents(),
       ])
@@ -107,6 +107,7 @@ export function useRealPlanning(accounts: Account[] | null, debts: RealDebt[] | 
             dateISO,
             isInternalTransfer: Boolean(tx.is_internal_transfer),
             isReimbursement: Boolean(tx.is_reimbursement),
+            isBalanceAdjustment: Boolean(tx.is_balance_adjustment),
           },
         ]
       })

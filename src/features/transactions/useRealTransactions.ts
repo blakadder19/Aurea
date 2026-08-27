@@ -26,6 +26,8 @@ export interface RealTransaction extends Transaction {
   incomeType: IncomeType | null
   /** Te devuelven parte de un gasto compartido: resta del gasto de su categoría, no suma como ingreso. */
   isReimbursement: boolean
+  /** Saldo inicial o revalorización de un activo manual: mueve el patrimonio, pero no es ingreso ni gasto. */
+  isBalanceAdjustment: boolean
 }
 
 /**
@@ -91,7 +93,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
         supabase
           .from('transactions')
           .select(
-            'id, account_id, booking_date, value_date, description, amount_cents, category_id, needs_review, user_note, tags, display_name, is_internal_transfer, receipt_path, income_type, is_reimbursement',
+            'id, account_id, booking_date, value_date, description, amount_cents, category_id, needs_review, user_note, tags, display_name, is_internal_transfer, receipt_path, income_type, is_reimbursement, is_balance_adjustment',
           )
           .order('booking_date', { ascending: false })
           .limit(loadedCount),
@@ -142,6 +144,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
           hasSplits,
           incomeType: (row.income_type as IncomeType | null) ?? null,
           isReimbursement: Boolean(row.is_reimbursement),
+          isBalanceAdjustment: Boolean(row.is_balance_adjustment),
         }
       })
 

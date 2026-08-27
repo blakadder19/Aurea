@@ -26,6 +26,7 @@ function PanelContent({
   onRename,
   onDisconnect,
   onChangeExcluded,
+  onRevalue,
 }: {
   account: Account
   /** true en real (con o sin banco ya sincronizado), false/undefined en demo. */
@@ -38,7 +39,12 @@ function PanelContent({
   onRename?: (accountId: string, displayName: string) => Promise<string | null>
   onDisconnect?: () => Promise<string | null>
   onChangeExcluded?: (accountId: string, excluded: boolean) => Promise<string | null>
+  onRevalue?: (accountId: string, newValueCents: number) => Promise<string | null>
 }) {
+  const [revaluing, setRevaluing] = useState(false)
+  const [valueInput, setValueInput] = useState(String(account.balance))
+  const [savingValue, setSavingValue] = useState(false)
+  const [valueError, setValueError] = useState<string | null>(null)
   const [savingFn, setSavingFn] = useState(false)
   const [fnError, setFnError] = useState<string | null>(null)
   const [shareInput, setShareInput] = useState(String(account.sharePercent ?? 100))
@@ -97,6 +103,21 @@ function PanelContent({
     const error = await onChangeSharePercent(account.id, percent)
     if (error) setShareError(error)
     setSavingShare(false)
+  }
+
+  async function handleSaveValue() {
+    if (!onRevalue) return
+    const value = Number(valueInput)
+    if (!Number.isFinite(value)) {
+      setValueError('Escribe un número.')
+      return
+    }
+    setSavingValue(true)
+    setValueError(null)
+    const error = await onRevalue(account.id, Math.round(value * 100))
+    setSavingValue(false)
+    if (error) setValueError(error)
+    else setRevaluing(false)
   }
 
   async function handleChangeExcluded(excluded: boolean) {
@@ -328,6 +349,18 @@ function PanelContent({
             Cambiar función
           </button>
         )}
+        {onRevalue && account.isManual && !revaluing && (
+          <button
+            type="button"
+            onClick={() => {
+              setValueInput(String(account.balance))
+              setRevaluing(true)
+            }}
+            className="min-h-11 rounded-md border border-line px-4 py-2.5 text-base font-semibold text-ink"
+          >
+            Actualizar valor
+          </button>
+        )}
         {onRename && !renaming && (
           <button
             type="button"
@@ -347,6 +380,47 @@ function PanelContent({
           </button>
         )}
       </div>
+
+      {onRevalue && account.isManual && revaluing && (
+        <div className="flex flex-col gap-2 border-t border-line pt-4">
+          <label className="text-sm font-semibold text-ink-muted">¿Cuánto vale hoy?</label>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <input
+              type="number"
+              step={100}
+              autoFocus
+              value={valueInput}
+              disabled={savingValue}
+              onChange={(e) => setValueInput(e.target.value)}
+              className="min-h-11 w-40 rounded-md border border-line px-3 py-2 text-right text-base text-ink tabular"
+            />
+            <span className="text-ink-muted">€</span>
+            <button
+              type="button"
+              disabled={savingValue}
+              onClick={() => void handleSaveValue()}
+              className="min-h-11 rounded-md border border-brand bg-brand px-3.5 text-sm font-semibold text-surface hover:bg-brand-hover disabled:opacity-60"
+            >
+              {savingValue ? 'Guardando…' : 'Guardar'}
+            </button>
+            <button
+              type="button"
+              disabled={savingValue}
+              onClick={() => {
+                setRevaluing(false)
+                setValueError(null)
+              }}
+              className="min-h-11 rounded-md border border-line px-3.5 text-sm font-semibold text-ink"
+            >
+              Cancelar
+            </button>
+          </div>
+          <p className="text-sm text-ink-muted">
+            Sube o baja tu patrimonio, pero no cuenta como ingreso ni como gasto — que tu piso valga más no es que hayas ingresado dinero.
+          </p>
+          {valueError && <p className="text-sm text-danger-text">{valueError}</p>}
+        </div>
+      )}
 
       {!account.isManual && onDisconnect && confirmingDisconnect && (
         <div className="flex flex-col gap-2 border-t border-line pt-4">
@@ -424,6 +498,7 @@ export function AccountDetailPanel({
   onRename,
   onDisconnect,
   onChangeExcluded,
+  onRevalue,
 }: {
   accounts?: Account[]
   isReal?: boolean
@@ -434,6 +509,7 @@ export function AccountDetailPanel({
   onRename?: (accountId: string, displayName: string) => Promise<string | null>
   onDisconnect?: () => Promise<string | null>
   onChangeExcluded?: (accountId: string, excluded: boolean) => Promise<string | null>
+  onRevalue?: (accountId: string, newValueCents: number) => Promise<string | null>
 }) {
   const accountId = useAccountsStore((s) => s.panelAccountId)
   const closePanel = useAccountsStore((s) => s.closePanel)
@@ -466,6 +542,7 @@ export function AccountDetailPanel({
           onRename={onRename}
           onDisconnect={onDisconnect}
           onChangeExcluded={onChangeExcluded}
+          onRevalue={onRevalue}
         />
       )}
     </SidePanel>

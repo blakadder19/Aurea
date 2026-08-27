@@ -17,6 +17,10 @@ describe('incomeContribution', () => {
   it('un reembolso no es ingreso', () => {
     expect(incomeContribution({ amountCents: 1200, isReimbursement: true })).toBe(0)
   })
+
+  it('dar de alta un piso de 240.000 € no es ingresar 240.000 €', () => {
+    expect(incomeContribution({ amountCents: 24_000_000, isBalanceAdjustment: true })).toBe(0)
+  })
 })
 
 describe('expenseContribution', () => {
@@ -46,6 +50,10 @@ describe('expenseContribution', () => {
     const cena = expenseContribution({ amountCents: -4000 })
     const mitad = expenseContribution({ amountCents: 2000, isReimbursement: true })
     expect(cena + mitad).toBe(2000)
+  })
+
+  it('revalorizar un activo a la baja no es un gasto', () => {
+    expect(expenseContribution({ amountCents: -500000, isBalanceAdjustment: true })).toBe(0)
   })
 })
 

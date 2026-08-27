@@ -115,7 +115,7 @@ export function useRealBudget(categories: RealCategory[] | null, budgetMonthStar
         supabase.from('budgets').select('category_id, amount_cents').eq('month', monthKeyForCycle(start)),
         supabase
           .from('transaction_category_amounts')
-          .select('category_id, amount_cents, is_reimbursement')
+          .select('category_id, amount_cents, is_reimbursement, is_balance_adjustment')
           .not('category_id', 'is', null)
           .eq('is_internal_transfer', false)
           .or(dateFilter),
@@ -133,7 +133,11 @@ export function useRealBudget(categories: RealCategory[] | null, budgetMonthStar
       for (const row of txRows ?? []) {
         // Solo gasto: los ingresos no cuentan en el ritmo del presupuesto,
         // pero un reembolso sí — resta de lo gastado en esa categoría.
-        const tx = { amountCents: row.amount_cents as number, isReimbursement: Boolean(row.is_reimbursement) }
+        const tx = {
+          amountCents: row.amount_cents as number,
+          isReimbursement: Boolean(row.is_reimbursement),
+          isBalanceAdjustment: Boolean(row.is_balance_adjustment),
+        }
         if (!countsTowardCategorySpend(tx)) continue
         const categoryId = row.category_id as string
         spentByCategory.set(categoryId, (spentByCategory.get(categoryId) ?? 0) + expenseContribution(tx))
