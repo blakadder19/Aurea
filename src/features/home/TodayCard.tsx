@@ -12,23 +12,30 @@ const ACCENT_BY_TONE: Record<MonthTone, string> = {
   'sin-datos': 'bg-ink-faint',
 }
 
-interface PendingAction {
+export interface PendingAction {
   label: string
   to: string
 }
 
 /**
- * De la bandeja de avisos a botones cortos: lo que hay que hacer, no la
- * explicación de por qué. La explicación sigue estando más abajo, en
- * "Necesita tu atención".
+ * De la bandeja de avisos a botones que dicen QUÉ HACER.
+ *
+ * El titular de un aviso nombra la cosa ("Gomo", "Tramyard Exchange Rent
+ * To Eoin Moore"), que como botón no dice nada. La acción del propio aviso
+ * ya está escrita en imperativo ("Abrir Centro de revisión", "Ver en Pagos
+ * y suscripciones"), así que se usa esa. Varios avisos que llevan al mismo
+ * sitio se juntan en un botón con el número, en vez de repetirlo.
  */
-function toActions(items: AttentionItem[]): PendingAction[] {
-  return items
-    .map((item) => {
-      const target = item.actions.find((a) => a.to)?.to
-      return target ? { label: item.headline, to: target } : null
-    })
-    .filter((a): a is PendingAction => a !== null)
+export function toActions(items: AttentionItem[]): PendingAction[] {
+  const byDestination = new Map<string, { label: string; count: number }>()
+  for (const item of items) {
+    const action = item.actions.find((a) => a.to)
+    if (!action?.to) continue
+    const existing = byDestination.get(action.to)
+    byDestination.set(action.to, { label: existing?.label ?? action.label, count: (existing?.count ?? 0) + 1 })
+  }
+  return [...byDestination.entries()]
+    .map(([to, { label, count }]) => ({ to, label: count > 1 ? `${label} (${count})` : label }))
     .slice(0, 4)
 }
 
