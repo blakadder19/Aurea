@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
-import { RingChart } from '../../components/RingChart'
 import { SectionLabel } from '../../components/SectionLabel'
 import { Skeleton } from '../../components/states/Skeleton'
 import {
@@ -60,24 +59,19 @@ export function AvailableTodayCard({ real }: { real?: RealAvailableToday } = {})
     <Card className="flex flex-col gap-5" padding="lg">
       <SectionLabel>Disponible hoy</SectionLabel>
 
-      <div className="flex flex-wrap items-center gap-5">
-        <RingChart
-          segments={[{ value: Math.max(0, data.availableToday), strokeClassName: 'stroke-brand' }]}
-          max={Math.max(data.eligibleAccountsSum, data.availableToday, 1)}
-          size={92}
-          strokeWidth={10}
-          ariaLabel="Disponible hoy como proporción de tus cuentas para gastar"
-        >
-          <span className="text-[10px] font-bold tracking-[0.04em] text-ink-faint uppercase">Hoy</span>
-        </RingChart>
-        <div>
-          <div className="font-serif text-[42px] leading-none font-extrabold tracking-[-0.02em] text-ink tabular lg:text-[58px]">
-            <Money value={data.availableToday} />
-          </div>
-          <p className="mt-2.5 max-w-[46ch] text-base text-ink-muted text-pretty">
-            Puedes gastar esto sin tocar tu ahorro ni dejar sin cubrir los pagos de los próximos 14 días.
-          </p>
+      {/*
+        Sin anillo: cuando el disponible es negativo no hay arco que pintar,
+        así que ocupaba 92 px para no decir nada. Y el titular de la
+        pantalla ya lo lleva la tarjeta de arriba, así que esta cifra no
+        necesita ser la más grande de Inicio — solo la más clara.
+      */}
+      <div>
+        <div className="font-serif text-[34px] leading-none font-extrabold tracking-[-0.02em] text-ink tabular lg:text-[40px]">
+          <Money value={data.availableToday} />
         </div>
+        <p className="mt-2.5 max-w-[46ch] text-base text-ink-muted text-pretty">
+          Puedes gastar esto sin tocar tu ahorro ni dejar sin cubrir los pagos de los próximos 14 días.
+        </p>
       </div>
 
       {/*

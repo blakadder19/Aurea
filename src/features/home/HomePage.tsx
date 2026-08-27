@@ -221,7 +221,7 @@ export function HomePage() {
       <Header
         isAuthenticated={isAuthenticated}
         today={today}
-        alertCount={alertCount}
+        alertCount={hasReal ? 0 : alertCount}
         period={period}
         onPeriodChange={setPeriod}
         customFrom={customFrom}
