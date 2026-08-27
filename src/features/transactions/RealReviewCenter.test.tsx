@@ -72,7 +72,13 @@ function renderCenter(onSaveCategory = vi.fn().mockResolvedValue(null), onBulkCl
     onBulkClassified,
     ...render(
       <BrowserRouter>
-        <RealReviewCenter transactions={txs} categories={categories} onSaveCategory={onSaveCategory} onBulkClassified={onBulkClassified} />
+        <RealReviewCenter
+          transactions={txs}
+          categories={categories}
+          onSaveCategory={onSaveCategory}
+          onBulkClassified={onBulkClassified}
+          ownAccountNames={[]}
+        />
       </BrowserRouter>,
     ),
   }

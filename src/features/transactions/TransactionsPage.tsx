@@ -279,6 +279,7 @@ export function TransactionsPage() {
             categories={realCategories ?? []}
             onSaveCategory={handleSaveCategory}
             onBulkClassified={refetch}
+            ownAccountNames={(realAccounts ?? []).map((a) => a.name)}
           />
         ) : (
           <>

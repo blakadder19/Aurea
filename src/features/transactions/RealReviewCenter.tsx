@@ -2,6 +2,8 @@ import { useRef, useState } from 'react'
 import { Badge } from '../../components/Badge'
 import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
+import { InternalTransfersCard } from './InternalTransfersCard'
+import { useInternalTransferCandidates } from './useInternalTransfers'
 import { useTransactionsStore } from './store'
 import { displayLabelFor } from './TransactionsTable'
 import { suggestCategories } from './useAiCategorization'
@@ -16,6 +18,8 @@ interface RealReviewCenterProps {
   categories: RealCategory[]
   onSaveCategory: (id: string, categoryId: string) => Promise<string | null>
   onBulkClassified: () => void
+  /** Nombres de las cuentas del usuario — dan contexto para distinguir un traspaso propio de un reembolso ajeno. */
+  ownAccountNames: string[]
 }
 
 /**
@@ -24,10 +28,16 @@ interface RealReviewCenterProps {
  * sugerencia real de la API de Anthropic sobre tus propias categorías,
  * que tú aceptas o descartas; nunca se aplica sola.
  */
-export function RealReviewCenter({ transactions, categories, onSaveCategory, onBulkClassified }: RealReviewCenterProps) {
+export function RealReviewCenter({ transactions, categories, onSaveCategory, onBulkClassified, ownAccountNames }: RealReviewCenterProps) {
   const openPanel = useTransactionsStore((s) => s.openPanel)
   const pending = transactions.filter(isTransactionPending)
   const categoryById = new Map(categories.map((c) => [c.id, categoryLabel(c)]))
+  const { candidates: transferCandidates, refetchDismissed } = useInternalTransferCandidates(transactions, ownAccountNames)
+
+  function handleTransferResolved() {
+    refetchDismissed()
+    onBulkClassified()
+  }
 
   const [suggestions, setSuggestions] = useState<Record<string, { categoryId: string; confidence: 'alta' | 'baja' }>>({})
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
@@ -164,6 +174,7 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory, onB
 
   return (
     <div className="flex flex-col gap-4">
+      <InternalTransfersCard candidates={transferCandidates} onResolved={handleTransferResolved} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-base text-ink-muted">
           {pending.length === 0
@@ -222,9 +233,11 @@ export function RealReviewCenter({ transactions, categories, onSaveCategory, onB
       {autoSummary && <p className="text-sm text-green-text">{autoSummary}</p>}
 
       {pending.length === 0 ? (
-        <Card padding="lg" className="py-12 text-center">
-          <p className="text-base text-ink-muted">No queda nada por revisar.</p>
-        </Card>
+        transferCandidates.length === 0 && (
+          <Card padding="lg" className="py-12 text-center">
+            <p className="text-base text-ink-muted">No queda nada por revisar.</p>
+          </Card>
+        )
       ) : (
         pending.map((t) => {
           const suggestion = suggestions[t.id]
