@@ -5,6 +5,7 @@ import { formatIsoDayMonth } from '../../lib/format'
 import { supabase } from '../../lib/supabase/client'
 import { useAuthStore } from '../../lib/supabase/useAuth'
 import { useTransactionsRefreshBus } from './refreshBus'
+import { buildAccountLabels } from './accountLabels'
 import { categoryLabel, type RealCategory } from './useRealCategories'
 
 /** Forma compatible con `Transaction` (TransactionsTable/TransactionPanel no cambian) + los datos que necesita edición/revisión real. */
@@ -109,7 +110,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
           )
           .order('booking_date', { ascending: false })
           .limit(loadedCount),
-        supabase.from('accounts').select('id, name, display_name, product, connection_id'),
+        supabase.from('accounts').select('id, name, display_name, product, connection_id, currency'),
         supabase.from('bank_connections').select('id, aspsp_name'),
         supabase.from('transaction_splits').select('transaction_id'),
       ])
@@ -124,12 +125,13 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
       const splitTransactionIds = new Set((splitRows ?? []).map((s) => s.transaction_id as string))
 
       const institutionByConnection = new Map((connectionRows ?? []).map((c) => [c.id, c.aspsp_name as string]))
-      const accountLabelById = new Map(
-        (accountRows ?? []).map((a) => {
-          const name = (a.display_name as string | null) || (a.name as string | null) || (a.product as string | null) || 'Cuenta'
-          const institution = institutionByConnection.get(a.connection_id as string) ?? 'Banco conectado'
-          return [a.id as string, `${name} · ${institution}`]
-        }),
+      const accountLabelById = buildAccountLabels(
+        (accountRows ?? []).map((a) => ({
+          id: a.id as string,
+          name: (a.display_name as string | null) || (a.name as string | null) || (a.product as string | null) || 'Cuenta',
+          institution: institutionByConnection.get(a.connection_id as string) ?? 'Banco conectado',
+          currency: a.currency as string | null,
+        })),
       )
       const categoryNameById = new Map((categories ?? []).map((c) => [c.id, categoryLabel(c)]))
 

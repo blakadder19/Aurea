@@ -4,6 +4,7 @@ import { NoSearchResults } from '../../components/states/NoSearchResults'
 import { transactions as demoTransactions, type Transaction } from '../../data/transactions'
 import { categoryColorClass } from '../../lib/categoryColor'
 import { formatMoney } from '../../lib/format'
+import { groupByMonth } from './groupByMonth'
 import { ALL_ACCOUNTS, ALL_CATEGORIES, ALL_STATUSES, DATE_ALL, DATE_THIS_MONTH, STATUS_NEEDS_REVIEW, useTransactionsStore } from './store'
 
 /** Lo que se muestra como comercio: el nombre personal si lo has puesto, si no lo que dice el banco. */
@@ -210,6 +211,7 @@ export function TransactionsTable({ transactions = demoTransactions }: { transac
       matchesDateFilter(t, dateFilter),
   )
   const allFilteredSelected = filtered.length > 0 && filtered.every((t) => selectedIds.has(t.id))
+  const groups = groupByMonth(filtered)
 
   if (filtered.length === 0) {
     return (
@@ -254,18 +256,40 @@ export function TransactionsTable({ transactions = demoTransactions }: { transac
                 </th>
               </tr>
             </thead>
-            <tbody>
-              {filtered.map((t) => (
-                <Row key={t.id} transaction={t} />
-              ))}
-            </tbody>
+            {groups.map((group) => (
+              <tbody key={group.key || 'sin-fecha'}>
+                {group.label && (
+                  <tr>
+                    <th colSpan={7} className="border-b border-line bg-canvas px-5 py-2 text-left">
+                      <span className="text-[13px] font-semibold tracking-[0.06em] text-ink-muted uppercase">{group.label}</span>
+                      <span className="ml-2 text-[13px] font-normal text-ink-faint normal-case">
+                        {formatMoney(group.spent, 0)} de gasto
+                      </span>
+                    </th>
+                  </tr>
+                )}
+                {group.transactions.map((t) => (
+                  <Row key={t.id} transaction={t} />
+                ))}
+              </tbody>
+            ))}
           </table>
         </div>
       </div>
 
       <div className="flex shrink-0 flex-col gap-2.5 lg:hidden">
-        {filtered.map((t) => (
-          <MobileCard key={t.id} transaction={t} />
+        {groups.map((group) => (
+          <div key={group.key || 'sin-fecha'} className="flex flex-col gap-2.5">
+            {group.label && (
+              <div className="flex items-baseline justify-between gap-2 pt-2">
+                <span className="text-[13px] font-semibold tracking-[0.06em] text-ink-muted uppercase">{group.label}</span>
+                <span className="text-[13px] text-ink-faint">{formatMoney(group.spent, 0)} de gasto</span>
+              </div>
+            )}
+            {group.transactions.map((t) => (
+              <MobileCard key={t.id} transaction={t} />
+            ))}
+          </div>
         ))}
       </div>
     </>
