@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Badge } from '../../components/Badge'
 import { Card } from '../../components/Card'
 import { Money } from '../../components/Money'
 import { formatIsoDayMonth } from '../../lib/format'
@@ -19,7 +18,7 @@ function CandidateRow({
 }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { outgoing, incoming, confidence } = candidate
+  const { outgoing, incoming } = candidate
 
   async function run(action: () => Promise<string | null>) {
     setBusy(true)
@@ -36,9 +35,6 @@ function CandidateRow({
         <div className="flex min-w-0 flex-col gap-1">
           <div className="flex items-center gap-2">
             <Money value={Math.abs(outgoing.amountCents) / 100} decimals={2} className="text-[17px] font-bold text-ink" />
-            <Badge variant={confidence === 'alta' ? 'info' : 'warning'} icon="">
-              {confidence === 'alta' ? 'Casi seguro' : 'Puede ser un reembolso'}
-            </Badge>
           </div>
           <div className="text-[15px] text-ink-muted">
             <span className="text-danger-text">−</span> {outgoing.description} · {formatIsoDayMonth(outgoing.dateISO)}
@@ -89,6 +85,30 @@ function CandidateRow({
  * Parejas +X/−X que parecen dinero tuyo cambiando de cuenta. Nunca se
  * marcan solas: un reembolso de un tercero encaja igual de bien en importe
  * y fecha, y darlo por hecho borraría un gasto real.
+ *
+ * Aquí hubo un botón "Marcar las N seguras" que confirmaba en lote las
+ * parejas de confianza 'alta'. Se quitó el 1 sep 2026 tras auditar datos
+ * reales: de las 5 parejas confirmadas, 3 estaban mal, y las 3 se habrían
+ * marcado solas porque el detector las daba por 'alta'. Dos eran el adelanto
+ * que el usuario hace por su compañero de piso (dinero que sale de su cuenta
+ * pero no es suyo, indistinguible del traspaso propio salvo por el importe) y
+ * una emparejaba −200 EUR con +200 PLN, porque el emparejador compara
+ * `amountCents` sin mirar la divisa.
+ *
+ * No volver a poner una acción en lote mientras el detector no distinga
+ * divisas y no exista forma de declarar el dinero adelantado por otro.
+ *
+ * También se quitó la insignia "Casi seguro" / "Puede ser un reembolso" de
+ * cada fila, por el mismo motivo: hacía la misma promesa de una en una. Y la
+ * señal que la sostenía no informa — `confidence` sube a 'alta' cuando las
+ * descripciones coinciden a ambos lados, cosa que en un traspaso real pasa
+ * SIEMPRE (un cambio de divisa etiqueta las dos patas igual). Decía "esto
+ * parece dinero moviéndose entre tus cuentas", que es cierto y no es la
+ * pregunta: las tres parejas mal eran dinero moviéndose entre sus cuentas.
+ *
+ * `confidence` sigue existiendo en el motor porque ordena qué parejas se
+ * forman primero (`detectInternalTransferCandidates`); quitarlo cambiaría el
+ * emparejamiento. Lo que se quita es la promesa en pantalla.
  */
 export function InternalTransfersCard({
   candidates,
@@ -99,44 +119,17 @@ export function InternalTransfersCard({
   categoryIdOf: (transactionId: string) => string | undefined
   onResolved: () => void
 }) {
-  const [confirmingAll, setConfirmingAll] = useState(false)
-  const [bulkError, setBulkError] = useState<string | null>(null)
-  const sure = candidates.filter((c) => c.confidence === 'alta')
-
   if (candidates.length === 0) return null
-
-  async function handleConfirmAllSure() {
-    setConfirmingAll(true)
-    setBulkError(null)
-    const results = await Promise.all(sure.map((c) => confirmInternalTransfer(c.outgoing.id, c.incoming.id)))
-    setConfirmingAll(false)
-    const failed = results.filter(Boolean).length
-    if (failed > 0) setBulkError(`No hemos podido marcar ${failed} de ${sure.length}. Inténtalo de nuevo con las que queden.`)
-    onResolved()
-  }
 
   return (
     <Card padding="lg" className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="font-serif text-[22px] lg:text-[19px] font-semibold text-ink">Dinero tuyo cambiando de cuenta</h2>
-          <p className="max-w-[70ch] text-[15px] text-ink-muted">
-            {candidates.length} pareja{candidates.length === 1 ? '' : 's'} de cargo y abono del mismo importe entre dos cuentas tuyas. Si es un
-            traspaso, no es ni gasto ni ingreso — y hoy se está contando como las dos cosas, inflando tus cifras.
-          </p>
-        </div>
-        {sure.length > 1 && (
-          <button
-            type="button"
-            disabled={confirmingAll}
-            onClick={() => void handleConfirmAllSure()}
-            className="min-h-11 shrink-0 rounded-md border border-brand bg-brand px-4 py-2.5 text-base font-semibold text-surface hover:bg-brand-hover disabled:opacity-60"
-          >
-            {confirmingAll ? 'Marcando…' : `Marcar las ${sure.length} seguras`}
-          </button>
-        )}
+      <div>
+        <h2 className="font-serif text-[22px] lg:text-[19px] font-semibold text-ink">Dinero tuyo cambiando de cuenta</h2>
+        <p className="max-w-[70ch] text-[15px] text-ink-muted">
+          {candidates.length} pareja{candidates.length === 1 ? '' : 's'} de cargo y abono del mismo importe entre dos cuentas tuyas. Si es un
+          traspaso, no es ni gasto ni ingreso — y hoy se está contando como las dos cosas, inflando tus cifras.
+        </p>
       </div>
-      {bulkError && <p className="text-sm text-danger-text">{bulkError}</p>}
       <div className="flex flex-col">
         {candidates.map((c) => (
           <CandidateRow key={`${c.outgoing.id}::${c.incoming.id}`} candidate={c} categoryIdOf={categoryIdOf} onResolved={onResolved} />
