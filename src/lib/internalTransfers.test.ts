@@ -2,7 +2,16 @@ import { describe, expect, it } from 'vitest'
 import { detectInternalTransferCandidates, type TransferTxLike } from './internalTransfers'
 
 function tx(overrides: Partial<TransferTxLike> & { id: string; amountCents: number }): TransferTxLike {
-  return { accountId: 'acc-1', dateISO: '2026-07-10', description: '', ...overrides }
+  return {
+    accountId: 'acc-1',
+    dateISO: '2026-07-10',
+    description: '',
+    currency: 'EUR',
+    transactionCode: null,
+    exchangeRate: null,
+    instructedAmountCents: null,
+    ...overrides,
+  }
 }
 
 const OWN_ACCOUNTS = ['Alejandro López', 'ALEJANDRO LOPEZ MOLINA & ELISABET MARTINEZ IBANEZ']
@@ -85,6 +94,100 @@ describe('detectInternalTransferCandidates', () => {
     )
     expect(candidates).toHaveLength(1)
     expect(candidates[0].confidence).toBe('media')
+  })
+
+  // Lo que dice el banco -------------------------------------------------------
+
+  it('no empareja divisas distintas aunque la cifra coincida (el falso 200 EUR / 200 PLN)', () => {
+    // Caso real del 14 y 15 de agosto: un cargo de 200,00 € y un abono de
+    // 200,00 zł, de dos cambios DISTINTOS, que el detector daba por pareja
+    // porque solo miraba `amountCents`. Se llegó a confirmar en la base.
+    const candidates = detectInternalTransferCandidates([
+      tx({ id: 'eur', accountId: 'acc-eur', amountCents: -20000, currency: 'EUR', dateISO: '2026-08-14', description: 'Exchanged to PLN' }),
+      tx({ id: 'pln', accountId: 'acc-pln', amountCents: 20000, currency: 'PLN', dateISO: '2026-08-15', description: 'Exchanged to PLN' }),
+    ])
+    expect(candidates).toEqual([])
+  })
+
+  it('empareja las dos patas de un cambio por la tasa, aunque los importes no coincidan', () => {
+    // −47,10 € y +200,00 zł: la misma operación, misma tasa, cifras distintas.
+    const candidates = detectInternalTransferCandidates([
+      tx({
+        id: 'eur',
+        accountId: 'acc-eur',
+        amountCents: -4710,
+        instructedAmountCents: -4663,
+        currency: 'EUR',
+        dateISO: '2026-08-15',
+        transactionCode: 'EXCHANGE',
+        exchangeRate: '4.2894237149666891',
+        description: 'Exchanged to PLN',
+      }),
+      tx({
+        id: 'pln',
+        accountId: 'acc-pln',
+        amountCents: 20000,
+        instructedAmountCents: 20000,
+        currency: 'PLN',
+        dateISO: '2026-08-15',
+        transactionCode: 'EXCHANGE',
+        exchangeRate: '4.2894237149666891',
+        description: 'Exchanged to PLN',
+      }),
+    ])
+    expect(candidates).toHaveLength(1)
+    expect(candidates[0].outgoing.id).toBe('eur')
+    expect(candidates[0].incoming.id).toBe('pln')
+    expect(candidates[0].confidence).toBe('alta')
+  })
+
+  it('con la misma tasa repetida el mismo día, cada pata va con la que le cuadra', () => {
+    // Revolut reutiliza la tasa: cuatro patas, dos parejas. Si bastara con
+    // compartir tasa, se cruzarían.
+    const rate = '4.2894237149666891'
+    const exchange = (id: string, accountId: string, amountCents: number, currency: string, dateISO: string) =>
+      tx({ id, accountId, amountCents, instructedAmountCents: amountCents, currency, dateISO, transactionCode: 'EXCHANGE', exchangeRate: rate, description: 'Exchanged to PLN' })
+
+    const candidates = detectInternalTransferCandidates([
+      exchange('eur-23', 'acc-eur', -2332, 'EUR', '2026-08-16'),
+      exchange('pln-100', 'acc-pln', 10000, 'PLN', '2026-08-16'),
+      exchange('eur-47', 'acc-eur', -4663, 'EUR', '2026-08-15'),
+      exchange('pln-200', 'acc-pln', 20000, 'PLN', '2026-08-15'),
+    ])
+
+    expect(candidates).toHaveLength(2)
+    const pairs = candidates.map((c) => `${c.outgoing.id}/${c.incoming.id}`).sort()
+    expect(pairs).toEqual(['eur-23/pln-100', 'eur-47/pln-200'])
+  })
+
+  it('no empareja dos cambios de tasas distintas aunque sean de días contiguos', () => {
+    const candidates = detectInternalTransferCandidates([
+      tx({ id: 'eur', accountId: 'acc-eur', amountCents: -20000, currency: 'EUR', dateISO: '2026-08-14', transactionCode: 'EXCHANGE', exchangeRate: '4.2840866671692154', description: 'Exchanged to PLN' }),
+      tx({ id: 'pln', accountId: 'acc-pln', amountCents: 20000, currency: 'PLN', dateISO: '2026-08-15', transactionCode: 'EXCHANGE', exchangeRate: '4.2894237149666891', description: 'Exchanged to PLN' }),
+    ])
+    expect(candidates).toEqual([])
+  })
+
+  it('un TRANSFER marcado por el banco es confianza alta sin depender del texto', () => {
+    const candidates = detectInternalTransferCandidates([
+      tx({ id: 'out', accountId: 'acc-1', amountCents: -85000, transactionCode: 'TRANSFER', description: 'Movimiento' }),
+      tx({ id: 'in', accountId: 'acc-2', amountCents: 85000, transactionCode: 'TRANSFER', description: 'Otra cosa' }),
+    ])
+    expect(candidates).toHaveLength(1)
+    expect(candidates[0].confidence).toBe('alta')
+  })
+
+  it('una pareja respaldada por el banco se lleva el lado antes que una coincidencia de texto', () => {
+    const candidates = detectInternalTransferCandidates(
+      [
+        tx({ id: 'out', accountId: 'acc-1', amountCents: -85000, transactionCode: 'TRANSFER', description: 'To ALEJANDRO LOPEZ MOLINA & ELISABET MARTINEZ IBANEZ' }),
+        tx({ id: 'in-texto', accountId: 'acc-2', amountCents: 85000, description: 'To ALEJANDRO LOPEZ MOLINA & ELISABET MARTINEZ IBANEZ' }),
+        tx({ id: 'in-banco', accountId: 'acc-3', amountCents: 85000, transactionCode: 'TRANSFER', description: 'From Alejandro L' }),
+      ],
+      OWN_ACCOUNTS,
+    )
+    expect(candidates).toHaveLength(1)
+    expect(candidates[0].incoming.id).toBe('in-banco')
   })
 
   it('cada movimiento entra como mucho en una pareja, y gana la de más confianza', () => {

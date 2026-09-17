@@ -77,6 +77,10 @@ export function useInternalTransferCandidates(
       dateISO: t.dateISO ?? '',
       amountCents: Math.round(t.importe * 100),
       description: t.comercio,
+      currency: t.currency,
+      transactionCode: t.transactionCode,
+      exchangeRate: t.exchangeRate,
+      instructedAmountCents: t.instructedAmountCents,
     }))
     .filter((t) => t.dateISO !== '')
 

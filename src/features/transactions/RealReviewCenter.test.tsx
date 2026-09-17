@@ -37,6 +37,10 @@ const transactions: RealTransaction[] = [
     incomeType: null,
     isReimbursement: false,
     isBalanceAdjustment: false,
+    currency: 'EUR',
+    transactionCode: null,
+    exchangeRate: null,
+    instructedAmountCents: null,
   },
   {
     id: 'tx-2',
@@ -57,6 +61,10 @@ const transactions: RealTransaction[] = [
     incomeType: null,
     isReimbursement: false,
     isBalanceAdjustment: false,
+    currency: 'EUR',
+    transactionCode: null,
+    exchangeRate: null,
+    instructedAmountCents: null,
   },
 ]
 const categories: RealCategory[] = [

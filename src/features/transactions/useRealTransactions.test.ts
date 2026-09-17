@@ -27,6 +27,10 @@ const fixtures: Record<string, unknown[]> = {
       value_date: null,
       description: 'Mercadona',
       amount_cents: -6218,
+      currency: 'EUR',
+      transaction_code: 'CARD_PAYMENT',
+      exchange_rate: null,
+      instructed_amount_cents: null,
       category_id: 'cat-1',
       needs_review: false,
       user_note: null,
@@ -115,6 +119,10 @@ describe('useRealTransactions', () => {
         incomeType: null,
         isReimbursement: false,
         isBalanceAdjustment: false,
+        currency: 'EUR',
+        transactionCode: 'CARD_PAYMENT',
+        exchangeRate: null,
+        instructedAmountCents: null,
       },
       {
         id: 'tx-2',
@@ -136,6 +144,12 @@ describe('useRealTransactions', () => {
         incomeType: null,
         isReimbursement: false,
         isBalanceAdjustment: false,
+        // Sin esas columnas en la fila (lo sincronizado antes del 20 jun 2026):
+        // divisa por defecto y el resto a null, sin reventar el mapeo.
+        currency: 'EUR',
+        transactionCode: null,
+        exchangeRate: null,
+        instructedAmountCents: null,
       },
     ])
   })

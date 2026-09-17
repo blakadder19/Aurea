@@ -29,6 +29,14 @@ export interface RealTransaction extends Transaction {
   isReimbursement: boolean
   /** Saldo inicial o revalorización de un activo manual: mueve el patrimonio, pero no es ingreso ni gasto. */
   isBalanceAdjustment: boolean
+  /** Divisa del movimiento, que no siempre es la de la cuenta (un pocket PLN cuelga de la misma cuenta). */
+  currency: string
+  /** Lo que el banco dice que es: EXCHANGE, TRANSFER, CARD_PAYMENT… null en lo anterior al 20 jun 2026, que ya no se puede repedir. */
+  transactionCode: string | null
+  /** Tasa exacta del cambio, tal cual llega. Solo en movimientos con cambio de divisa. */
+  exchangeRate: string | null
+  /** Importe instruido en céntimos: el de antes del margen de Revolut. */
+  instructedAmountCents: number | null
 }
 
 /**
@@ -106,7 +114,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
         supabase
           .from('transactions')
           .select(
-            'id, account_id, booking_date, value_date, description, amount_cents, category_id, needs_review, user_note, tags, display_name, is_internal_transfer, receipt_path, income_type, is_reimbursement, is_balance_adjustment',
+            'id, account_id, booking_date, value_date, description, amount_cents, currency, transaction_code, exchange_rate, instructed_amount_cents, category_id, needs_review, user_note, tags, display_name, is_internal_transfer, receipt_path, income_type, is_reimbursement, is_balance_adjustment',
           )
           .order('booking_date', { ascending: false })
           .limit(loadedCount),
@@ -159,6 +167,10 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
           incomeType: (row.income_type as IncomeType | null) ?? null,
           isReimbursement: Boolean(row.is_reimbursement),
           isBalanceAdjustment: Boolean(row.is_balance_adjustment),
+          currency: (row.currency as string | null) ?? 'EUR',
+          transactionCode: (row.transaction_code as string | null) ?? null,
+          exchangeRate: (row.exchange_rate as string | null) ?? null,
+          instructedAmountCents: (row.instructed_amount_cents as number | null) ?? null,
         }
       })
 

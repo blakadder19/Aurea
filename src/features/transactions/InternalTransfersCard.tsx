@@ -32,15 +32,33 @@ function CandidateRow({
   return (
     <div className="flex flex-col gap-2 border-b border-[#f0f3f1] py-3 last:border-b-0">
       <div className="flex flex-wrap items-center justify-between gap-3">
+        {/*
+          Un importe por pata, cada uno con su divisa. Antes había una sola
+          cifra en grande arriba, que valía porque las dos patas eran iguales
+          por construcción. Un cambio de divisa nunca lo es: −47,10 € y
+          +200,00 zł son la misma pareja, y enseñar solo una de las dos cifras
+          sería mentir sobre la otra.
+        */}
         <div className="flex min-w-0 flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <Money value={Math.abs(outgoing.amountCents) / 100} decimals={2} className="text-[17px] font-bold text-ink" />
+          <div className="text-[15px] text-ink-muted">
+            <span className="text-danger-text">−</span>{' '}
+            <Money
+              value={Math.abs(outgoing.amountCents) / 100}
+              decimals={2}
+              currency={outgoing.currency}
+              className="text-[17px] font-bold text-ink"
+            />{' '}
+            · {outgoing.description} · {formatIsoDayMonth(outgoing.dateISO)}
           </div>
           <div className="text-[15px] text-ink-muted">
-            <span className="text-danger-text">−</span> {outgoing.description} · {formatIsoDayMonth(outgoing.dateISO)}
-          </div>
-          <div className="text-[15px] text-ink-muted">
-            <span className="text-green-text">+</span> {incoming.description} · {formatIsoDayMonth(incoming.dateISO)}
+            <span className="text-green-text">+</span>{' '}
+            <Money
+              value={Math.abs(incoming.amountCents) / 100}
+              decimals={2}
+              currency={incoming.currency}
+              className="text-[17px] font-bold text-ink"
+            />{' '}
+            · {incoming.description} · {formatIsoDayMonth(incoming.dateISO)}
           </div>
         </div>
         <div className="flex shrink-0 gap-2">
@@ -92,11 +110,15 @@ function CandidateRow({
  * marcado solas porque el detector las daba por 'alta'. Dos eran el adelanto
  * que el usuario hace por su compañero de piso (dinero que sale de su cuenta
  * pero no es suyo, indistinguible del traspaso propio salvo por el importe) y
- * una emparejaba −200 EUR con +200 PLN, porque el emparejador compara
+ * una emparejaba −200 EUR con +200 PLN, porque el emparejador comparaba
  * `amountCents` sin mirar la divisa.
  *
- * No volver a poner una acción en lote mientras el detector no distinga
- * divisas y no exista forma de declarar el dinero adelantado por otro.
+ * Lo de la divisa se arregló el 17 sep 2026: el detector usa el código que
+ * manda el banco (`transaction_code`) y la tasa del cambio, así que un cambio
+ * de divisa se empareja por tasa y ya no por cifra. Sigue sin haber acción en
+ * lote, y no debe volver: queda en pie el otro motivo, el adelanto que el
+ * usuario hace por su compañero de piso, que es dinero que sale de su cuenta
+ * sin ser suyo e indistinguible de un traspaso propio.
  *
  * También se quitó la insignia "Casi seguro" / "Puede ser un reembolso" de
  * cada fila, por el mismo motivo: hacía la misma promesa de una en una. Y la
@@ -126,8 +148,8 @@ export function InternalTransfersCard({
       <div>
         <h2 className="font-serif text-[22px] lg:text-[19px] font-semibold text-ink">Dinero tuyo cambiando de cuenta</h2>
         <p className="max-w-[70ch] text-[15px] text-ink-muted">
-          {candidates.length} pareja{candidates.length === 1 ? '' : 's'} de cargo y abono del mismo importe entre dos cuentas tuyas. Si es un
-          traspaso, no es ni gasto ni ingreso — y hoy se está contando como las dos cosas, inflando tus cifras.
+          {candidates.length} pareja{candidates.length === 1 ? '' : 's'} de cargo y abono entre dos cuentas tuyas. Si es un traspaso, no es ni
+          gasto ni ingreso — y hoy se está contando como las dos cosas, inflando tus cifras.
         </p>
       </div>
       <div className="flex flex-col">
