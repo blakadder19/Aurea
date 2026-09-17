@@ -177,6 +177,33 @@ describe('detectInternalTransferCandidates', () => {
     expect(candidates[0].confidence).toBe('alta')
   })
 
+  it('verifiedByBank distingue lo que confirma el banco de lo que solo se parece', () => {
+    const [cambio] = detectInternalTransferCandidates([
+      tx({ id: 'eur', accountId: 'acc-eur', amountCents: -4663, currency: 'EUR', dateISO: '2026-08-15', transactionCode: 'EXCHANGE', exchangeRate: '4.2894237149666891', description: 'Exchanged to PLN' }),
+      tx({ id: 'pln', accountId: 'acc-pln', amountCents: 20000, currency: 'PLN', dateISO: '2026-08-15', transactionCode: 'EXCHANGE', exchangeRate: '4.2894237149666891', description: 'Exchanged to PLN' }),
+    ])
+    expect(cambio.verifiedByBank).toBe(true)
+
+    // Mismo texto a los dos lados y misma cifra, pero nada del banco detrás:
+    // es exactamente la señal que confirmó tres parejas mal en agosto.
+    const [soloTexto] = detectInternalTransferCandidates([
+      tx({ id: 'out', accountId: 'acc-1', amountCents: -20000, description: 'Exchanged to PLN' }),
+      tx({ id: 'in', accountId: 'acc-2', amountCents: 20000, description: 'Exchanged to PLN' }),
+    ])
+    expect(soloTexto.confidence).toBe('alta')
+    expect(soloTexto.verifiedByBank).toBe(false)
+  })
+
+  it('dos EXCHANGE de la misma divisa que solo cuadran en cifra no cuentan como verificados', () => {
+    // Sin tasa compartida no hay confirmación independiente: que ambos sean
+    // EXCHANGE no basta, podrían ser dos cambios distintos del mismo importe.
+    const [pareja] = detectInternalTransferCandidates([
+      tx({ id: 'out', accountId: 'acc-1', amountCents: -5000, currency: 'EUR', transactionCode: 'EXCHANGE', exchangeRate: '1.0842' }),
+      tx({ id: 'in', accountId: 'acc-2', amountCents: 5000, currency: 'EUR', transactionCode: 'EXCHANGE', exchangeRate: '7.7031' }),
+    ])
+    expect(pareja.verifiedByBank).toBe(false)
+  })
+
   it('una pareja respaldada por el banco se lleva el lado antes que una coincidencia de texto', () => {
     const candidates = detectInternalTransferCandidates(
       [

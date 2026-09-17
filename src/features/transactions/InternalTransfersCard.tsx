@@ -120,6 +120,12 @@ function CandidateRow({
  * usuario hace por su compañero de piso, que es dinero que sale de su cuenta
  * sin ser suyo e indistinguible de un traspaso propio.
  *
+ * Si alguna vez vuelve, la única señal que lo justificaría es
+ * `verifiedByBank`, y solo para esas parejas: ahí la confirmación es un dato
+ * del banco (mismo código, misma tasa al dígito 17, importes que cuadran al
+ * aplicarla), no un parecido. Nunca para las de `confidence: 'alta'` a secas,
+ * que es lo que marcó mal las tres de agosto.
+ *
  * También se quitó la insignia "Casi seguro" / "Puede ser un reembolso" de
  * cada fila, por el mismo motivo: hacía la misma promesa de una en una. Y la
  * señal que la sostenía no informa — `confidence` sube a 'alta' cuando las

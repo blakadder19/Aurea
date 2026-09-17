@@ -35,8 +35,28 @@ export interface TransferCandidate {
    * descripción en ambos lados, o una descripción que nombra a una de tus
    * cuentas). 'media' cuando solo cuadran importe y fecha — ahí es donde
    * caben los reembolsos de terceros, y por eso hace falta confirmar.
+   *
+   * Ojo: 'alta' NO quiere decir verificado. Las tres parejas mal confirmadas
+   * que se auditaron el 1 sep 2026 eran todas 'alta'. Para saber si la pareja
+   * la respalda el banco o solo el parecido del texto, mirar `verifiedByBank`.
    */
   confidence: 'alta' | 'media'
+  /**
+   * La pareja la sostiene un dato del banco y no un parecido: ambas patas con
+   * el mismo `transaction_code`, y en un cambio de divisa además la misma tasa
+   * exacta con los importes cuadrando al aplicarla.
+   *
+   * Es confirmación independiente de verdad. Que las dos patas de un cambio
+   * compartan `exchange_rate` al dígito 17 no lo produce ninguna casualidad de
+   * importes ni de fechas: o son el mismo cambio o no lo son. Un texto igual a
+   * los dos lados, en cambio, pasa SIEMPRE en un traspaso real y también en un
+   * reembolso de un tercero, que es justo lo que no se puede distinguir.
+   *
+   * No sube `confidence` porque estas parejas ya salen 'alta' y no hay nada
+   * por encima. Lo que aporta es separar los dos significados que 'alta' tenía
+   * mezclados: "el banco lo dice" y "el texto se parece".
+   */
+  verifiedByBank: boolean
 }
 
 /** Ventana en días: un traspaso entre bancos puede tardar un par de días en aparecer en el otro lado. */
@@ -126,16 +146,8 @@ function isExchangePair(a: TransferTxLike, b: TransferTxLike): boolean {
   return converts(magA, magB, rate) || converts(magB, magA, rate)
 }
 
-/** Ambas patas marcadas por el banco con el mismo código: la pareja no se está adivinando. */
-function bankBacked(out: TransferTxLike, inc: TransferTxLike): boolean {
-  return (
-    (out.transactionCode === 'EXCHANGE' && inc.transactionCode === 'EXCHANGE') ||
-    (out.transactionCode === 'TRANSFER' && inc.transactionCode === 'TRANSFER')
-  )
-}
-
 /**
- * Confianza de la pareja, o null si no son pareja.
+ * Veredicto sobre la pareja, o null si no son pareja.
  *
  * Manda el banco. `bank_transaction_code.code` dice si un movimiento es un
  * cambio de divisa o un traspaso, y desde el 17 sep 2026 está guardado. Antes
@@ -145,14 +157,24 @@ function bankBacked(out: TransferTxLike, inc: TransferTxLike): boolean {
  * Un cambio de divisa NUNCA tiene el mismo importe a los dos lados, así que
  * es el código y la tasa lo que lo identifica, no la cifra.
  */
-function pairConfidence(out: TransferTxLike, inc: TransferTxLike, tokens: string[]): 'alta' | 'media' | null {
-  if (isExchangePair(out, inc)) return 'alta'
+function evaluatePair(
+  out: TransferTxLike,
+  inc: TransferTxLike,
+  tokens: string[],
+): Pick<TransferCandidate, 'confidence' | 'verifiedByBank'> | null {
+  // Mismo cambio de divisa: misma tasa exacta y los importes cuadran con ella.
+  if (isExchangePair(out, inc)) return { confidence: 'alta', verifiedByBank: true }
   // Divisas distintas sin un cambio del banco detrás: los importes no son
   // comparables, no hay nada que emparejar.
   if (out.currency !== inc.currency) return null
   if (inc.amountCents !== -out.amountCents) return null
-  if (out.transactionCode === 'TRANSFER' && inc.transactionCode === 'TRANSFER') return 'alta'
-  return confidenceFor(out, inc, tokens)
+  // Dos EXCHANGE de la misma divisa no llegan aquí verificados: si comparten
+  // tasa ya han salido arriba, y si no, esto es una coincidencia de importe
+  // como cualquier otra. Solo TRANSFER cuenta como respaldado en esta rama.
+  if (out.transactionCode === 'TRANSFER' && inc.transactionCode === 'TRANSFER') {
+    return { confidence: 'alta', verifiedByBank: true }
+  }
+  return { confidence: confidenceFor(out, inc, tokens), verifiedByBank: false }
 }
 
 /**
@@ -169,22 +191,22 @@ export function detectInternalTransferCandidates(
   const incoming = transactions.filter((t) => t.amountCents > 0)
   const tokens = ownAccountTokens(ownAccountNames)
 
-  const scored: (TransferCandidate & { dayGap: number; fromBank: boolean })[] = []
+  const scored: (TransferCandidate & { dayGap: number })[] = []
   for (const out of outgoing) {
     for (const inc of incoming) {
       if (inc.accountId === out.accountId) continue
       const dayGap = daysBetween(out.dateISO, inc.dateISO)
       if (dayGap > MAX_DAY_GAP) continue
-      const confidence = pairConfidence(out, inc, tokens)
-      if (!confidence) continue
-      scored.push({ outgoing: out, incoming: inc, confidence, dayGap, fromBank: bankBacked(out, inc) })
+      const verdict = evaluatePair(out, inc, tokens)
+      if (!verdict) continue
+      scored.push({ outgoing: out, incoming: inc, ...verdict, dayGap })
     }
   }
 
   scored.sort((a, b) => {
     // Lo que dice el banco va primero: una pareja confirmada por código y tasa
     // no debe perder un lado contra una coincidencia de texto.
-    if (a.fromBank !== b.fromBank) return a.fromBank ? -1 : 1
+    if (a.verifiedByBank !== b.verifiedByBank) return a.verifiedByBank ? -1 : 1
     if (a.confidence !== b.confidence) return a.confidence === 'alta' ? -1 : 1
     return a.dayGap - b.dayGap
   })
@@ -195,7 +217,12 @@ export function detectInternalTransferCandidates(
     if (used.has(candidate.outgoing.id) || used.has(candidate.incoming.id)) continue
     used.add(candidate.outgoing.id)
     used.add(candidate.incoming.id)
-    result.push({ outgoing: candidate.outgoing, incoming: candidate.incoming, confidence: candidate.confidence })
+    result.push({
+      outgoing: candidate.outgoing,
+      incoming: candidate.incoming,
+      confidence: candidate.confidence,
+      verifiedByBank: candidate.verifiedByBank,
+    })
   }
   return result
 }
