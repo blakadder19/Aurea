@@ -1,5 +1,12 @@
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2'
-import { decimalToCents, maskIban, pickPrincipalBalance, signedAmountCents, transactionFingerprint } from './normalize.ts'
+import {
+  decimalToCents,
+  maskIban,
+  pickPrincipalBalance,
+  signedAmountCents,
+  transactionBankFields,
+  transactionFingerprint,
+} from './normalize.ts'
 import type { CollectedAccount } from './sync.ts'
 
 export class PersistenceError extends Error {
@@ -53,6 +60,38 @@ async function applyRulesToNewTransactions(
   )
 }
 
+/**
+ * Rellena los campos del banco en movimientos que ya estaban guardados.
+ *
+ * La inserción de arriba es `ignoreDuplicates: true` a propósito: un re-sync no
+ * debe pisar la categoría ni las notas que el usuario haya puesto a mano. El
+ * efecto colateral es que las columnas nuevas se quedarían a null para siempre
+ * en todo lo ya sincronizado. La RPC es la excepción acotada — actualiza solo
+ * las cinco columnas que salen enteras del banco, nunca nada que el usuario
+ * edite, y corre bajo su propio RLS.
+ *
+ * Es idempotente: solo escribe las filas que de verdad cambian, así que a
+ * partir del primer relleno un sync estable devuelve 0.
+ */
+async function backfillBankFields(
+  client: SupabaseClient,
+  rows: Record<string, unknown>[],
+): Promise<number> {
+  if (rows.length === 0) return 0
+  const payload = rows.map((row) => ({
+    account_id: row.account_id,
+    dedup_key: row.dedup_key,
+    transaction_code: row.transaction_code,
+    exchange_rate: row.exchange_rate,
+    exchange_rate_unit_currency: row.exchange_rate_unit_currency,
+    instructed_amount_cents: row.instructed_amount_cents,
+    instructed_currency: row.instructed_currency,
+  }))
+  const { data, error } = await client.rpc('backfill_transaction_bank_fields', { p_rows: payload })
+  if (error) throw new PersistenceError('db_error')
+  return (data as number | null) ?? 0
+}
+
 interface PersistParams {
   client: SupabaseClient
   userId: string
@@ -68,6 +107,8 @@ export interface PersistResult {
   connectionId: string
   accounts: number
   transactionsNew: number
+  /** Movimientos ya existentes a los que este sync les rellenó campos del banco. */
+  transactionsBackfilled: number
 }
 
 /**
@@ -99,6 +140,7 @@ export async function persistCollected(params: PersistParams): Promise<PersistRe
   const connectionId = connection.id as string
 
   let transactionsNew = 0
+  let transactionsBackfilled = 0
   const newlyInserted: { id: string; description: string | null }[] = []
 
   for (const account of accounts) {
@@ -153,6 +195,7 @@ export async function persistCollected(params: PersistParams): Promise<PersistRe
           booking_date: toDate(tx.booking_date),
           value_date: toDate(tx.value_date),
           description: (tx.remittance_information ?? []).join(' ') || null,
+          ...transactionBankFields(tx),
         }))
         // "último gana" dentro del propio lote si Enable Banking repitiera una fila.
         .filter((row) => (seen.has(row.dedup_key) ? false : (seen.add(row.dedup_key), true)))
@@ -164,6 +207,8 @@ export async function persistCollected(params: PersistParams): Promise<PersistRe
       if (transactionsError) throw new PersistenceError('db_error')
       transactionsNew += inserted?.length ?? 0
       if (inserted) newlyInserted.push(...(inserted as { id: string; description: string | null }[]))
+
+      transactionsBackfilled += await backfillBankFields(client, transactionRows)
     }
   }
 
@@ -193,5 +238,5 @@ export async function persistCollected(params: PersistParams): Promise<PersistRe
   })
   if (syncRunError) throw new PersistenceError('db_error')
 
-  return { connectionId, accounts: accounts.length, transactionsNew }
+  return { connectionId, accounts: accounts.length, transactionsNew, transactionsBackfilled }
 }

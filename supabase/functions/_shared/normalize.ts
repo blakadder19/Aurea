@@ -20,6 +20,32 @@ export interface EbBalance {
   last_change_date_time?: string
 }
 
+/**
+ * Cambio de divisa tal y como lo manda Enable Banking. Dos avisos, medidos
+ * sobre movimientos reales y no documentados por ellos:
+ *
+ *  - En un CARD_PAYMENT, `unit_currency` viene como 'EUR' y la divisa
+ *    extranjera NO aparece en ningún campo. Solo un CARD_REFUND la nombra, y
+ *    entonces la tasa viene invertida. Por eso aquí no se deduce ningún par de
+ *    divisas: se guarda lo que llega.
+ *  - `instructed_amount` es el importe ANTES del margen de Revolut;
+ *    `transaction_amount` es lo que de verdad se cobró. La diferencia entre
+ *    ambos es la comisión de cambio.
+ */
+export interface EbExchangeRate {
+  unit_currency?: string
+  exchange_rate?: string
+  rate_type?: string | null
+  contract_identification?: string | null
+  instructed_amount?: EbAmount
+}
+
+export interface EbBankTransactionCode {
+  code?: string
+  sub_code?: string | null
+  description?: string | null
+}
+
 export interface EbTransaction {
   entry_reference?: string
   transaction_amount: EbAmount
@@ -30,6 +56,8 @@ export interface EbTransaction {
   transaction_date?: string
   reference_number?: string
   remittance_information?: string[]
+  bank_transaction_code?: EbBankTransactionCode | null
+  exchange_rate?: EbExchangeRate | null
 }
 
 export interface EbAccountDetails {
@@ -58,6 +86,38 @@ export function decimalToCents(decimal: string): number {
 export function signedAmountCents(amount: EbAmount, creditDebitIndicator?: string): number {
   const magnitude = Math.abs(decimalToCents(amount.amount))
   return creditDebitIndicator === 'DBIT' ? -magnitude : magnitude
+}
+
+/** Campos que vienen del banco y que hasta ahora se descartaban en el mapeo. */
+export interface TransactionBankFields {
+  transaction_code: string | null
+  exchange_rate: string | null
+  exchange_rate_unit_currency: string | null
+  instructed_amount_cents: number | null
+  instructed_currency: string | null
+}
+
+/**
+ * La tasa se deja como string, tal cual llega: viene con 17 cifras
+ * significativas ("7.7270629130483708") y convertirla a `number` la redondea
+ * antes de que Postgres la vea. La columna es `numeric`, que la acepta exacta
+ * desde el texto.
+ *
+ * El importe instruido sí va a céntimos, con el mismo signo que `amount_cents`
+ * (misma función de signo), para poder restar uno de otro sin pensar.
+ */
+export function transactionBankFields(tx: EbTransaction): TransactionBankFields {
+  const xr = tx.exchange_rate
+  const instructed = xr?.instructed_amount
+  return {
+    transaction_code: tx.bank_transaction_code?.code ?? null,
+    exchange_rate: xr?.exchange_rate ?? null,
+    exchange_rate_unit_currency: xr?.unit_currency ?? null,
+    instructed_amount_cents: instructed
+      ? signedAmountCents(instructed, tx.credit_debit_indicator)
+      : null,
+    instructed_currency: instructed?.currency ?? null,
+  }
 }
 
 const BALANCE_PRIORITY = [
