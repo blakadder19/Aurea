@@ -143,9 +143,17 @@ export function TransactionsPage() {
     statusFilter !== ALL_STATUSES ||
     dateFilter !== DATE_ALL
 
+  // El Centro de revisión tiene el mismo problema que el buscador, y por el
+  // mismo motivo: razona sobre lo que hay cargado y da su respuesta por
+  // completa. Cuenta lo que está sin clasificar y empareja traspasos, y las
+  // dos cosas mienten si faltan movimientos por debajo del corte. Con 664
+  // movimientos y 302 más nuevos, los cuatro cambios de divisa del 14-16 de
+  // agosto caen en la posición 303: el detector no los veía nunca.
+  const needsFullHistory = hasActiveFilter || view === 'revision'
+
   useEffect(() => {
-    if (isAuthenticated && hasActiveFilter && hasMore) loadAll()
-  }, [isAuthenticated, hasActiveFilter, hasMore, loadAll])
+    if (isAuthenticated && needsFullHistory && hasMore) loadAll()
+  }, [isAuthenticated, needsFullHistory, hasMore, loadAll])
 
   // La selección por defecto de la demo (AMZN/Zara) no tiene sentido en real:
   // esos ids nunca corresponden a un movimiento real, pero seguirían contando
