@@ -49,6 +49,32 @@ regla? No. Son problemas distintos y se apuntan por separado.
 
 ## Etiquetas
 
+- ~~**2026-09-18 — La banda de acciones en lote se quedaba fuera de pantalla.**~~
+  Arreglado el 2026-09-18. Vive dentro del `<main>` con scroll, por encima de
+  la tabla, y no estaba pegada: seleccionar una casilla de la fila 200 la
+  renderizaba a miles de píxeles por encima de lo que estabas mirando, así que
+  parecía que seleccionar no hacía nada. Con 300 movimientos cargados de
+  entrada, ese era el caso normal. Ahora es `sticky top-0`.
+
+- **2026-09-18 — Siguiente: un creador de etiquetas en condiciones.**
+  Hoy las etiquetas se escriben a mano, en un campo de texto separado por
+  comas, y son un `text[]` libre por fila. No hay catálogo, ni autocompletado,
+  ni renombrado, ni borrado global, y `bulkAddTag` solo hace `trim()`. Eso hace
+  inevitable que acaben conviviendo "viaje", "Viaje" y "viaje-china" como tres
+  cosas distintas, y que nadie se entere hasta que los totales no cuadran.
+
+  Las categorías ya tienen icono y color; las etiquetas deberían tener lo
+  mismo. La industria (Copilot, Quicken Simplifi, Rocket Money) las trata como
+  ciudadano de primera: categoría = tipo de gasto, obligatoria y excluyente;
+  etiqueta = contexto (viaje, proyecto, persona), varias por movimiento y
+  cruzando categorías.
+
+  Implica tabla `tags` propia (nombre, emoji, color, user_id), tabla puente
+  `transaction_tags`, y **migrar el `text[]` actual** — hoy es 1 sola fila con
+  la etiqueta «Comida», así que el momento de hacerlo es ahora y no dentro de
+  500 etiquetas. Al elegir de una lista en vez de teclear desaparece el
+  problema de las variantes, y de paso se arregla lo de abajo.
+
 - **2026-09-18 — El desplegable de etiquetas solo lista las de lo ya cargado.**
   Las opciones salen de `realTransactions` (`TransactionsPage.tsx`), que en la
   vista de tabla y sin filtros son los 300 primeros. Una etiqueta que solo esté

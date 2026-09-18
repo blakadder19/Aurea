@@ -8,7 +8,18 @@ interface BulkActionsBarProps {
   onBulkAddTag?: (ids: string[], tag: string) => Promise<string | null>
 }
 
-/** Banda negra de acciones en lote. Solo visible cuando hay selección. */
+/**
+ * Banda negra de acciones en lote. Solo visible cuando hay selección.
+ *
+ * Va pegada arriba (`sticky`) y no es un detalle estético. Vive dentro del
+ * `<main>` con scroll de Movimientos, por encima de la tabla: sin pegarla,
+ * seleccionar una casilla de la fila 200 renderiza la banda a miles de píxeles
+ * por encima de lo que estás mirando y parece que no pasa nada. Con 300
+ * movimientos cargados de entrada eso es lo normal, no el caso raro.
+ *
+ * `z-10` para quedar por encima de las filas; el panel de detalle es un
+ * Dialog con z-50 y sigue tapándola, como debe.
+ */
 export function BulkActionsBar({ categories, onBulkCategorize, onBulkAddTag }: BulkActionsBarProps) {
   const count = useTransactionsStore((s) => s.selectedIds.size)
   const selectedIds = useTransactionsStore((s) => s.selectedIds)
@@ -45,8 +56,8 @@ export function BulkActionsBar({ categories, onBulkCategorize, onBulkAddTag }: B
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-[14px] bg-ink px-5 py-3.5">
+    <div data-testid="bulk-actions-bar" className="sticky top-0 z-10 flex flex-col gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-[14px] bg-ink px-5 py-3.5 shadow-[0_6px_18px_rgba(22,26,25,0.18)]">
         <div className="text-base font-semibold text-surface">
           {count} movimiento{count === 1 ? '' : 's'} seleccionado{count === 1 ? '' : 's'}
         </div>
