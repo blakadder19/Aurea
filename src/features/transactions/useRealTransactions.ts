@@ -242,35 +242,40 @@ export async function bulkUpdateTransactionCategory(ids: string[], categoryId: s
 }
 
 /**
- * Añade una etiqueta a varios movimientos a la vez, sin pisar las etiquetas
- * que ya tuviera cada uno ni duplicarla si ya la llevaba — lee las etiquetas
- * actuales de cada fila y las actualiza una a una (no hay `array_append` en
- * el cliente de Supabase para un `.update().in(...)` masivo).
+ * Añade una etiqueta a varios movimientos a la vez, sin pisar las que ya
+ * tuviera cada uno ni duplicarla.
+ *
+ * Una sola sentencia, vía RPC. Hasta el 18 sep 2026 esto leía los movimientos
+ * y mandaba un UPDATE POR MOVIMIENTO en paralelo: N escrituras independientes
+ * que podían quedarse a medias sin que nadie se enterara, porque el único
+ * control era "¿alguna devolvió error?". Nadie contaba filas.
+ *
+ * Ahora es atómico y devuelve cuántos llevan la etiqueta al terminar, para
+ * poder contrastarlo con cuántos se seleccionaron. Ver la migración
+ * `20260918120000_add_tag_to_transactions_fn.sql`.
  */
-export async function bulkAddTag(ids: string[], tag: string): Promise<string | null> {
-  if (!supabase) return 'Supabase no está configurado.'
+export async function bulkAddTag(ids: string[], tag: string): Promise<{ error: string | null; taggedCount: number }> {
+  if (!supabase) return { error: 'Supabase no está configurado.', taggedCount: 0 }
   const trimmed = tag.trim()
-  if (!trimmed) return 'Escribe una etiqueta.'
+  if (!trimmed) return { error: 'Escribe una etiqueta.', taggedCount: 0 }
+  if (ids.length === 0) return { error: null, taggedCount: 0 }
 
-  const { data, error: readError } = await supabase.from('transactions').select('id, tags').in('id', ids)
-  if (readError || !data) {
-    console.error('bulkAddTag: fallo al leer', readError)
-    return 'No hemos podido leer los movimientos seleccionados. Inténtalo de nuevo.'
+  const { data, error } = await supabase.rpc('add_tag_to_transactions', { p_ids: ids, p_tag: trimmed })
+  if (error) {
+    console.error('bulkAddTag: fallo al guardar', error)
+    return { error: 'No hemos podido guardar la etiqueta. Inténtalo de nuevo.', taggedCount: 0 }
   }
 
-  const results = await Promise.all(
-    data.map((row) => {
-      const existing = (row.tags as string[] | null) ?? []
-      const tags = existing.includes(trimmed) ? existing : [...existing, trimmed]
-      return supabase!.from('transactions').update({ tags }).eq('id', row.id as string)
-    }),
-  )
-  const failed = results.find((r) => r.error)
-  if (failed) {
-    console.error('bulkAddTag: fallo al guardar', failed.error)
-    return 'No hemos podido guardar la etiqueta en todos los movimientos. Inténtalo de nuevo.'
+  const taggedCount = (data as number | null) ?? 0
+  // Si la cuenta no cuadra con lo seleccionado, se dice. Antes esto era
+  // invisible: el cliente solo miraba si alguna de las N escrituras fallaba.
+  if (taggedCount < ids.length) {
+    return {
+      error: `Solo hemos podido etiquetar ${taggedCount} de ${ids.length} movimientos. Inténtalo de nuevo.`,
+      taggedCount,
+    }
   }
-  return null
+  return { error: null, taggedCount }
 }
 
 /** Escribe etiquetas y nota de un movimiento real. */

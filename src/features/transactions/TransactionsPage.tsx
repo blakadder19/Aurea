@@ -189,9 +189,11 @@ export function TransactionsPage() {
   }
 
   async function handleBulkAddTag(ids: string[], tag: string) {
-    const error = await bulkAddTag(ids, tag)
-    if (!error) refetch()
-    return error
+    const result = await bulkAddTag(ids, tag)
+    // Se refresca aunque falle: si etiquetó de menos, la lista tiene que
+    // enseñar cuáles sí, no quedarse mostrando el estado de antes.
+    refetch()
+    return result
   }
 
   async function handleUpdateManual(id: string, accountId: string, description: string, amountCents: number, dateIso: string) {

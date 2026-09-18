@@ -5,7 +5,7 @@ import { useTransactionsStore } from './store'
 interface BulkActionsBarProps {
   categories?: RealCategory[]
   onBulkCategorize?: (ids: string[], categoryId: string) => Promise<string | null>
-  onBulkAddTag?: (ids: string[], tag: string) => Promise<string | null>
+  onBulkAddTag?: (ids: string[], tag: string) => Promise<{ error: string | null; taggedCount: number }>
 }
 
 /**
@@ -45,7 +45,10 @@ export function BulkActionsBar({ categories, onBulkCategorize, onBulkAddTag }: B
     if (!onBulkAddTag) return
     setSaving(true)
     setError(null)
-    const err = await onBulkAddTag(Array.from(selectedIds), tagInput)
+    // La selección se congela aquí: es la lista que de verdad se manda, y la
+    // que hay que comparar con lo que responda.
+    const ids = Array.from(selectedIds)
+    const { error: err } = await onBulkAddTag(ids, tagInput)
     if (err) setError(err)
     else {
       setAddingTag(false)
