@@ -278,6 +278,11 @@ function RealFields({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [ruleMessage, setRuleMessage] = useState<string | null>(null)
+  // El nombre completo como punto de partida, pero editable: los comercios
+  // llegan con sufijos irrepetibles ("Alipay*otherretail533") y una regla con
+  // el literal entero no vuelve a encajar nunca. Recortándolo a "Alipay" una
+  // sola regla se lleva decenas.
+  const [ruleMatchValue, setRuleMatchValue] = useState(transaction.comercio)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [splits, setSplits] = useState<TransactionSplit[]>([])
   const [editingSplit, setEditingSplit] = useState(false)
@@ -369,15 +374,18 @@ function RealFields({
   }
 
   async function handleCreateRule() {
-    if (!categoryId) return
+    const match = ruleMatchValue.trim()
+    if (!categoryId || !match) return
     setSaving(true)
     setError(null)
-    const { error: err, appliedCount } = await onCreateRule(transaction.comercio, categoryId)
+    const { error: err, appliedCount } = await onCreateRule(match, categoryId)
     setSaving(false)
     if (err) setError(err)
     else
       setRuleMessage(
-        `Hecho. ${appliedCount} movimiento${appliedCount === 1 ? '' : 's'} parecido${appliedCount === 1 ? '' : 's'} a «${transaction.comercio}» clasificado${appliedCount === 1 ? '' : 's'} igual. Los que lleguen de aquí en adelante se clasificarán solos en la próxima sincronización.`,
+        appliedCount === 0
+          ? `Regla creada para «${match}». No había ningún movimiento sin clasificar que la cumpliera; los que lleguen de aquí en adelante se clasificarán solos.`
+          : `Hecho. ${appliedCount} movimiento${appliedCount === 1 ? '' : 's'} sin clasificar que conten${appliedCount === 1 ? 'ía' : 'ían'} «${match}» ${appliedCount === 1 ? 'ha' : 'han'} pasado a esta categoría. Los que lleguen de aquí en adelante se clasificarán solos en la próxima sincronización.`,
       )
   }
 
@@ -561,9 +569,31 @@ function RealFields({
       )}
       {receiptError && <p className="text-sm text-danger-text">{receiptError}</p>}
       {categoryId && (
-        <button type="button" disabled={saving} onClick={() => void handleCreateRule()} className={SECONDARY_BUTTON}>
-          Aplicar esta categoría a movimientos parecidos
-        </button>
+        <div className="flex flex-col gap-2 rounded-md border border-line p-3">
+          <label className={LABEL_CLASSES}>
+            Aplicar esta categoría a movimientos parecidos
+            <input
+              type="text"
+              value={ruleMatchValue}
+              onChange={(e) => setRuleMatchValue(e.target.value)}
+              disabled={saving}
+              className={INPUT_CLASSES}
+              aria-describedby="regla-ayuda"
+            />
+          </label>
+          <p id="regla-ayuda" className="text-sm text-ink-muted">
+            Se clasificarán los movimientos cuya descripción contenga ese texto. Recórtalo para abarcar más: dejando solo «Alipay» entran
+            todos los «Alipay*…». Nunca cambia los que ya tengan categoría.
+          </p>
+          <button
+            type="button"
+            disabled={saving || ruleMatchValue.trim() === ''}
+            onClick={() => void handleCreateRule()}
+            className={`${SECONDARY_BUTTON} disabled:opacity-60`}
+          >
+            Crear regla
+          </button>
+        </div>
       )}
       {ruleMessage && <p className="text-sm text-green-text">{ruleMessage}</p>}
       {error && <p className="text-sm text-danger-text">{error}</p>}

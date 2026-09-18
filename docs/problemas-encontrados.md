@@ -18,6 +18,37 @@ la fecha y dónde está. No se arreglan en el momento: se apuntan y se sigue.
   el sentido a la paginación): sería contar los pendientes con un `count` en
   Supabase, sin traerse las filas.
 
+## Reglas de clasificación
+
+Los tres salieron de la misma pregunta el 2026-09-18: ¿clasificar a mano crea
+regla? No. Son problemas distintos y se apuntan por separado.
+
+- ~~**2026-09-18 — Crear una regla pisaba lo ya clasificado a mano.**~~
+  Arreglado el 2026-09-18. La aplicación retroactiva era un `ilike` sin filtro
+  de categoría ni de fecha, así que reclasificaba en silencio movimientos que
+  el usuario ya había puesto en otra categoría, sin forma de deshacerlo. Ahora
+  solo toca los que están sin clasificar, y un movimiento dividido cuenta como
+  clasificado aunque su `category_id` sea null.
+
+- ~~**2026-09-18 — La regla usaba la descripción entera y no volvía a encajar.**~~
+  Arreglado el 2026-09-18. `match_value` era el nombre completo del comercio,
+  así que con sufijos aleatorios (`Alipay*otherretail533`) la regla no capturaba
+  ningún movimiento futuro. De los 236 de septiembre, 137 descripciones
+  distintas y 120 irrepetibles. Ahora el texto se edita antes de guardar, con el
+  nombre completo como valor por defecto.
+
+- **2026-09-18 — Clasificar a mano no propone crear la regla.**
+  Las tres vías de clasificar (`updateTransactionCategory`,
+  `bulkUpdateTransactionCategory`, `bulkApplyCategorySuggestions`) solo escriben
+  `category_id`; la tabla `rules` no se toca. Crear la regla es un paso aparte,
+  un botón dentro del panel de detalle de un movimiento concreto, de uno en uno.
+  El usuario puede clasificar cien movimientos del mismo comercio sin que nada
+  le sugiera nunca que podría hacerlo una sola vez. Sin arreglar a propósito:
+  lo que falta no es código sino decidir cuándo ofrecerlo sin volverse pesado
+  (¿al segundo movimiento igual?, ¿al guardar?, ¿una sola vez por comercio?).
+
+## Otros
+
 - **2026-09-18 — Siguiente: pedir la tasa del saldo de apertura de un pocket.**
   Es la opción C de la conversión FIFO, y va después de la A (que ya está: el
   gasto sin respaldo se queda fuera del total y se muestra al lado).

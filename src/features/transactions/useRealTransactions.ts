@@ -339,10 +339,22 @@ export async function updateTransactionDisplayName(id: string, displayName: stri
 
 /**
  * Crea una regla ("todo lo que contenga este texto en la descripción va a
- * esta categoría") y la aplica retroactivamente a los movimientos que ya
- * coinciden. También sigue viva después: `persistCollected` (sincronización
+ * esta categoría") y la aplica retroactivamente, pero SOLO a lo que está sin
+ * clasificar. También sigue viva después: `persistCollected` (sincronización
  * bancaria) la vuelve a aplicar a cada movimiento nuevo que llegue, así que
  * no hace falta recrearla cada vez que aparece un cargo del mismo comercio.
+ *
+ * Hasta el 18 sep 2026 el update era un `ilike` a secas, sin mirar la
+ * categoría: crear una regla reclasificaba también movimientos que el usuario
+ * ya había puesto a mano en otra categoría, en silencio y sin forma de
+ * deshacerlo. Una regla sirve para rellenar huecos, no para pisar decisiones
+ * ya tomadas; ante la duda, gana lo que el usuario ya decidió.
+ *
+ * "Sin clasificar" es el mismo criterio que usa el resto de la app
+ * (`isTransactionPending`): un movimiento dividido ya está clasificado —en
+ * varias categorías a la vez— aunque su `category_id` propio sea null, así que
+ * tampoco se toca. Los que tienen categoría y están marcados para revisar
+ * quedan fuera igualmente: tienen categoría, y esto no la pisa.
  */
 export async function createRuleFromTransaction(
   matchValue: string,
@@ -365,10 +377,26 @@ export async function createRuleFromTransaction(
     return { error: 'No hemos podido crear la regla. Inténtalo de nuevo.', appliedCount: 0 }
   }
 
+  const [{ data: candidates, error: readError }, { data: splitRows }] = await Promise.all([
+    supabase.from('transactions').select('id').ilike('description', `%${value}%`).is('category_id', null),
+    supabase.from('transaction_splits').select('transaction_id'),
+  ])
+  if (readError || !candidates) {
+    console.error('createRuleFromTransaction: fallo al buscar a qué aplicarla', readError)
+    return { error: 'La regla se creó, pero no hemos podido aplicarla a movimientos existentes.', appliedCount: 0 }
+  }
+
+  // Un movimiento dividido tiene `category_id` null y aun así está
+  // clasificado, así que se queda fuera. No se puede filtrar en la propia
+  // consulta (no hay NOT EXISTS en el cliente), y son cuatro filas.
+  const splitIds = new Set((splitRows ?? []).map((s) => s.transaction_id as string))
+  const ids = candidates.map((c) => c.id as string).filter((id) => !splitIds.has(id))
+  if (ids.length === 0) return { error: null, appliedCount: 0 }
+
   const { data, error: applyError } = await supabase
     .from('transactions')
     .update({ category_id: categoryId, needs_review: false })
-    .ilike('description', `%${value}%`)
+    .in('id', ids)
     .select('id')
   if (applyError) {
     console.error('createRuleFromTransaction: fallo al aplicar la regla', applyError)
