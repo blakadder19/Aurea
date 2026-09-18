@@ -29,6 +29,12 @@ export interface RealVerdict {
   gastado: number
   restante: number
   previsionCierre: number
+  /**
+   * Gasto en otra divisa que no se ha podido pasar a euros, en céntimos de su
+   * divisa. Se enseña al lado del total en vez de callarlo: si "Gastado" deja
+   * fuera 9,99 £, la cifra tiene que decirlo ella misma.
+   */
+  uncovered?: { currency: string; cents: number }[]
 }
 
 /** Bloque 1 — Conclusión del mes: titular + barra de ritmo + cinco KPIs. */
@@ -100,6 +106,20 @@ export function MonthVerdictCard({ real }: { real?: RealVerdict }) {
           </div>
         ))}
       </div>
+
+      {real && real.uncovered && real.uncovered.length > 0 && (
+        <p className="max-w-[70ch] border-t border-line pt-[18px] text-[15px] text-ink-muted">
+          Fuera de esa cifra:{' '}
+          {real.uncovered.map((u, i) => (
+            <span key={u.currency}>
+              {i > 0 && ' · '}
+              <Money value={u.cents / 100} decimals={2} currency={u.currency} className="font-semibold text-ink" /> sin convertir
+            </span>
+          ))}
+          . Se gastaron desde un saldo que ya tenías antes de conectar el banco, así que no hay ningún cambio al que atribuirles un euro. No se
+          han estimado.
+        </p>
+      )}
     </Card>
   )
 }

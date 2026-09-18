@@ -3,6 +3,7 @@ import type { BudgetCategory } from '../../data/budget'
 import type { BudgetStatus } from '../../lib/budgetCalc'
 import { computeCategoryPace, cycleEnd, cycleStart, daysElapsedInCycle, daysInCycle, forecastCents, isoDate } from '../../lib/budgetCalc'
 import { formatDayMonth, formatMonthYearLong } from '../../lib/format'
+import { convertPocketSpendFifo, type PocketMovement } from '../../lib/pocketFifo'
 import { countsTowardCategorySpend, expenseContribution } from '../../lib/reimbursements'
 import { proposeBudgetFromHistory } from './proposeBudget'
 import { supabase } from '../../lib/supabase/client'
@@ -22,6 +23,12 @@ export interface RealBudgetCategory {
   status: BudgetStatus
 }
 
+/** Gasto de un pocket que FIFO no ha podido respaldar con ningún cambio. En céntimos de su propia divisa. */
+export interface UncoveredPocketSpend {
+  currency: string
+  cents: number
+}
+
 export interface RealBudgetSummary {
   monthLabel: string
   dayOfMonth: number
@@ -32,6 +39,12 @@ export interface RealBudgetSummary {
   forecastCents: number
   paceDeltaCents: number | null
   categories: RealBudgetCategory[]
+  /**
+   * Lo que se ha quedado fuera del total en euros por no tener un cambio
+   * detrás. Se enseña al lado de la cifra, nunca se esconde: un total que
+   * calla lo que no sabe promete más de lo que puede.
+   */
+  uncoveredPocketSpend: UncoveredPocketSpend[]
 }
 
 interface RealBudgetResult {
@@ -40,6 +53,9 @@ interface RealBudgetResult {
   budget: RealBudgetSummary | null
   refetch: () => void
 }
+
+/** La divisa en la que se presupuesta: lo que esté en otra hay que convertirlo antes de sumar. */
+const REPORTING_CURRENCY = 'EUR'
 
 /** Primer día del mes calendario en que empieza el ciclo — clave de almacenamiento en `budgets.month` (la tabla exige que sea día 1). */
 function monthKeyForCycle(start: Date): string {
@@ -112,34 +128,83 @@ export function useRealBudget(categories: RealCategory[] | null, budgetMonthStar
         `and(booking_date.gte.${from},booking_date.lt.${to}),` +
         `and(booking_date.is.null,value_date.gte.${from},value_date.lt.${to})`
 
-      const [{ data: budgetRows, error: budgetError }, { data: txRows, error: txError }] = await Promise.all([
-        supabase.from('budgets').select('category_id, amount_cents').eq('month', monthKeyForCycle(start)),
-        supabase
-          .from('transaction_category_amounts')
-          .select('category_id, amount_cents, is_reimbursement, is_balance_adjustment')
-          .not('category_id', 'is', null)
-          .eq('is_internal_transfer', false)
-          .or(dateFilter),
-      ])
+      const [{ data: budgetRows, error: budgetError }, { data: txRows, error: txError }, { data: pocketRows, error: pocketError }] =
+        await Promise.all([
+          supabase.from('budgets').select('category_id, amount_cents').eq('month', monthKeyForCycle(start)),
+          supabase
+            .from('transaction_category_amounts')
+            .select('transaction_id, category_id, amount_cents, is_reimbursement, is_balance_adjustment')
+            .not('category_id', 'is', null)
+            .eq('is_internal_transfer', false)
+            .or(dateFilter),
+          // Sin filtro de fechas a propósito: FIFO necesita los cambios
+          // ANTERIORES al ciclo, que son los que respaldan lo que se gastó
+          // dentro. Son unas pocas decenas de filas, no una página.
+          supabase
+            .from('transactions')
+            .select('id, account_id, currency, amount_cents, booking_date, value_date, exchange_rate, exchange_rate_unit_currency')
+            .neq('currency', REPORTING_CURRENCY),
+        ])
       if (cancelled) return
-      if (budgetError || txError) {
-        console.error('useRealBudget: fallo al leer budgets/transactions', budgetError ?? txError)
+      if (budgetError || txError || pocketError) {
+        console.error('useRealBudget: fallo al leer budgets/transactions', budgetError ?? txError ?? pocketError)
         setBudget(null)
         setLoading(false)
         return
       }
 
+      // Lo gastado desde un pocket llega en su divisa. FIFO le pone el euro
+      // que de verdad costó, cambio a cambio. Movimientos sigue enseñando la
+      // cifra del banco sin tocar: aquí solo cambia lo que suma Presupuesto.
+      const pockets = (pocketRows ?? []).map(
+        (p): PocketMovement => ({
+          id: p.id as string,
+          accountId: p.account_id as string,
+          currency: p.currency as string,
+          amountCents: p.amount_cents as number,
+          dateISO: ((p.booking_date as string | null) ?? (p.value_date as string | null)) ?? '',
+          exchangeRate: p.exchange_rate as string | null,
+          exchangeRateUnitCurrency: p.exchange_rate_unit_currency as string | null,
+        }),
+      )
+      const pocketById = new Map(pockets.map((p) => [p.id, p]))
+      const converted = convertPocketSpendFifo(pockets)
+
       const budgetedByCategory = new Map((budgetRows ?? []).map((b) => [b.category_id as string, b.amount_cents as number]))
       const spentByCategory = new Map<string, number>()
+      const uncoveredByCurrency = new Map<string, number>()
       for (const row of txRows ?? []) {
+        const rowCents = row.amount_cents as number
+        const pocket = pocketById.get(row.transaction_id as string)
+
+        // Un movimiento dividido aparece una vez por categoría: cada trozo se
+        // lleva su parte proporcional del euro y de lo no respaldado, así la
+        // suma de los trozos vuelve a dar el movimiento entero.
+        const share = pocket && pocket.amountCents !== 0 ? rowCents / pocket.amountCents : 1
+        const eurCents = pocket ? (converted.eurCentsById.get(pocket.id) ?? 0) * share : 0
+        const uncovered = pocket ? (converted.uncoveredCentsById.get(pocket.id) ?? 0) * share : 0
+
         // Solo gasto: los ingresos no cuentan en el ritmo del presupuesto,
         // pero un reembolso sí — resta de lo gastado en esa categoría.
         const tx = {
-          amountCents: row.amount_cents as number,
+          // El signo lo sigue poniendo el movimiento original; FIFO solo da magnitud.
+          amountCents: pocket ? Math.sign(rowCents) * Math.round(eurCents) : rowCents,
           isReimbursement: Boolean(row.is_reimbursement),
           isBalanceAdjustment: Boolean(row.is_balance_adjustment),
         }
-        if (!countsTowardCategorySpend(tx)) continue
+        // Se decide con la fila original: un gasto de 12,00 zł sin cambio
+        // detrás convierte a 0 € y dejaría de parecer un gasto.
+        if (!countsTowardCategorySpend({ ...tx, amountCents: rowCents })) continue
+
+        if (pocket) {
+          // Sin euro y sin descubierto anotado: FIFO no lo trató como gasto
+          // (p. ej. un reembolso en divisa). No hay con qué convertirlo.
+          const sinRespaldo = eurCents === 0 && uncovered === 0 ? Math.abs(rowCents) : uncovered
+          if (sinRespaldo > 0) {
+            uncoveredByCurrency.set(pocket.currency, (uncoveredByCurrency.get(pocket.currency) ?? 0) + sinRespaldo)
+          }
+        }
+
         const categoryId = row.category_id as string
         spentByCategory.set(categoryId, (spentByCategory.get(categoryId) ?? 0) + expenseContribution(tx))
       }
@@ -167,6 +232,10 @@ export function useRealBudget(categories: RealCategory[] | null, budgetMonthStar
         forecastCents: forecastCents(totalSpentCents, daysElapsed, totalDays),
         paceDeltaCents: totalPace.paceDeltaCents,
         categories: realCategories,
+        uncoveredPocketSpend: [...uncoveredByCurrency.entries()]
+          .map(([currency, cents]) => ({ currency, cents: Math.round(cents) }))
+          .filter((u) => u.cents > 0)
+          .sort((a, b) => b.cents - a.cents),
       })
       setLoading(false)
     }
@@ -271,6 +340,7 @@ export function toBudgetViewModel(real: RealBudgetSummary): { verdict: RealVerdi
       gastado: euros(totalSpentCents),
       restante: euros(real.totalRemainingCents),
       previsionCierre: euros(real.forecastCents),
+      uncovered: real.uncoveredPocketSpend,
     },
     categories: real.categories.map((c) => ({
       id: c.categoryId,

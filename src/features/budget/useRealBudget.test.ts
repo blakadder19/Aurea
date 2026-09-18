@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Session } from '@supabase/supabase-js'
 import type { RealCategory } from '../transactions/useRealCategories'
 
@@ -10,7 +10,7 @@ import type { RealCategory } from '../transactions/useRealCategories'
  */
 function chainable(data: unknown[]) {
   const builder: Record<string, unknown> = {}
-  for (const method of ['select', 'eq', 'not', 'or', 'order', 'limit']) {
+  for (const method of ['select', 'eq', 'neq', 'not', 'or', 'order', 'limit']) {
     builder[method] = () => builder
   }
   // oxlint-disable-next-line unicorn/no-thenable -- imita a propósito el query builder real de supabase-js.
@@ -26,6 +26,8 @@ const fixtures: Record<string, unknown[]> = {
     { category_id: 'cat-2', amount_cents: -5000 },
     { category_id: 'cat-1', amount_cents: 90000 }, // ingreso: no debe contar como gasto.
   ],
+  // Pockets en otra divisa: sin filtro de fechas, FIFO los necesita enteros.
+  transactions: [],
 }
 
 const categories: RealCategory[] = [
@@ -103,6 +105,75 @@ describe('useRealBudget', () => {
 
     const supermercado = result.current.budget!.categories.find((c) => c.categoryId === 'cat-1')!
     expect(supermercado.expectedPaceCents).toBe(supermercado.budgetedCents)
+  })
+})
+
+describe('gasto en otra divisa', () => {
+  const backup = {
+    tca: fixtures.transaction_category_amounts,
+    tx: fixtures.transactions,
+  }
+  afterEach(() => {
+    fixtures.transaction_category_amounts = backup.tca
+    fixtures.transactions = backup.tx
+  })
+
+  it('suma el gasto del pocket en euros por FIFO, no su cifra en la divisa', async () => {
+    // 200,00 zł cambiados a 4,0 y 100,00 zł gastados = 25,00 €, no 100,00.
+    fixtures.transaction_category_amounts = [{ transaction_id: 'gasto-pln', category_id: 'cat-1', amount_cents: -10_000 }]
+    fixtures.transactions = [
+      {
+        id: 'cambio-pln',
+        account_id: 'acc-pln',
+        currency: 'PLN',
+        amount_cents: 20_000,
+        booking_date: '2026-08-01',
+        value_date: null,
+        exchange_rate: '4.0',
+        exchange_rate_unit_currency: 'EUR',
+      },
+      {
+        id: 'gasto-pln',
+        account_id: 'acc-pln',
+        currency: 'PLN',
+        amount_cents: -10_000,
+        booking_date: '2026-08-02',
+        value_date: null,
+        exchange_rate: null,
+        exchange_rate_unit_currency: null,
+      },
+    ]
+    useAuthStore.setState({ session: activeSession })
+    const { result } = renderHook(() => useRealBudget(categories, 1, 1))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    expect(result.current.budget!.categories.find((c) => c.categoryId === 'cat-1')!.spentCents).toBe(2_500)
+    expect(result.current.budget!.uncoveredPocketSpend).toEqual([])
+  })
+
+  it('lo que no tiene cambio detrás queda fuera del total y se reporta aparte, nunca en silencio', async () => {
+    // El caso real de la libra: 9,99 £ gastados y ningún cambio a libras.
+    fixtures.transaction_category_amounts = [{ transaction_id: 'gasto-gbp', category_id: 'cat-1', amount_cents: -999 }]
+    fixtures.transactions = [
+      {
+        id: 'gasto-gbp',
+        account_id: 'acc-gbp',
+        currency: 'GBP',
+        amount_cents: -999,
+        booking_date: '2026-08-02',
+        value_date: null,
+        exchange_rate: null,
+        exchange_rate_unit_currency: null,
+      },
+    ]
+    useAuthStore.setState({ session: activeSession })
+    const { result } = renderHook(() => useRealBudget(categories, 1, 1))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    // No se estima: no suma ni un céntimo al total en euros...
+    expect(result.current.budget!.totalSpentCents).toBe(0)
+    // ...pero tampoco desaparece.
+    expect(result.current.budget!.uncoveredPocketSpend).toEqual([{ currency: 'GBP', cents: 999 }])
   })
 })
 
