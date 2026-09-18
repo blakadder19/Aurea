@@ -5,7 +5,7 @@ import { RealReviewCenter } from './RealReviewCenter'
 import { ReviewCenter } from './ReviewCenter'
 import { TransactionPanel } from './TransactionPanel'
 import { TransactionsTable } from './TransactionsTable'
-import { ALL_ACCOUNTS, ALL_CATEGORIES, ALL_STATUSES, DATE_ALL, useTransactionsStore, type TransactionsView } from './store'
+import { ALL_ACCOUNTS, ALL_CATEGORIES, ALL_STATUSES, ALL_TAGS, DATE_ALL, useTransactionsStore, type TransactionsView } from './store'
 import {
   bulkAddTag,
   bulkUpdateTransactionCategory,
@@ -136,11 +136,13 @@ export function TransactionsPage() {
   const categoryFilter = useTransactionsStore((s) => s.categoryFilter)
   const statusFilter = useTransactionsStore((s) => s.statusFilter)
   const dateFilter = useTransactionsStore((s) => s.dateFilter)
+  const tagFilter = useTransactionsStore((s) => s.tagFilter)
   const hasActiveFilter =
     searchQuery.trim() !== '' ||
     accountFilter !== ALL_ACCOUNTS ||
     categoryFilter !== ALL_CATEGORIES ||
     statusFilter !== ALL_STATUSES ||
+    tagFilter !== ALL_TAGS ||
     dateFilter !== DATE_ALL
 
   // El Centro de revisión tiene el mismo problema que el buscador, y por el
@@ -279,6 +281,7 @@ export function TransactionsPage() {
               <FilterBar
                 accounts={hasRealTransactions ? [...new Set(realTransactions!.map((t) => t.cuenta))] : undefined}
                 categories={hasRealTransactions ? realCategories!.map((c) => categoryLabel(c)) : undefined}
+                tags={hasRealTransactions ? [...new Set(realTransactions!.flatMap((t) => t.tags ?? []))].sort() : undefined}
                 isReal={hasRealTransactions}
               />
               <BulkActionsBar

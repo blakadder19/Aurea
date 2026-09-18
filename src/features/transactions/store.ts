@@ -6,6 +6,7 @@ export type TransactionsView = 'tabla' | 'revision'
 export const ALL_ACCOUNTS = 'Todas las cuentas'
 export const ALL_CATEGORIES = 'Todas las categorías'
 export const ALL_STATUSES = 'Cualquier estado'
+export const ALL_TAGS = 'Cualquier etiqueta'
 export const STATUS_NEEDS_REVIEW = 'Requiere revisión'
 export const STATUS_CONFIRMED = 'Confirmado'
 export const DATE_ALL = 'Todo'
@@ -25,6 +26,9 @@ interface TransactionsUIState {
   setCategoryFilter: (category: string) => void
   statusFilter: string
   setStatusFilter: (status: string) => void
+  /** Etiqueta exacta, o ALL_TAGS. La ponen el desplegable y los chips de la tabla. */
+  tagFilter: string
+  setTagFilter: (tag: string) => void
   /** Solo se usa en real — la demo mantiene su propio "Este mes" cosmético en el propio componente. */
   dateFilter: string
   setDateFilter: (date: string) => void
@@ -59,6 +63,8 @@ export const useTransactionsStore = create<TransactionsUIState>((set) => ({
   setCategoryFilter: (categoryFilter) => set({ categoryFilter }),
   statusFilter: ALL_STATUSES,
   setStatusFilter: (statusFilter) => set({ statusFilter }),
+  tagFilter: ALL_TAGS,
+  setTagFilter: (tagFilter) => set({ tagFilter }),
   dateFilter: DATE_ALL,
   setDateFilter: (dateFilter) => set({ dateFilter }),
 

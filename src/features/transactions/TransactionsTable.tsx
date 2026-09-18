@@ -5,7 +5,16 @@ import { transactions as demoTransactions, type Transaction } from '../../data/t
 import { categoryColorClass } from '../../lib/categoryColor'
 import { formatMoney } from '../../lib/format'
 import { groupByMonth } from './groupByMonth'
-import { ALL_ACCOUNTS, ALL_CATEGORIES, ALL_STATUSES, DATE_ALL, DATE_THIS_MONTH, STATUS_NEEDS_REVIEW, useTransactionsStore } from './store'
+import {
+  ALL_ACCOUNTS,
+  ALL_CATEGORIES,
+  ALL_STATUSES,
+  ALL_TAGS,
+  DATE_ALL,
+  DATE_THIS_MONTH,
+  STATUS_NEEDS_REVIEW,
+  useTransactionsStore,
+} from './store'
 
 /** Lo que se muestra como comercio: el nombre personal si lo has puesto, si no lo que dice el banco. */
 export function displayLabelFor(t: Transaction): string {
@@ -21,6 +30,17 @@ export function matchesSearch(t: Transaction, query: string): boolean {
   if ((t.userNote ?? '').toLowerCase().includes(query)) return true
   if ((t.tags ?? []).some((tag) => tag.toLowerCase().includes(query))) return true
   return false
+}
+
+/**
+ * Etiqueta exacta, no "contiene": el buscador ya hace texto libre sobre las
+ * etiquetas, y ahí «viaje» también trae un comercio que se llame "Viajes El
+ * Corte Inglés". Este filtro es la respuesta precisa a "enséñame lo de esta
+ * etiqueta", así que compara la etiqueta entera.
+ */
+export function matchesTagFilter(t: Transaction, tagFilter: string): boolean {
+  if (tagFilter === ALL_TAGS) return true
+  return (t.tags ?? []).includes(tagFilter)
 }
 
 /** Mismo criterio que Centro de revisión: sin categoría o marcado needsReview — no solo needsReview a secas. */
@@ -59,6 +79,45 @@ function Avatar({ transaction }: { transaction: Transaction }) {
       className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[13px] font-bold text-surface ${categoryColorClass(transaction.categoria)}`}
     >
       {displayLabelFor(transaction).charAt(0).toUpperCase()}
+    </div>
+  )
+}
+
+/**
+ * Chips de etiqueta que aplican el filtro al pulsarlos. Sin esto el filtro
+ * queda escondido en un desplegable y las etiquetas siguen siendo adorno.
+ *
+ * Paran la propagación porque la fila entera abre el panel de detalle, y
+ * vuelven a pulsarse para quitar el filtro: si no, desde una lista ya filtrada
+ * no habría forma de salir sin ir al desplegable.
+ */
+function TagChips({ tags }: { tags: string[] }) {
+  const tagFilter = useTransactionsStore((s) => s.tagFilter)
+  const setTagFilter = useTransactionsStore((s) => s.setTagFilter)
+  if (tags.length === 0) return null
+
+  return (
+    <div className="mt-1 flex flex-wrap gap-1">
+      {tags.map((tag) => {
+        const active = tagFilter === tag
+        return (
+          <button
+            key={tag}
+            type="button"
+            aria-pressed={active}
+            aria-label={active ? `Quitar el filtro de la etiqueta ${tag}` : `Filtrar por la etiqueta ${tag}`}
+            onClick={(e) => {
+              e.stopPropagation()
+              setTagFilter(active ? ALL_TAGS : tag)
+            }}
+            className={`rounded-full px-2 py-0.5 text-[12px] font-medium ${
+              active ? 'bg-brand text-surface' : 'bg-canvas text-ink-muted hover:bg-brand-soft hover:text-brand'
+            }`}
+          >
+            {tag}
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -107,15 +166,7 @@ function Row({ transaction }: { transaction: Transaction }) {
         <div className="truncate" title={transaction.comercio}>
           {displayLabelFor(transaction)}
         </div>
-        {transaction.tags && transaction.tags.length > 0 && (
-          <div className="mt-1 flex flex-wrap gap-1">
-            {transaction.tags.map((tag) => (
-              <span key={tag} className="rounded-full bg-canvas px-2 py-0.5 text-[12px] font-medium text-ink-muted">
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
+        <TagChips tags={transaction.tags ?? []} />
       </td>
       <td className="max-w-[190px] truncate border-b border-[#f0f3f1] py-3.5 pr-4 text-base text-ink-muted" title={transaction.cuenta}>
         {transaction.cuenta}
@@ -165,15 +216,7 @@ function MobileCard({ transaction }: { transaction: Transaction }) {
         <div className="mt-0.5 truncate text-sm text-ink-muted">
           {transaction.fecha} · {transaction.categoria} · {transaction.cuenta}
         </div>
-        {transaction.tags && transaction.tags.length > 0 && (
-          <div className="mt-1 flex flex-wrap gap-1">
-            {transaction.tags.map((tag) => (
-              <span key={tag} className="rounded-full bg-canvas px-2 py-0.5 text-[12px] font-medium text-ink-muted">
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
+        <TagChips tags={transaction.tags ?? []} />
       </div>
       <Money
         value={transaction.importe}
@@ -196,6 +239,7 @@ export function TransactionsTable({ transactions = demoTransactions }: { transac
   const statusFilter = useTransactionsStore((s) => s.statusFilter)
   const setStatusFilter = useTransactionsStore((s) => s.setStatusFilter)
   const dateFilter = useTransactionsStore((s) => s.dateFilter)
+  const tagFilter = useTransactionsStore((s) => s.tagFilter)
   const setDateFilter = useTransactionsStore((s) => s.setDateFilter)
   const selectedIds = useTransactionsStore((s) => s.selectedIds)
   const setSelectedIds = useTransactionsStore((s) => s.setSelectedIds)
@@ -208,6 +252,7 @@ export function TransactionsTable({ transactions = demoTransactions }: { transac
       (accountFilter === ALL_ACCOUNTS || t.cuenta === accountFilter) &&
       (categoryFilter === ALL_CATEGORIES || t.categoria === categoryFilter) &&
       (statusFilter === ALL_STATUSES || needsReview(t) === (statusFilter === STATUS_NEEDS_REVIEW)) &&
+      matchesTagFilter(t, tagFilter) &&
       matchesDateFilter(t, dateFilter),
   )
   const allFilteredSelected = filtered.length > 0 && filtered.every((t) => selectedIds.has(t.id))

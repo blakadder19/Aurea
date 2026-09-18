@@ -5,6 +5,7 @@ import {
   ALL_ACCOUNTS,
   ALL_CATEGORIES,
   ALL_STATUSES,
+  ALL_TAGS,
   DATE_ALL,
   DATE_LAST_3_MONTHS,
   DATE_THIS_MONTH,
@@ -29,10 +30,13 @@ const SELECT_CLASSES =
 export function FilterBar({
   accounts = filterAccounts,
   categories = filterCategories,
+  tags = [],
   isReal = false,
 }: {
   accounts?: string[]
   categories?: string[]
+  /** Las etiquetas que de verdad existen en tus movimientos. Vacío = no se enseña el filtro. */
+  tags?: string[]
   isReal?: boolean
 }) {
   const searchQuery = useTransactionsStore((s) => s.searchQuery)
@@ -45,6 +49,8 @@ export function FilterBar({
   const setStatus = useTransactionsStore((s) => s.setStatusFilter)
   const dateFilter = useTransactionsStore((s) => s.dateFilter)
   const setDateFilter = useTransactionsStore((s) => s.setDateFilter)
+  const tag = useTransactionsStore((s) => s.tagFilter)
+  const setTag = useTransactionsStore((s) => s.setTagFilter)
 
   const [demoDate, setDemoDate] = useState(DATE_THIS_MONTH)
 
@@ -114,6 +120,22 @@ export function FilterBar({
         <option>{STATUS_CONFIRMED}</option>
         <option>{STATUS_NEEDS_REVIEW}</option>
       </select>
+      {/*
+        Solo las etiquetas que existen, nunca texto libre: una etiqueta que no
+        tiene ningún movimiento no es una opción, es una errata esperando. Si
+        todavía no has etiquetado nada, el desplegable no aparece en vez de
+        ofrecer una lista vacía.
+      */}
+      {tags.length > 0 && (
+        <select aria-label="Filtrar por etiqueta" value={tag} onChange={(e) => setTag(e.target.value)} className={SELECT_CLASSES}>
+          <option>{ALL_TAGS}</option>
+          {tags.map((t) => (
+            <option key={t}>{t}</option>
+          ))}
+          {/* La etiqueta elegida desde un chip de una fila que ahora mismo ya no está en pantalla. */}
+          {tag !== ALL_TAGS && !tags.includes(tag) && <option value={tag}>{tag}</option>}
+        </select>
+      )}
     </div>
   )
 }

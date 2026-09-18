@@ -47,6 +47,18 @@ regla? No. Son problemas distintos y se apuntan por separado.
   lo que falta no es código sino decidir cuándo ofrecerlo sin volverse pesado
   (¿al segundo movimiento igual?, ¿al guardar?, ¿una sola vez por comercio?).
 
+## Etiquetas
+
+- **2026-09-18 — El desplegable de etiquetas solo lista las de lo ya cargado.**
+  Las opciones salen de `realTransactions` (`TransactionsPage.tsx`), que en la
+  vista de tabla y sin filtros son los 300 primeros. Una etiqueta que solo esté
+  en movimientos más antiguos no aparece como opción, y hay pescadilla: para
+  cargarlo todo hace falta un filtro activo, y para activar ese filtro hace
+  falta ver la opción. Los chips de esos movimientos sí funcionan en cuanto se
+  ven. Mismo patrón que pasa con el desplegable de cuentas, que lleva así desde
+  siempre. Se arregla leyendo las etiquetas distintas con una consulta aparte,
+  no trayéndose las filas.
+
 ## Otros
 
 - **2026-09-18 — Siguiente: pedir la tasa del saldo de apertura de un pocket.**
