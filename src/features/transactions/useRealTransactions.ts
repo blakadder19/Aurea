@@ -254,7 +254,43 @@ export async function bulkUpdateTransactionCategory(ids: string[], categoryId: s
  * poder contrastarlo con cuántos se seleccionaron. Ver la migración
  * `20260918120000_add_tag_to_transactions_fn.sql`.
  */
+/**
+ * TEMPORAL — instrumentación del fallo "etiquetar en lote solo etiqueta uno".
+ *
+ * Ni los tests con mocks ni las llamadas a mano contra la API de producción
+ * reproducen la pérdida, así que hay que mirar la llamada de verdad. Apunta en
+ * `debug_tag_calls` cuántos ids hay en cada salto. Nunca rompe el flujo: si
+ * falla el apunte, se traga el error y se sigue etiquetando.
+ *
+ * BORRAR junto con la tabla en cuanto se sepa dónde se pierden.
+ */
+export async function recordTagCallDebug(entry: {
+  origen: string
+  tag: string
+  ids: string[]
+  storeCount?: number
+  closureCount?: number
+  nota?: string
+}): Promise<void> {
+  console.info('[aurea][debug] etiquetar en lote', entry)
+  if (!supabase) return
+  try {
+    await supabase.from('debug_tag_calls').insert({
+      origen: entry.origen,
+      tag: entry.tag,
+      ids: entry.ids,
+      store_count: entry.storeCount ?? null,
+      closure_count: entry.closureCount ?? null,
+      nota: entry.nota ?? null,
+    })
+  } catch (err) {
+    console.warn('[aurea][debug] no se pudo apuntar la llamada', err)
+  }
+}
+
 export async function bulkAddTag(ids: string[], tag: string): Promise<{ error: string | null; taggedCount: number }> {
+  // TEMPORAL — lo que de verdad llega aquí, al final de la cadena.
+  void recordTagCallDebug({ origen: 'bulkAddTag', tag, ids, nota: `recibidos ${ids.length}` })
   if (!supabase) return { error: 'Supabase no está configurado.', taggedCount: 0 }
   const trimmed = tag.trim()
   if (!trimmed) return { error: 'Escribe una etiqueta.', taggedCount: 0 }
