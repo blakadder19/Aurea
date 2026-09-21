@@ -176,6 +176,17 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
 
       setTransactions(mapped)
       setLoading(false)
+
+      // TEMPORAL — diagnóstico de "los chips no aparecen sin recargar".
+      // Apunta CADA recarga que termina: si después de etiquetar no aparece
+      // ninguna línea, el refetch no está llegando; si aparece y ya trae las
+      // etiquetas, el fallo es de pintado y no de datos.
+      void recordTagCallDebug({
+        origen: 'useRealTransactions.load',
+        tag: '',
+        ids: [],
+        nota: `filas=${mapped.length} conEtiqueta=${mapped.filter((t) => t.tags.length > 0).length} version=${version} loadedCount=${loadedCount}`,
+      })
     }
 
     load()
