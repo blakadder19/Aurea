@@ -8,15 +8,19 @@ import {
   updateCategoryIcon,
   type RealCategory,
 } from '../transactions/useRealCategories'
+import { EmojiPicker } from '../../components/EmojiPicker'
 
 function IconInput({ category, onSaved, onDeleted }: { category: RealCategory; onSaved: () => void; onDeleted: () => void }) {
   const [value, setValue] = useState(category.icon ?? '')
   const [error, setError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
 
-  async function handleBlur() {
-    if (value === (category.icon ?? '')) return
-    const err = await updateCategoryIcon(category.id, value)
+  // Guarda al elegir, no al salir del campo: con un selector ya no hay nada
+  // que "terminar de escribir", y el `onBlur` de antes se perdía el cambio si
+  // cerrabas el panel con el ratón fuera.
+  async function handleSelect(emoji: string | null) {
+    setValue(emoji ?? '')
+    const err = await updateCategoryIcon(category.id, emoji ?? '')
     if (err) setError(err)
     else {
       setError(null)
@@ -41,15 +45,7 @@ function IconInput({ category, onSaved, onDeleted }: { category: RealCategory; o
       </span>
       <div className="flex flex-col items-end gap-1">
         <div className="flex items-center gap-2.5">
-          <input
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onBlur={() => void handleBlur()}
-            placeholder="🙂"
-            maxLength={4}
-            aria-label={`Icono de ${category.name}`}
-            className="min-h-11 w-16 rounded-md border border-line bg-surface text-center text-xl"
-          />
+          <EmojiPicker value={value || null} ariaLabel={`Icono de ${category.name}`} onSelect={(e) => void handleSelect(e)} />
           <button
             type="button"
             disabled={deleting}
@@ -97,15 +93,7 @@ function AddCategoryForm({ categories, onCreated }: { categories: RealCategory[]
   return (
     <div className="flex flex-col gap-2 border-t border-line pt-3">
       <div className="flex flex-wrap items-center gap-2.5">
-        <input
-          value={icon}
-          onChange={(e) => setIcon(e.target.value)}
-          placeholder="🙂"
-          maxLength={4}
-          disabled={saving}
-          aria-label="Icono de la nueva categoría"
-          className="min-h-11 w-16 rounded-md border border-line bg-surface text-center text-xl"
-        />
+        <EmojiPicker value={icon || null} disabled={saving} ariaLabel="Icono de la nueva categoría" onSelect={(e) => setIcon(e ?? '')} />
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}

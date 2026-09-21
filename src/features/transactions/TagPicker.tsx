@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { EmojiPicker } from '../../components/EmojiPicker'
 import type { TransactionTag } from '../../data/transactions'
 import { defaultTagColor, TAG_COLORS, tagBgClass } from '../../lib/tagColor'
 
@@ -43,7 +44,7 @@ export function TagPicker({ availableTags, activeTagIds = [], onPick, onCreate, 
   async function handleCreate() {
     setSaving(true)
     setError(null)
-    const { error: err, tag } = await onCreate(trimmed, emoji.trim() || null, color)
+    const { error: err, tag } = await onCreate(trimmed, emoji || null, color)
     setSaving(false)
     if (err || !tag) {
       setError(err ?? 'No hemos podido crear la etiqueta.')
@@ -108,18 +109,10 @@ export function TagPicker({ availableTags, activeTagIds = [], onPick, onCreate, 
 
       {creating && (
         <div className="flex flex-col gap-2 border-t border-line pt-2">
-          <label className="flex flex-col gap-1 text-sm font-semibold text-ink-muted">
+          <div className="flex flex-col gap-1 text-sm font-semibold text-ink-muted">
             Emoji (opcional)
-            <input
-              type="text"
-              value={emoji}
-              disabled={saving}
-              onChange={(e) => setEmoji(e.target.value)}
-              placeholder="🇨🇳"
-              aria-label="Emoji de la etiqueta"
-              className="min-h-11 w-20 rounded-md border border-line px-3 py-2 text-[15px]"
-            />
-          </label>
+            <EmojiPicker value={emoji || null} disabled={saving} ariaLabel="Emoji de la etiqueta" onSelect={(e) => setEmoji(e ?? '')} />
+          </div>
           <div className="flex flex-col gap-1 text-sm font-semibold text-ink-muted">
             Color
             <div className="flex flex-wrap gap-1.5">

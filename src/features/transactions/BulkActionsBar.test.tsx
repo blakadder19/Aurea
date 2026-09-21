@@ -77,7 +77,12 @@ describe('BulkActionsBar', () => {
     expect(onCreateTag).not.toHaveBeenCalled()
 
     fireEvent.click(screen.getByRole('button', { name: 'Crear «viaje-china»' }))
-    fireEvent.change(screen.getByLabelText('Emoji de la etiqueta'), { target: { value: '🇨🇳' } })
+
+    // El emoji se elige pulsando, no escribiéndolo.
+    fireEvent.click(screen.getByRole('button', { name: 'Emoji de la etiqueta' }))
+    fireEvent.change(screen.getByLabelText('Buscar emoji'), { target: { value: 'china' } })
+    fireEvent.click(screen.getByRole('button', { name: 'china' }))
+
     fireEvent.click(screen.getByRole('button', { name: 'Crear etiqueta' }))
 
     await waitFor(() => expect(onCreateTag).toHaveBeenCalledWith('viaje-china', '🇨🇳', expect.any(String)))
