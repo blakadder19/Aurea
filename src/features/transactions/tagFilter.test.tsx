@@ -2,14 +2,18 @@ import { fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { matchesTagFilter, TransactionsTable } from './TransactionsTable'
 import { ALL_TAGS, useTransactionsStore } from './store'
-import type { Transaction } from '../../data/transactions'
+import type { Transaction, TransactionTag } from '../../data/transactions'
 
 /**
  * Etiquetar sirve de poco si luego no puedes pedir "enséñame lo de esta
  * etiqueta". Esto cubre las dos formas de pedirlo: el desplegable y el chip.
  */
 
-const tx = (id: string, comercio: string, tags: string[]): Transaction & { tags: string[] } => ({
+const CHINA: TransactionTag = { id: 'tag-china', name: 'viaje-china', emoji: '🇨🇳', color: 'cat-3' }
+const COMIDA: TransactionTag = { id: 'tag-comida', name: 'comida', emoji: null, color: 'cat-1' }
+const SUSCRIPCIONES: TransactionTag = { id: 'tag-subs', name: 'suscripciones', emoji: null, color: 'cat-4' }
+
+const tx = (id: string, comercio: string, tags: TransactionTag[]): Transaction => ({
   id,
   fecha: '15 sep',
   comercio,
@@ -20,11 +24,11 @@ const tx = (id: string, comercio: string, tags: string[]): Transaction & { tags:
 })
 
 const TRANSACTIONS = [
-  tx('a', 'Alipay*govagency', ['viaje-china']),
-  tx('b', 'Didi', ['viaje-china']),
-  tx('c', 'Weixin*hotpot', ['viaje-china', 'comida']),
+  tx('a', 'Alipay*govagency', [CHINA]),
+  tx('b', 'Didi', [CHINA]),
+  tx('c', 'Weixin*hotpot', [CHINA, COMIDA]),
   tx('d', 'Mercadona', []),
-  tx('e', 'Netflix', ['suscripciones']),
+  tx('e', 'Netflix', [SUSCRIPCIONES]),
 ]
 
 function renderTable() {
@@ -44,19 +48,18 @@ describe('matchesTagFilter', () => {
     expect(matchesTagFilter(TRANSACTIONS[3], ALL_TAGS)).toBe(true)
   })
 
-  it('compara la etiqueta entera, no "contiene"', () => {
-    // El buscador ya hace texto libre; este filtro es la respuesta precisa.
-    expect(matchesTagFilter(TRANSACTIONS[0], 'viaje-china')).toBe(true)
-    expect(matchesTagFilter(TRANSACTIONS[0], 'viaje')).toBe(false)
+  it('compara por id, así renombrar la etiqueta no rompe el filtro puesto', () => {
+    expect(matchesTagFilter(TRANSACTIONS[0], CHINA.id)).toBe(true)
+    expect(matchesTagFilter(TRANSACTIONS[0], 'viaje-china')).toBe(false)
   })
 
   it('un movimiento con varias etiquetas entra por cualquiera de ellas', () => {
-    expect(matchesTagFilter(TRANSACTIONS[2], 'viaje-china')).toBe(true)
-    expect(matchesTagFilter(TRANSACTIONS[2], 'comida')).toBe(true)
+    expect(matchesTagFilter(TRANSACTIONS[2], CHINA.id)).toBe(true)
+    expect(matchesTagFilter(TRANSACTIONS[2], COMIDA.id)).toBe(true)
   })
 
   it('un movimiento sin etiquetas no entra por ninguna', () => {
-    expect(matchesTagFilter(TRANSACTIONS[3], 'viaje-china')).toBe(false)
+    expect(matchesTagFilter(TRANSACTIONS[3], CHINA.id)).toBe(false)
   })
 })
 
@@ -71,7 +74,7 @@ describe('filtrar la tabla por etiqueta', () => {
   })
 
   it('con la etiqueta puesta salen solo los tres de esa etiqueta', () => {
-    useTransactionsStore.setState({ tagFilter: 'viaje-china' })
+    useTransactionsStore.setState({ tagFilter: CHINA.id })
     renderTable()
     expect(visibleMerchants()).toEqual(['Alipay*govagency', 'Didi', 'Weixin*hotpot'])
   })
@@ -80,7 +83,7 @@ describe('filtrar la tabla por etiqueta', () => {
     renderTable()
     fireEvent.click(screen.getAllByRole('button', { name: 'Filtrar por la etiqueta viaje-china' })[0])
 
-    expect(useTransactionsStore.getState().tagFilter).toBe('viaje-china')
+    expect(useTransactionsStore.getState().tagFilter).toBe(CHINA.id)
     expect(visibleMerchants()).toEqual(['Alipay*govagency', 'Didi', 'Weixin*hotpot'])
   })
 

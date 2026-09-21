@@ -40,8 +40,8 @@ describe('matchesSearch', () => {
   })
 
   it('busca por etiqueta', () => {
-    expect(matchesSearch(tx({ tags: ['Vacaciones2026', 'Compartido'] }), 'vacaciones')).toBe(true)
-    expect(matchesSearch(tx({ tags: ['Vacaciones2026'] }), 'trabajo')).toBe(false)
+    expect(matchesSearch(tx({ tags: [{ id: 'Vacaciones2026', name: 'Vacaciones2026', emoji: null, color: 'cat-1' }, { id: 'Compartido', name: 'Compartido', emoji: null, color: 'cat-1' }] }), 'vacaciones')).toBe(true)
+    expect(matchesSearch(tx({ tags: [{ id: 'Vacaciones2026', name: 'Vacaciones2026', emoji: null, color: 'cat-1' }] }), 'trabajo')).toBe(false)
   })
 
   it('sin nota ni etiquetas (demo), no revienta y simplemente no coincide por ahí', () => {

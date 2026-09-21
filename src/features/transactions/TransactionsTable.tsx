@@ -1,9 +1,10 @@
 import type { KeyboardEvent } from 'react'
 import { Money } from '../../components/Money'
 import { NoSearchResults } from '../../components/states/NoSearchResults'
-import { transactions as demoTransactions, type Transaction } from '../../data/transactions'
+import { transactions as demoTransactions, type Transaction, type TransactionTag } from '../../data/transactions'
 import { categoryColorClass } from '../../lib/categoryColor'
 import { formatMoney } from '../../lib/format'
+import { tagBgClass } from '../../lib/tagColor'
 import { groupByMonth } from './groupByMonth'
 import {
   ALL_ACCOUNTS,
@@ -28,19 +29,18 @@ export function matchesSearch(t: Transaction, query: string): boolean {
   if ((t.displayName ?? '').toLowerCase().includes(query)) return true
   if (formatMoney(Math.abs(t.importe)).toLowerCase().includes(query)) return true
   if ((t.userNote ?? '').toLowerCase().includes(query)) return true
-  if ((t.tags ?? []).some((tag) => tag.toLowerCase().includes(query))) return true
+  if ((t.tags ?? []).some((tag) => tag.name.toLowerCase().includes(query))) return true
   return false
 }
 
 /**
- * Etiqueta exacta, no "contiene": el buscador ya hace texto libre sobre las
- * etiquetas, y ahí «viaje» también trae un comercio que se llame "Viajes El
- * Corte Inglés". Este filtro es la respuesta precisa a "enséñame lo de esta
- * etiqueta", así que compara la etiqueta entera.
+ * Por id de etiqueta, no por nombre: renombrar una etiqueta no debe romper el
+ * filtro que tengas puesto. Y exacta, no "contiene" — para texto libre ya está
+ * el buscador, que ahí también trae un comercio llamado "Viajes El Corte Inglés".
  */
 export function matchesTagFilter(t: Transaction, tagFilter: string): boolean {
   if (tagFilter === ALL_TAGS) return true
-  return (t.tags ?? []).includes(tagFilter)
+  return (t.tags ?? []).some((tag) => tag.id === tagFilter)
 }
 
 /** Mismo criterio que Centro de revisión: sin categoría o marcado needsReview — no solo needsReview a secas. */
@@ -91,7 +91,7 @@ function Avatar({ transaction }: { transaction: Transaction }) {
  * vuelven a pulsarse para quitar el filtro: si no, desde una lista ya filtrada
  * no habría forma de salir sin ir al desplegable.
  */
-function TagChips({ tags }: { tags: string[] }) {
+function TagChips({ tags }: { tags: TransactionTag[] }) {
   const tagFilter = useTransactionsStore((s) => s.tagFilter)
   const setTagFilter = useTransactionsStore((s) => s.setTagFilter)
   if (tags.length === 0) return null
@@ -99,22 +99,23 @@ function TagChips({ tags }: { tags: string[] }) {
   return (
     <div className="mt-1 flex flex-wrap gap-1">
       {tags.map((tag) => {
-        const active = tagFilter === tag
+        const active = tagFilter === tag.id
         return (
           <button
-            key={tag}
+            key={tag.id}
             type="button"
             aria-pressed={active}
-            aria-label={active ? `Quitar el filtro de la etiqueta ${tag}` : `Filtrar por la etiqueta ${tag}`}
+            aria-label={active ? `Quitar el filtro de la etiqueta ${tag.name}` : `Filtrar por la etiqueta ${tag.name}`}
             onClick={(e) => {
               e.stopPropagation()
-              setTagFilter(active ? ALL_TAGS : tag)
+              setTagFilter(active ? ALL_TAGS : tag.id)
             }}
-            className={`rounded-full px-2 py-0.5 text-[12px] font-medium ${
-              active ? 'bg-brand text-surface' : 'bg-canvas text-ink-muted hover:bg-brand-soft hover:text-brand'
+            className={`rounded-full px-2 py-0.5 text-[12px] font-medium text-surface ${tagBgClass(tag.color)} ${
+              active ? 'ring-2 ring-ink ring-offset-1' : 'opacity-85 hover:opacity-100'
             }`}
           >
-            {tag}
+            {tag.emoji ? `${tag.emoji} ` : ''}
+            {tag.name}
           </button>
         )
       })}

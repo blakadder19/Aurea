@@ -3,9 +3,11 @@ import { useEffect, useRef, useState } from 'react'
 import { Money } from '../../components/Money'
 import { SectionLabel } from '../../components/SectionLabel'
 import { SidePanel } from '../../components/SidePanel'
-import { filterCategories, transactions as demoTransactions, type Transaction } from '../../data/transactions'
+import { filterCategories, transactions as demoTransactions, type Transaction, type TransactionTag } from '../../data/transactions'
 import { INCOME_TYPE_LABELS, INCOME_TYPES, type IncomeType } from '../../lib/declaredIncome'
 import { focusRowById } from '../../lib/dom'
+import { tagBgClass } from '../../lib/tagColor'
+import { TagPicker } from './TagPicker'
 import { displayLabelFor } from './TransactionsTable'
 import { useTransactionsStore } from './store'
 import { categoryLabel, type RealCategory } from './useRealCategories'
@@ -195,7 +197,10 @@ interface RealFieldsProps {
   transaction: RealTransaction
   categories: RealCategory[]
   onSaveCategory: (id: string, categoryId: string) => Promise<string | null>
-  onSaveNotesAndTags: (id: string, note: string, tags: string[]) => Promise<string | null>
+  onSaveNotesAndTags: (id: string, note: string, tagIds: string[]) => Promise<string | null>
+  /** El catálogo de etiquetas del usuario: se elige de ahí, nunca se teclea. */
+  availableTags?: TransactionTag[]
+  onCreateTag?: (name: string, emoji: string | null, color: string) => Promise<{ error: string | null; tag: TransactionTag | null }>
   onCreateRule: (matchValue: string, categoryId: string) => Promise<{ error: string | null; appliedCount: number }>
   onClose: () => void
   manualAccountIds?: Set<string>
@@ -264,9 +269,11 @@ function RealFields({
   onSaveInternalTransfer,
   onSaveIncomeType,
   onSplitsChanged,
+  availableTags = [],
+  onCreateTag,
 }: RealFieldsProps) {
   const [categoryId, setCategoryId] = useState(transaction.categoryId ?? '')
-  const [tagsInput, setTagsInput] = useState(transaction.tags.join(', '))
+  const [tagIds, setTagIds] = useState<string[]>(transaction.tags.map((t) => t.id))
   const [noteInput, setNoteInput] = useState(transaction.userNote)
   const [displayNameInput, setDisplayNameInput] = useState(transaction.displayName ?? '')
   const [isTransfer, setIsTransfer] = useState(transaction.isInternalTransfer)
@@ -284,6 +291,7 @@ function RealFields({
   // sola regla se lleva decenas.
   const [ruleMatchValue, setRuleMatchValue] = useState(transaction.comercio)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [pickingTag, setPickingTag] = useState(false)
   const [splits, setSplits] = useState<TransactionSplit[]>([])
   const [editingSplit, setEditingSplit] = useState(false)
   const [receiptPath, setReceiptPath] = useState(transaction.receiptPath)
@@ -337,13 +345,9 @@ function RealFields({
   async function handleSave() {
     setSaving(true)
     setError(null)
-    const tags = tagsInput
-      .split(',')
-      .map((t) => t.trim())
-      .filter(Boolean)
     const errors = await Promise.all([
       splits.length === 0 && categoryId !== (transaction.categoryId ?? '') ? onSaveCategory(transaction.id, categoryId) : null,
-      onSaveNotesAndTags(transaction.id, noteInput, tags),
+      onSaveNotesAndTags(transaction.id, noteInput, tagIds),
       isManual && onUpdateManual
         ? onUpdateManual(transaction.id, transaction.accountId, manualDescription, Math.round(Number(manualAmount || '0') * 100), manualDateIso)
         : null,
@@ -489,13 +493,50 @@ function RealFields({
       </label>
       <label className={LABEL_CLASSES}>
         Etiquetas
-        <input
-          value={tagsInput}
-          disabled={saving}
-          onChange={(e) => setTagsInput(e.target.value)}
-          placeholder="p. ej. compra semanal, separadas por comas"
-          className={INPUT_CLASSES}
-        />
+        {/*
+          Se eligen del catálogo, no se teclean. El campo de texto separado por
+          comas que había aquí es lo que hacía inevitable acabar con "viaje",
+          "Viaje" y "viaje-china" como tres etiquetas distintas.
+        */}
+        <div className="flex flex-col gap-2">
+          {tagIds.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {tagIds.map((id) => {
+                const tag = availableTags.find((t) => t.id === id)
+                if (!tag) return null
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    disabled={saving}
+                    aria-label={`Quitar la etiqueta ${tag.name} de este movimiento`}
+                    onClick={() => setTagIds((prev) => prev.filter((x) => x !== tag.id))}
+                    className={`rounded-full px-2.5 py-1 text-[13px] font-medium text-surface ${tagBgClass(tag.color)}`}
+                  >
+                    {tag.emoji ? `${tag.emoji} ` : ''}
+                    {tag.name} ✕
+                  </button>
+                )
+              })}
+            </div>
+          )}
+          {pickingTag && onCreateTag ? (
+            <TagPicker
+              availableTags={availableTags}
+              activeTagIds={tagIds}
+              disabled={saving}
+              onCreate={onCreateTag}
+              onPick={(tag) => {
+                setTagIds((prev) => (prev.includes(tag.id) ? prev.filter((x) => x !== tag.id) : [...prev, tag.id]))
+                setPickingTag(false)
+              }}
+            />
+          ) : (
+            <button type="button" disabled={saving || !onCreateTag} onClick={() => setPickingTag(true)} className={SECONDARY_BUTTON}>
+              Añadir etiqueta
+            </button>
+          )}
+        </div>
       </label>
       <label className={LABEL_CLASSES}>
         Notas

@@ -27,13 +27,14 @@ const todayForFilename = () => new Date().toISOString().slice(0, 10)
 export async function exportTransactionsCsv(): Promise<string | null> {
   if (!supabase) return 'Supabase no está configurado.'
 
-  const [{ data: transactions, error: txError }, { data: accounts }, { data: categories }] = await Promise.all([
+  const [{ data: transactions, error: txError }, { data: accounts }, { data: categories }, { data: tagRows }] = await Promise.all([
     supabase
       .from('transactions')
-      .select('booking_date, value_date, description, amount_cents, account_id, category_id, user_note, tags')
+      .select('id, booking_date, value_date, description, amount_cents, account_id, category_id, user_note')
       .order('booking_date', { ascending: false }),
     supabase.from('accounts').select('id, name, display_name, product'),
     supabase.from('categories').select('id, name'),
+    supabase.from('transaction_tags').select('transaction_id, tags (name)'),
   ])
   if (txError || !transactions) {
     console.error('exportTransactionsCsv: fallo al leer transactions', txError)
@@ -49,6 +50,16 @@ export async function exportTransactionsCsv(): Promise<string | null> {
   )
   const categoryNameById = new Map((categories ?? []).map((c) => [c.id as string, c.name as string]))
 
+  // Las etiquetas viven en su propia tabla desde el 21 sep 2026, no en un
+  // text[] de cada movimiento.
+  const tagNamesByTransaction = new Map<string, string[]>()
+  for (const row of (tagRows ?? []) as unknown as { transaction_id: string; tags: { name: string } | { name: string }[] | null }[]) {
+    const embedded = Array.isArray(row.tags) ? row.tags : row.tags ? [row.tags] : []
+    const list = tagNamesByTransaction.get(row.transaction_id) ?? []
+    for (const tag of embedded) list.push(tag.name)
+    tagNamesByTransaction.set(row.transaction_id, list)
+  }
+
   const rows = transactions.map((t) => [
     (t.booking_date as string | null) ?? (t.value_date as string | null) ?? '',
     (t.description as string | null) ?? '',
@@ -56,7 +67,7 @@ export async function exportTransactionsCsv(): Promise<string | null> {
     t.category_id ? (categoryNameById.get(t.category_id as string) ?? 'Sin clasificar') : 'Sin clasificar',
     ((t.amount_cents as number) / 100).toFixed(2),
     (t.user_note as string | null) ?? '',
-    ((t.tags as string[] | null) ?? []).join('; '),
+    (tagNamesByTransaction.get(t.id as string) ?? []).sort((a, b) => a.localeCompare(b, 'es')).join('; '),
   ])
 
   downloadFile(`aurea-movimientos-${todayForFilename()}.csv`, toCsv(['Fecha', 'Comercio', 'Cuenta', 'Categoría', 'Importe', 'Nota', 'Etiquetas'], rows), 'text/csv;charset=utf-8;')
@@ -72,7 +83,7 @@ export async function exportTransactionsCsv(): Promise<string | null> {
 export async function exportAllDataJson(): Promise<string | null> {
   if (!supabase) return 'Supabase no está configurado.'
 
-  const [accounts, transactions, categories, budgets, goals, debtDetails, investments] = await Promise.all([
+  const [accounts, transactions, categories, budgets, goals, debtDetails, investments, tags, transactionTags] = await Promise.all([
     supabase.from('accounts').select('*'),
     supabase.from('transactions').select('*'),
     supabase.from('categories').select('*'),
@@ -80,9 +91,11 @@ export async function exportAllDataJson(): Promise<string | null> {
     supabase.from('goals').select('*'),
     supabase.from('debt_details').select('*'),
     supabase.from('investments').select('*'),
+    supabase.from('tags').select('*'),
+    supabase.from('transaction_tags').select('*'),
   ])
 
-  const failed = [accounts, transactions, categories, budgets, goals, debtDetails, investments].find((r) => r.error)
+  const failed = [accounts, transactions, categories, budgets, goals, debtDetails, investments, tags, transactionTags].find((r) => r.error)
   if (failed) {
     console.error('exportAllDataJson: fallo al leer datos', failed.error)
     return 'No hemos podido exportar tus datos. Inténtalo de nuevo.'
@@ -97,6 +110,8 @@ export async function exportAllDataJson(): Promise<string | null> {
     goals: goals.data,
     debtDetails: debtDetails.data,
     investments: investments.data,
+    tags: tags.data,
+    transactionTags: transactionTags.data,
   }
 
   downloadFile(`aurea-datos-${todayForFilename()}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8;')

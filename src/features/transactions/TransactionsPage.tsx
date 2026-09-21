@@ -8,6 +8,7 @@ import { TransactionsTable } from './TransactionsTable'
 import { ALL_ACCOUNTS, ALL_CATEGORIES, ALL_STATUSES, ALL_TAGS, DATE_ALL, useTransactionsStore, type TransactionsView } from './store'
 import {
   bulkAddTag,
+  bulkRemoveTag,
   bulkUpdateTransactionCategory,
   createRuleFromTransaction,
   isTransactionPending,
@@ -20,6 +21,7 @@ import {
 } from './useRealTransactions'
 import type { IncomeType } from '../../lib/declaredIncome'
 import { categoryLabel, useRealCategories } from './useRealCategories'
+import { createTag, useRealTags } from './useRealTags'
 import { ErrorState } from '../../components/states/ErrorState'
 import { EmptyState } from '../../components/states/EmptyState'
 import { LoadingRealData } from '../../components/states/LoadingRealData'
@@ -119,6 +121,7 @@ export function TransactionsPage() {
   const session = useAuthStore((s) => s.session)
 
   const { categories: realCategories } = useRealCategories()
+  const { tags: realTags } = useRealTags()
   const { loading: loadingReal, transactions: realTransactions, refetch, hasMore, loadMore, loadAll } = useRealTransactions(realCategories)
   const { connections: realConnections } = useRealConnections()
   const { accounts: realAccounts, refetch: refetchAccounts } = useRealAccounts()
@@ -188,10 +191,22 @@ export function TransactionsPage() {
     return error
   }
 
-  async function handleBulkAddTag(ids: string[], tag: string) {
-    const result = await bulkAddTag(ids, tag)
+  async function handleBulkAddTag(ids: string[], tagId: string) {
+    const result = await bulkAddTag(ids, tagId)
     // Se refresca aunque falle: si etiquetó de menos, la lista tiene que
     // enseñar cuáles sí, no quedarse mostrando el estado de antes.
+    refetch()
+    return result
+  }
+
+  async function handleCreateTag(name: string, emoji: string | null, color: string) {
+    const result = await createTag(name, emoji, color)
+    if (!result.error) refetch()
+    return result
+  }
+
+  async function handleBulkRemoveTag(ids: string[], tagId: string) {
+    const result = await bulkRemoveTag(ids, tagId)
     refetch()
     return result
   }
@@ -239,6 +254,8 @@ export function TransactionsPage() {
         categories: realCategories ?? [],
         onSaveCategory: handleSaveCategory,
         onSaveNotesAndTags: handleSaveNotesAndTags,
+        availableTags: realTags ?? [],
+        onCreateTag: handleCreateTag,
         onCreateRule: handleCreateRule,
         manualAccountIds,
         onUpdateManual: handleUpdateManual,
@@ -283,13 +300,17 @@ export function TransactionsPage() {
               <FilterBar
                 accounts={hasRealTransactions ? [...new Set(realTransactions!.map((t) => t.cuenta))] : undefined}
                 categories={hasRealTransactions ? realCategories!.map((c) => categoryLabel(c)) : undefined}
-                tags={hasRealTransactions ? [...new Set(realTransactions!.flatMap((t) => t.tags ?? []))].sort() : undefined}
+                tags={isAuthenticated ? (realTags ?? []) : undefined}
                 isReal={hasRealTransactions}
               />
               <BulkActionsBar
                 categories={hasRealTransactions ? realCategories! : undefined}
                 onBulkCategorize={hasRealTransactions ? handleBulkCategorize : undefined}
                 onBulkAddTag={hasRealTransactions ? handleBulkAddTag : undefined}
+                onBulkRemoveTag={hasRealTransactions ? handleBulkRemoveTag : undefined}
+                onCreateTag={handleCreateTag}
+                availableTags={realTags ?? []}
+                transactions={hasRealTransactions ? realTransactions! : []}
               />
               <TransactionsTable transactions={hasRealTransactions ? realTransactions! : undefined} />
               {isAuthenticated && hasMore && (

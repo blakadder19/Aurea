@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { Transaction } from '../../data/transactions'
+import type { Transaction, TransactionTag } from '../../data/transactions'
 import type { IncomeType } from '../../lib/declaredIncome'
 import { formatIsoDayMonth } from '../../lib/format'
 import { supabase } from '../../lib/supabase/client'
@@ -14,7 +14,7 @@ export interface RealTransaction extends Transaction {
   accountId: string
   needsReview: boolean
   userNote: string
-  tags: string[]
+  tags: TransactionTag[]
   /** Fecha ISO sin formatear (booking_date o value_date) — para cálculos, `fecha` es solo para mostrar. */
   dateISO: string | null
   /** Dinero moviéndose entre tus propias cuentas: no es un gasto ni un ingreso real, se excluye de esos cálculos. */
@@ -110,17 +110,19 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
 
     async function load() {
       if (!supabase) return
-      const [{ data: txRows, error: txError }, { data: accountRows }, { data: connectionRows }, { data: splitRows }] = await Promise.all([
+      const [{ data: txRows, error: txError }, { data: accountRows }, { data: connectionRows }, { data: splitRows }, { data: tagRows }] =
+        await Promise.all([
         supabase
           .from('transactions')
           .select(
-            'id, account_id, booking_date, value_date, description, amount_cents, currency, transaction_code, exchange_rate, instructed_amount_cents, category_id, needs_review, user_note, tags, display_name, is_internal_transfer, receipt_path, income_type, is_reimbursement, is_balance_adjustment',
+            'id, account_id, booking_date, value_date, description, amount_cents, currency, transaction_code, exchange_rate, instructed_amount_cents, category_id, needs_review, user_note, display_name, is_internal_transfer, receipt_path, income_type, is_reimbursement, is_balance_adjustment',
           )
           .order('booking_date', { ascending: false })
           .limit(loadedCount),
         supabase.from('accounts').select('id, name, display_name, product, connection_id, currency'),
         supabase.from('bank_connections').select('id, aspsp_name'),
         supabase.from('transaction_splits').select('transaction_id'),
+        supabase.from('transaction_tags').select('transaction_id, tags (id, name, emoji, color)'),
       ])
       if (cancelled) return
       if (txError || !txRows) {
@@ -131,6 +133,19 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
       }
 
       const splitTransactionIds = new Set((splitRows ?? []).map((s) => s.transaction_id as string))
+
+      // Las etiquetas llegan por la tabla puente, con su emoji y su color.
+      const tagsByTransaction = new Map<string, TransactionTag[]>()
+      // El recurso embebido llega como objeto en una relación muchos-a-uno,
+      // pero supabase-js lo tipa como array: se acepta cualquiera de las dos.
+      for (const row of (tagRows ?? []) as unknown as { transaction_id: string; tags: TransactionTag | TransactionTag[] | null }[]) {
+        const embedded = Array.isArray(row.tags) ? row.tags : row.tags ? [row.tags] : []
+        if (embedded.length === 0) continue
+        const list = tagsByTransaction.get(row.transaction_id) ?? []
+        for (const tag of embedded) list.push({ id: tag.id, name: tag.name, emoji: tag.emoji ?? null, color: tag.color ?? 'cat-1' })
+        tagsByTransaction.set(row.transaction_id, list)
+      }
+      for (const list of tagsByTransaction.values()) list.sort((a, b) => a.name.localeCompare(b.name, 'es'))
 
       const institutionByConnection = new Map((connectionRows ?? []).map((c) => [c.id, c.aspsp_name as string]))
       const accountLabelById = buildAccountLabels(
@@ -158,7 +173,7 @@ export function useRealTransactions(categories: RealCategory[] | null): RealTran
           accountId: row.account_id as string,
           needsReview: Boolean(row.needs_review),
           userNote: (row.user_note as string | null) ?? '',
-          tags: (row.tags as string[] | null) ?? [],
+          tags: tagsByTransaction.get(row.id as string) ?? [],
           displayName: row.display_name as string | null,
           dateISO: isoDate,
           isInternalTransfer: Boolean(row.is_internal_transfer),
@@ -242,52 +257,74 @@ export async function bulkUpdateTransactionCategory(ids: string[], categoryId: s
 }
 
 /**
- * Añade una etiqueta a varios movimientos a la vez, sin pisar las que ya
- * tuviera cada uno ni duplicarla.
+ * Pone una etiqueta a varios movimientos a la vez, o la quita de todos.
  *
- * Una sola sentencia, vía RPC. Hasta el 18 sep 2026 esto leía los movimientos
- * y mandaba un UPDATE POR MOVIMIENTO en paralelo: N escrituras independientes
- * que podían quedarse a medias sin que nadie se enterara, porque el único
- * control era "¿alguna devolvió error?". Nadie contaba filas.
+ * Una sola sentencia cada una, vía RPC. Hasta el 18 sep 2026 poner una
+ * etiqueta eran N escrituras independientes en paralelo que podían quedarse a
+ * medias sin que nadie se enterara: el único control era "¿alguna devolvió
+ * error?", nadie contaba filas.
  *
- * Ahora es atómico y devuelve cuántos llevan la etiqueta al terminar, para
- * poder contrastarlo con cuántos se seleccionaron. Ver la migración
- * `20260918120000_add_tag_to_transactions_fn.sql`.
+ * Las dos devuelven cuántos movimientos quedan como se pedía, para contrastarlo
+ * con cuántos se seleccionaron y avisar si no cuadra.
  */
-export async function bulkAddTag(ids: string[], tag: string): Promise<{ error: string | null; taggedCount: number }> {
+export async function bulkAddTag(ids: string[], tagId: string): Promise<{ error: string | null; taggedCount: number }> {
   if (!supabase) return { error: 'Supabase no está configurado.', taggedCount: 0 }
-  const trimmed = tag.trim()
-  if (!trimmed) return { error: 'Escribe una etiqueta.', taggedCount: 0 }
+  if (!tagId) return { error: 'Elige una etiqueta.', taggedCount: 0 }
   if (ids.length === 0) return { error: null, taggedCount: 0 }
 
-  const { data, error } = await supabase.rpc('add_tag_to_transactions', { p_ids: ids, p_tag: trimmed })
+  const { data, error } = await supabase.rpc('add_tag_to_transactions', { p_ids: ids, p_tag_id: tagId })
   if (error) {
     console.error('bulkAddTag: fallo al guardar', error)
     return { error: 'No hemos podido guardar la etiqueta. Inténtalo de nuevo.', taggedCount: 0 }
   }
 
   const taggedCount = (data as number | null) ?? 0
-  // Si la cuenta no cuadra con lo seleccionado, se dice. Antes esto era
-  // invisible: el cliente solo miraba si alguna de las N escrituras fallaba.
   if (taggedCount < ids.length) {
-    return {
-      error: `Solo hemos podido etiquetar ${taggedCount} de ${ids.length} movimientos. Inténtalo de nuevo.`,
-      taggedCount,
-    }
+    return { error: `Solo hemos podido etiquetar ${taggedCount} de ${ids.length} movimientos. Inténtalo de nuevo.`, taggedCount }
   }
   return { error: null, taggedCount }
 }
 
-/** Escribe etiquetas y nota de un movimiento real. */
-export async function updateTransactionNotesAndTags(id: string, note: string, tags: string[]): Promise<string | null> {
-  if (!supabase) return 'Supabase no está configurado.'
-  const { error } = await supabase
-    .from('transactions')
-    .update({ user_note: note || null, tags })
-    .eq('id', id)
+export async function bulkRemoveTag(ids: string[], tagId: string): Promise<{ error: string | null; removedCount: number }> {
+  if (!supabase) return { error: 'Supabase no está configurado.', removedCount: 0 }
+  if (!tagId) return { error: 'Elige una etiqueta.', removedCount: 0 }
+  if (ids.length === 0) return { error: null, removedCount: 0 }
+
+  const { data, error } = await supabase.rpc('remove_tag_from_transactions', { p_ids: ids, p_tag_id: tagId })
   if (error) {
-    console.error('updateTransactionNotesAndTags: fallo al guardar', error)
+    console.error('bulkRemoveTag: fallo al quitar', error)
+    return { error: 'No hemos podido quitar la etiqueta. Inténtalo de nuevo.', removedCount: 0 }
+  }
+
+  const removedCount = (data as number | null) ?? 0
+  if (removedCount < ids.length) {
+    return { error: `Solo hemos podido quitarla de ${removedCount} de ${ids.length} movimientos. Inténtalo de nuevo.`, removedCount }
+  }
+  return { error: null, removedCount }
+}
+
+/**
+ * Nota y etiquetas de un movimiento, desde el panel de detalle.
+ *
+ * Las etiquetas se reemplazan enteras en una sola transacción (`set_transaction_tags`):
+ * borrar primero y volver a insertar desde el cliente dejaría un instante con el
+ * movimiento sin ninguna, y un fallo a medio camino lo dejaría así para siempre.
+ */
+export async function updateTransactionNotesAndTags(id: string, note: string, tagIds: string[]): Promise<string | null> {
+  if (!supabase) return 'Supabase no está configurado.'
+  const { error: noteError } = await supabase
+    .from('transactions')
+    .update({ user_note: note || null })
+    .eq('id', id)
+  if (noteError) {
+    console.error('updateTransactionNotesAndTags: fallo al guardar la nota', noteError)
     return 'No hemos podido guardar el cambio. Inténtalo de nuevo.'
+  }
+
+  const { error: tagsError } = await supabase.rpc('set_transaction_tags', { p_transaction_id: id, p_tag_ids: tagIds })
+  if (tagsError) {
+    console.error('updateTransactionNotesAndTags: fallo al guardar las etiquetas', tagsError)
+    return 'Hemos guardado la nota, pero no las etiquetas. Inténtalo de nuevo.'
   }
   return null
 }

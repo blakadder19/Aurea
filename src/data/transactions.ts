@@ -3,6 +3,20 @@
  * Tomados literalmente de build_aurea_movimientos/README.md.
  */
 
+/**
+ * Una etiqueta tal y como se enseña: contexto del gasto (un viaje, un
+ * proyecto, una persona), no su tipo. El tipo es la categoría, que es
+ * obligatoria y excluyente; de etiquetas puede llevar varias y cruzan
+ * categorías.
+ */
+export interface TransactionTag {
+  id: string
+  name: string
+  emoji: string | null
+  /** Ranura de la paleta (`cat-1`…`cat-8`), no un hex libre. */
+  color: string
+}
+
 export interface Transaction {
   id: string
   fecha: string
@@ -10,8 +24,8 @@ export interface Transaction {
   cuenta: string
   categoria: string
   importe: number
-  /** Solo en real: etiquetas libres que el usuario añade desde el panel de detalle. */
-  tags?: string[]
+  /** Solo en real: etiquetas del catálogo del usuario (tabla `tags`), no texto libre. */
+  tags?: TransactionTag[]
   /** Solo en real: nota libre que el usuario añade desde el panel de detalle. */
   userNote?: string
   /** Solo en real: nombre personal que sustituye a `comercio` al mostrarlo, sin tocar el dato del banco. */

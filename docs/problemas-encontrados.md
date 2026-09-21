@@ -56,7 +56,13 @@ regla? No. Son problemas distintos y se apuntan por separado.
   parecía que seleccionar no hacía nada. Con 300 movimientos cargados de
   entrada, ese era el caso normal. Ahora es `sticky top-0`.
 
-- **2026-09-18 — Siguiente: un creador de etiquetas en condiciones.**
+- ~~**2026-09-18 — Siguiente: un creador de etiquetas en condiciones.**~~
+  Hecho el 2026-09-21: tabla `tags` (nombre, emoji, color), tabla puente
+  `transaction_tags`, el `text[]` migrado y la columna borrada. Se elige de una
+  lista con autocompletado y crear es explícito; el índice único por nombre en
+  minúsculas impide que "Viaje" y "viaje" convivan. Queda el detalle original
+  como referencia:
+
   Hoy las etiquetas se escriben a mano, en un campo de texto separado por
   comas, y son un `text[]` libre por fila. No hay catálogo, ni autocompletado,
   ni renombrado, ni borrado global, y `bulkAddTag` solo hace `trim()`. Eso hace
@@ -75,15 +81,11 @@ regla? No. Son problemas distintos y se apuntan por separado.
   500 etiquetas. Al elegir de una lista en vez de teclear desaparece el
   problema de las variantes, y de paso se arregla lo de abajo.
 
-- **2026-09-18 — El desplegable de etiquetas solo lista las de lo ya cargado.**
-  Las opciones salen de `realTransactions` (`TransactionsPage.tsx`), que en la
-  vista de tabla y sin filtros son los 300 primeros. Una etiqueta que solo esté
-  en movimientos más antiguos no aparece como opción, y hay pescadilla: para
-  cargarlo todo hace falta un filtro activo, y para activar ese filtro hace
-  falta ver la opción. Los chips de esos movimientos sí funcionan en cuanto se
-  ven. Mismo patrón que pasa con el desplegable de cuentas, que lleva así desde
-  siempre. Se arregla leyendo las etiquetas distintas con una consulta aparte,
-  no trayéndose las filas.
+- ~~**2026-09-18 — El desplegable de etiquetas solo lista las de lo ya cargado.**~~
+  Arreglado el 2026-09-21 al mover las etiquetas a su tabla: las opciones salen
+  de `tags` vía `useRealTags`, no de los movimientos cargados. Una etiqueta
+  existe aunque no la lleve nadie. El desplegable de cuentas sigue sacando sus
+  opciones de lo cargado, con el mismo problema.
 
 ## Otros
 

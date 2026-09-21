@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { filterAccounts, filterCategories } from '../../data/transactions'
+import { filterAccounts, filterCategories, type TransactionTag } from '../../data/transactions'
 import { formatIsoMonthYear } from '../../lib/format'
 import {
   ALL_ACCOUNTS,
@@ -35,8 +35,8 @@ export function FilterBar({
 }: {
   accounts?: string[]
   categories?: string[]
-  /** Las etiquetas que de verdad existen en tus movimientos. Vacío = no se enseña el filtro. */
-  tags?: string[]
+  /** El catálogo de etiquetas del usuario (tabla `tags`). Vacío = no se enseña el filtro. */
+  tags?: TransactionTag[]
   isReal?: boolean
 }) {
   const searchQuery = useTransactionsStore((s) => s.searchQuery)
@@ -121,19 +121,24 @@ export function FilterBar({
         <option>{STATUS_NEEDS_REVIEW}</option>
       </select>
       {/*
-        Solo las etiquetas que existen, nunca texto libre: una etiqueta que no
-        tiene ningún movimiento no es una opción, es una errata esperando. Si
-        todavía no has etiquetado nada, el desplegable no aparece en vez de
+        Las opciones salen del catálogo (tabla `tags`), no de los movimientos
+        cargados. Antes se sacaban de la primera página de 300, así que una
+        etiqueta que solo estuviera más atrás no aparecía y había pescadilla:
+        para cargarlo todo hacía falta filtrar, y para filtrar hacía falta ver
+        la opción. Ahora una etiqueta existe aunque no la lleve nadie.
+
+        Si todavía no has creado ninguna, el desplegable no aparece en vez de
         ofrecer una lista vacía.
       */}
       {tags.length > 0 && (
         <select aria-label="Filtrar por etiqueta" value={tag} onChange={(e) => setTag(e.target.value)} className={SELECT_CLASSES}>
-          <option>{ALL_TAGS}</option>
+          <option value={ALL_TAGS}>{ALL_TAGS}</option>
           {tags.map((t) => (
-            <option key={t}>{t}</option>
+            <option key={t.id} value={t.id}>
+              {t.emoji ? `${t.emoji} ` : ''}
+              {t.name}
+            </option>
           ))}
-          {/* La etiqueta elegida desde un chip de una fila que ahora mismo ya no está en pantalla. */}
-          {tag !== ALL_TAGS && !tags.includes(tag) && <option value={tag}>{tag}</option>}
         </select>
       )}
     </div>

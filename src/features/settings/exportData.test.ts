@@ -53,10 +53,12 @@ describe('exportTransactionsCsv', () => {
     vi.resetModules()
     const fixtures: Record<string, unknown[]> = {
       transactions: [
-        { booking_date: '2026-08-25', value_date: null, description: 'Mercadona', amount_cents: -6218, account_id: 'acc-1', category_id: 'cat-1', user_note: 'Compra semanal', tags: ['Casa'] },
+        { id: 'tx-1', booking_date: '2026-08-25', value_date: null, description: 'Mercadona', amount_cents: -6218, account_id: 'acc-1', category_id: 'cat-1', user_note: 'Compra semanal' },
       ],
       accounts: [{ id: 'acc-1', name: 'Nómina', product: null }],
       categories: [{ id: 'cat-1', name: 'Supermercado' }],
+      // Las etiquetas viven en su tabla puente desde el 21 sep 2026.
+      transaction_tags: [{ transaction_id: 'tx-1', tags: { name: 'Casa' } }],
     }
     const mockFrom = vi.fn((table: string) => chainable(fixtures[table] ?? []))
     vi.doMock('../../lib/supabase/client', () => ({ isSupabaseConfigured: true, supabase: { from: mockFrom } }))
@@ -76,7 +78,7 @@ describe('exportTransactionsCsv', () => {
   it('un movimiento sin categoría se exporta como "Sin clasificar"', async () => {
     vi.resetModules()
     const fixtures: Record<string, unknown[]> = {
-      transactions: [{ booking_date: '2026-08-25', value_date: null, description: 'Alipay', amount_cents: -100, account_id: 'acc-1', category_id: null, user_note: null, tags: [] }],
+      transactions: [{ id: 'tx-1', booking_date: '2026-08-25', value_date: null, description: 'Alipay', amount_cents: -100, account_id: 'acc-1', category_id: null, user_note: null }],
       accounts: [{ id: 'acc-1', name: 'Nómina', product: null }],
       categories: [],
     }
@@ -113,6 +115,8 @@ describe('exportAllDataJson', () => {
       goals: [],
       debt_details: [],
       investments: [],
+      tags: [{ id: 'tag-1' }],
+      transaction_tags: [{ transaction_id: 'tx-1', tag_id: 'tag-1' }],
     }
     const mockFrom = vi.fn((table: string) => chainable(fixtures[table] ?? []))
     vi.doMock('../../lib/supabase/client', () => ({ isSupabaseConfigured: true, supabase: { from: mockFrom } }))

@@ -10,7 +10,7 @@ import type { RealCategory } from './useRealCategories'
  */
 function chainable(data: unknown[]) {
   const builder: Record<string, unknown> = {}
-  for (const method of ['select', 'order', 'limit']) {
+  for (const method of ['select', 'order', 'limit', 'eq', 'in']) {
     builder[method] = () => builder
   }
   // oxlint-disable-next-line unicorn/no-thenable -- imita a propósito el query builder real de supabase-js.
@@ -34,7 +34,6 @@ const fixtures: Record<string, unknown[]> = {
       category_id: 'cat-1',
       needs_review: false,
       user_note: null,
-      tags: [],
       display_name: null,
       is_internal_transfer: false,
     },
@@ -48,11 +47,12 @@ const fixtures: Record<string, unknown[]> = {
       category_id: null,
       needs_review: false,
       user_note: 'revisar',
-      tags: ['amazon'],
       display_name: 'Compra de Amazon',
       is_internal_transfer: false,
     },
   ],
+  // Las etiquetas llegan por la tabla puente, no por una columna del movimiento.
+  transaction_tags: [{ transaction_id: 'tx-2', tags: { id: 'tag-amazon', name: 'amazon', emoji: '📦', color: 'cat-4' } }],
   accounts: [{ id: 'acc-1', name: 'Nómina', product: null, connection_id: 'conn-1' }],
   bank_connections: [{ id: 'conn-1', aspsp_name: 'Openbank' }],
 }
@@ -135,7 +135,7 @@ describe('useRealTransactions', () => {
         accountId: 'acc-1',
         needsReview: false,
         userNote: 'revisar',
-        tags: ['amazon'],
+        tags: [{ id: 'tag-amazon', name: 'amazon', emoji: '📦', color: 'cat-4' }],
         displayName: 'Compra de Amazon',
         dateISO: '2026-08-18',
         isInternalTransfer: false,
@@ -210,7 +210,6 @@ describe('paginación', () => {
       category_id: null,
       needs_review: false,
       user_note: null,
-      tags: [],
       display_name: null,
       is_internal_transfer: false,
     }))
