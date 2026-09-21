@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { BulkActionsBar } from './BulkActionsBar'
 import { FilterBar } from './FilterBar'
+import { TagSummaryCard } from './TagSummaryCard'
 import { RealReviewCenter } from './RealReviewCenter'
 import { ReviewCenter } from './ReviewCenter'
 import { TransactionPanel } from './TransactionPanel'
@@ -22,6 +23,9 @@ import {
 import type { IncomeType } from '../../lib/declaredIncome'
 import { categoryLabel, useRealCategories } from './useRealCategories'
 import { createTag, useRealTags } from './useRealTags'
+import { usePocketEuroValues } from './usePocketEuroValues'
+import { buildTagSummary } from '../../lib/tagSummary'
+import { matchesTagFilter } from './TransactionsTable'
 import { ErrorState } from '../../components/states/ErrorState'
 import { EmptyState } from '../../components/states/EmptyState'
 import { LoadingRealData } from '../../components/states/LoadingRealData'
@@ -122,6 +126,7 @@ export function TransactionsPage() {
 
   const { categories: realCategories } = useRealCategories()
   const { tags: realTags } = useRealTags()
+  const pocketEuros = usePocketEuroValues()
   const { loading: loadingReal, transactions: realTransactions, refetch, hasMore, loadMore, loadAll } = useRealTransactions(realCategories)
   const { connections: realConnections } = useRealConnections()
   const { accounts: realAccounts, refetch: refetchAccounts } = useRealAccounts()
@@ -147,6 +152,18 @@ export function TransactionsPage() {
     statusFilter !== ALL_STATUSES ||
     tagFilter !== ALL_TAGS ||
     dateFilter !== DATE_ALL
+
+  // El resumen se calcula sobre los MISMOS movimientos que se ven debajo, no
+  // con una consulta aparte: así la cifra no puede discrepar de la lista.
+  const filteredTag = realTags?.find((t) => t.id === tagFilter) ?? null
+  const tagSummary =
+    filteredTag && realTransactions
+      ? buildTagSummary(
+          realTransactions.filter((t) => matchesTagFilter(t, filteredTag.id)),
+          pocketEuros.eurCentsById,
+          pocketEuros.uncoveredCentsById,
+        )
+      : null
 
   // El Centro de revisión tiene el mismo problema que el buscador, y por el
   // mismo motivo: razona sobre lo que hay cargado y da su respuesta por
@@ -303,6 +320,7 @@ export function TransactionsPage() {
                 tags={isAuthenticated ? (realTags ?? []) : undefined}
                 isReal={hasRealTransactions}
               />
+              {filteredTag && tagSummary && <TagSummaryCard tag={filteredTag} summary={tagSummary} />}
               <BulkActionsBar
                 categories={hasRealTransactions ? realCategories! : undefined}
                 onBulkCategorize={hasRealTransactions ? handleBulkCategorize : undefined}
