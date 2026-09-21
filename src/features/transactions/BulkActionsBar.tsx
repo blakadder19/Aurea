@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { categoryLabel, type RealCategory } from './useRealCategories'
-import { recordTagCallDebug } from './useRealTransactions'
 import { useTransactionsStore } from './store'
 
 interface BulkActionsBarProps {
@@ -49,22 +48,6 @@ export function BulkActionsBar({ categories, onBulkCategorize, onBulkAddTag }: B
     // La selección se congela aquí: es la lista que de verdad se manda, y la
     // que hay que comparar con lo que responda.
     const ids = Array.from(selectedIds)
-
-    // TEMPORAL — diagnóstico de "solo se etiqueta uno". Se comparan tres
-    // cifras del mismo instante: lo que tiene el store leído en crudo, lo que
-    // tenía el componente en este render, y lo que se manda. Si la primera y
-    // la segunda no coinciden, el componente está trabajando con una
-    // selección vieja; si coinciden y aun así es 1, quien pierde es el store.
-    const storeNow = useTransactionsStore.getState().selectedIds
-    void recordTagCallDebug({
-      origen: 'BulkActionsBar',
-      tag: tagInput,
-      ids,
-      storeCount: storeNow.size,
-      closureCount: selectedIds.size,
-      nota: `contador en pantalla=${count} · store=[${[...storeNow].join('|')}]`,
-    })
-
     const { error: err } = await onBulkAddTag(ids, tagInput)
     if (err) setError(err)
     else {
